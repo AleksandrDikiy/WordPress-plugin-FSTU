@@ -1,0 +1,26 @@
+# ─── IDE та Редактори (PhpStorm, VSCode) ───
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ─── Системні файли ОС ───
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# ─── Логи та тимчасові файли ───
+*.log
+debug.log
+error_log
+
+# ─── Залежності (якщо в майбутньому додасте) ───
+vendor/
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# ─── Збірки та кеш ───
+.sass-cache/
+dist/
+build/
