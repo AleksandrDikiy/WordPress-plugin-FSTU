@@ -38,18 +38,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 	<?php if ( $is_logged_in ) : ?>
 		<!-- Протокол — тільки для авторизованих -->
-		<button type="button"
-		        class="fstu-btn fstu-btn--secondary"
-		        id="fstu-btn-protocol"
-		        title="Сформувати протокол"
-		        <?php echo ! $is_admin ? 'disabled aria-disabled="true"' : ''; ?>>
-			<span class="fstu-btn__icon" aria-hidden="true">📋</span> Протокол
-		</button>
+        <button type="button"
+                class="fstu-btn fstu-btn--secondary fstu-btn--open-modal"
+                data-modal="fstu-modal-protocol"
+                id="fstu-btn-protocol"
+                title="Сформувати протокол"
+                <?php echo ! $is_admin ? 'disabled aria-disabled="true"' : ''; ?>>
+            <span class="fstu-btn__icon" aria-hidden="true">📋</span> Протокол
+        </button>
 
 		<!-- Звіт — тільки для адміністраторів -->
-		<button type="button"
-		        class="fstu-btn fstu-btn--secondary"
-		        id="fstu-btn-report"
+        <button type="button"
+                class="fstu-btn fstu-btn--secondary fstu-btn--open-modal"
+                data-modal="fstu-modal-report"
+                id="fstu-btn-report"
 		        title="Сформувати звіт"
 		        <?php echo ! $is_admin ? 'disabled aria-disabled="true"' : ''; ?>>
 			<span class="fstu-btn__icon" aria-hidden="true">📊</span> Звіт

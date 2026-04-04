@@ -55,6 +55,7 @@ jQuery( document ).ready( function ( $ ) {
 		bindFilterEvents();
 		bindPaginationEvents();
 		bindTableEvents();
+		bindTabsEvents();
 		bindModalEvents();
 		bindApplicationFormEvents();
 		fetchRegistry(); // Початкове завантаження
@@ -228,8 +229,6 @@ jQuery( document ).ready( function ( $ ) {
 		$( document ).on( 'click', '.fstu-card-link, .fstu-card--download', function ( e ) {
 			e.preventDefault();
 			const userId = $( this ).data( 'user-id' );
-			const card   = $( this ).data( 'card' );
-			console.log( '[FSTU] Членський квиток:', { userId, card } ); // eslint-disable-line no-console
 			openMemberCard( userId );
 		} );
 
@@ -237,14 +236,12 @@ jQuery( document ).ready( function ( $ ) {
 		$( document ).on( 'click', '.fstu-club-link', function ( e ) {
 			e.preventDefault();
 			const clubId = $( this ).data( 'club-id' );
-			console.log( '[FSTU] Клуб ID:', clubId ); // eslint-disable-line no-console
 			openClubInfo( clubId );
 		} );
 
 		// Кнопка деталей рядка ▾
 		$( document ).on( 'click', '.fstu-btn--details', function () {
 			const userId = $( this ).data( 'user-id' );
-			console.log( '[FSTU] Деталі користувача:', userId ); // eslint-disable-line no-console
 			$( this ).toggleClass( 'fstu-btn--details-open' );
 			// Додаткову логіку розгортання рядка можна додати тут
 		} );
@@ -286,19 +283,228 @@ jQuery( document ).ready( function ( $ ) {
 						const general = r.data.general;
 						$modal.find( '#mc-val-name' ).text( general.name || '—' );
 						$modal.find( '#mc-val-birth' ).text( general.birth_date || '—' );
+						$modal.find( '#mc-val-sex' ).text( general.sex || '—' );
 						$modal.find( '#mc-val-email' ).text( general.email || '—' );
 						$modal.find( '#mc-val-phone' ).text( general.phone || '—' );
 						$modal.find( '#mc-val-skype' ).text( general.skype || '—' );
-						$modal.find( '#mc-val-facebook' ).html( general.facebook ? `<a href="${ general.facebook }" target="_blank">${ general.facebook }</a>` : '—' );
+
+						// Логіка для Facebook
+						let fbHtml = general.facebook || '—';
+						if ( general.facebook && general.facebook.startsWith( 'http' ) ) {
+							fbHtml = `<a href="${ general.facebook }" target="_blank">Профіль Facebook</a>`;
+						}
+						$modal.find( '#mc-val-facebook' ).html( fbHtml );
+
+						// Фото
 						$modal.find( '#mc-photo' ).attr( 'src', general.photo_url );
 
-						// Показуємо іконку згоди
-						$modal.find( '#mc-pd-icon-ok' ).toggleClass( 'fstu-hidden', ! general.has_consent );
-						$modal.find( '#mc-pd-icon-no' ).toggleClass( 'fstu-hidden', general.has_consent );
-						$modal.find( '#mc-pd-text' ).text(
-							general.has_consent ? 'Надано згоду на показ ПД' : 'Згоду на показ ПД не надано'
-						);
+						// Показуємо іконку згоди та статус
+						$modal.find( '#mc-pd-icon-ok' ).toggleClass( 'fstu-hidden', !general.can_see_personal );
+						$modal.find( '#mc-pd-icon-no' ).toggleClass( 'fstu-hidden', general.can_see_personal );
+
+						let pdText = 'Згоду на показ ПД не надано';
+						if ( general.can_see_personal ) {
+							pdText = general.has_consent ? 'Надано згоду на показ ПД' : 'Доступ (Адмін / Власник)';
+						}
+						$modal.find( '#mc-pd-text' ).text( pdText );
 					}
+					// Заповнюємо вкладку "Приватне"
+					const $tabPrivate = $modal.find( '#mc-tab-private' );
+					if ( r.data.private ) {
+						$tabPrivate.removeClass( 'fstu-hidden' );
+						$modal.find( '#mc-val-address' ).text( r.data.private.address || '—' );
+						$modal.find( '#mc-val-job' ).text( r.data.private.job || '—' );
+						$modal.find( '#mc-val-edu' ).text( r.data.private.education || '—' );
+						$modal.find( '#mc-val-family-ph' ).text( r.data.private.family_ph || '—' );
+					} else {
+						$tabPrivate.addClass( 'fstu-hidden' );
+					}
+
+					// Заповнюємо вкладку "Службове"
+					const $tabService = $modal.find( '#mc-tab-service' );
+					if ( r.data.service ) {
+						$tabService.removeClass( 'fstu-hidden' );
+						$modal.find( '#mc-val-id' ).text( r.data.service.id || '—' );
+						$modal.find( '#mc-val-login' ).text( r.data.service.login || '—' );
+						$modal.find( '#mc-val-lastlog' ).text( r.data.service.last_login || '—' );
+						$modal.find( '#mc-val-regdate' ).text( r.data.service.registered || '—' );
+						$modal.find( '#mc-val-tgact' ).text( r.data.service.tg_active || '—' );
+						$modal.find( '#mc-val-tgcode' ).text( r.data.service.tg_code || '—' );
+						$modal.find( '#mc-val-tgid' ).text( r.data.service.tg_id || '—' );
+						$modal.find( '#mc-val-ipn' ).text( r.data.service.ipn || '—' );
+						$modal.find( '#mc-val-bank' ).text( r.data.service.bank || '—' );
+						$modal.find( '#mc-val-iban' ).text( r.data.service.iban || '—' );
+					} else {
+						$tabService.addClass( 'fstu-hidden' );
+					}
+					// Заповнюємо вкладку "Клуби"
+					const $clubsList  = $modal.find( '#mc-val-clubs-list' );
+					const $clubsEmpty = $modal.find( '#mc-val-clubs-empty' );
+					const $clubsTable = $modal.find( '#mc-clubs-table' );
+
+					$clubsList.empty();
+					if ( r.data.clubs && r.data.clubs.length > 0 ) {
+						$clubsEmpty.addClass( 'fstu-hidden' );
+						$clubsTable.removeClass( 'fstu-hidden' );
+
+						let clubsHtml = '';
+						r.data.clubs.forEach( function( club ) {
+							const nameHtml = club.www
+								? `<a href="${ club.www }" target="_blank">${ club.name }</a>`
+								: club.name;
+							clubsHtml += `
+								<tr class="fstu-row">
+									<td class="fstu-td" style="font-weight:600;">${ nameHtml }</td>
+									<td class="fstu-td">${ club.adr }</td>
+								</tr>`;
+						});
+						$clubsList.html( clubsHtml );
+					} else {
+						$clubsTable.addClass( 'fstu-hidden' );
+						$clubsEmpty.removeClass( 'fstu-hidden' );
+					}
+					// Заповнюємо вкладку "Міста"
+					const $citiesList  = $modal.find( '#mc-val-cities-list' );
+					const $citiesEmpty = $modal.find( '#mc-val-cities-empty' );
+					const $citiesTable = $modal.find( '#mc-cities-table' );
+
+					$citiesList.empty();
+					if ( r.data.cities && r.data.cities.length > 0 ) {
+						$citiesEmpty.addClass( 'fstu-hidden' );
+						$citiesTable.removeClass( 'fstu-hidden' );
+
+						let citiesHtml = '';
+						r.data.cities.forEach( function( item ) {
+							citiesHtml += `
+								<tr class="fstu-row">
+									<td class="fstu-td" style="font-weight:600;">${ item.city }</td>
+									<td class="fstu-td">${ item.region }</td>
+									<td class="fstu-td">${ item.date }</td>
+								</tr>`;
+						});
+						$citiesList.html( citiesHtml );
+					} else {
+						$citiesTable.addClass( 'fstu-hidden' );
+						$citiesEmpty.removeClass( 'fstu-hidden' );
+					}
+					// Заповнюємо вкладку "Види туризму"
+					const $tourismList  = $modal.find( '#mc-val-tourism-list' );
+					const $tourismEmpty = $modal.find( '#mc-val-tourism-empty' );
+					const $tourismTable = $modal.find( '#mc-tourism-table' );
+
+					$tourismList.empty();
+					if ( r.data.tourism && r.data.tourism.length > 0 ) {
+						$tourismEmpty.addClass( 'fstu-hidden' );
+						$tourismTable.removeClass( 'fstu-hidden' );
+
+						let tourismHtml = '';
+						r.data.tourism.forEach( function( item ) {
+							tourismHtml += `
+								<tr class="fstu-row">
+									<td class="fstu-td" style="font-weight:600;">${ item.name }</td>
+									<td class="fstu-td" style="color: var(--fstu-text-light);">${ item.date }</td>
+								</tr>`;
+						});
+						$tourismList.html( tourismHtml );
+					} else {
+						$tourismTable.addClass( 'fstu-hidden' );
+						$tourismEmpty.removeClass( 'fstu-hidden' );
+					}
+					// Заповнюємо вкладку "Досвід"
+					const $experienceEmpty = $modal.find( '#mc-val-experience-empty' );
+					const $experienceTable = $modal.find( '#mc-experience-table' );
+					const $experiencePagin = $modal.find( '#mc-experience-pagination' );
+
+					if ( r.data.experience && r.data.experience.length > 0 ) {
+						$experienceEmpty.addClass( 'fstu-hidden' );
+						$experienceTable.removeClass( 'fstu-hidden' );
+
+						mcState.expData = r.data.experience;
+						mcState.expPage = 1;
+						renderExperienceTable();
+
+						if ( mcState.expData.length > mcState.expPerPage ) {
+							$experiencePagin.removeClass( 'fstu-hidden' );
+						} else {
+							$experiencePagin.addClass( 'fstu-hidden' );
+						}
+					} else {
+						$experienceTable.addClass( 'fstu-hidden' );
+						$experiencePagin.addClass( 'fstu-hidden' );
+						$experienceEmpty.removeClass( 'fstu-hidden' );
+					}
+					// Заповнюємо вкладку "Розряди"
+					const $ranksEmpty = $modal.find( '#mc-val-ranks-empty' );
+					const $ranksTable = $modal.find( '#mc-ranks-table' );
+					const $ranksPagin = $modal.find( '#mc-ranks-pagination' );
+
+					if ( r.data.ranks && r.data.ranks.length > 0 ) {
+						$ranksEmpty.addClass( 'fstu-hidden' );
+						$ranksTable.removeClass( 'fstu-hidden' );
+
+						mcState.rankData = r.data.ranks;
+						mcState.rankPage = 1;
+						renderRanksTable();
+
+						if ( mcState.rankData.length > mcState.rankPerPage ) {
+							$ranksPagin.removeClass( 'fstu-hidden' );
+						} else {
+							$ranksPagin.addClass( 'fstu-hidden' );
+						}
+					} else {
+						$ranksTable.addClass( 'fstu-hidden' );
+						$ranksPagin.addClass( 'fstu-hidden' );
+						$ranksEmpty.removeClass( 'fstu-hidden' );
+					}
+					// Заповнюємо вкладку "Суддівство"
+					const $judgingList  = $modal.find( '#mc-val-judging-list' );
+					const $judgingEmpty = $modal.find( '#mc-val-judging-empty' );
+					const $judgingTable = $modal.find( '#mc-judging-table' );
+
+					$judgingList.empty();
+					if ( r.data.judging && r.data.judging.length > 0 ) {
+						$judgingEmpty.addClass( 'fstu-hidden' );
+						$judgingTable.removeClass( 'fstu-hidden' );
+
+						let judgingHtml = '';
+						r.data.judging.forEach( function( judge ) {
+							judgingHtml += `
+								<tr class="fstu-row">
+									<td class="fstu-td" style="font-weight:600;">${ judge.category }</td>
+									<td class="fstu-td" style="color: var(--fstu-text-light);">${ judge.date }</td>
+								</tr>`;
+						});
+						$judgingList.html( judgingHtml );
+					} else {
+						$judgingTable.addClass( 'fstu-hidden' );
+						$judgingEmpty.removeClass( 'fstu-hidden' );
+					}
+
+					// Показуємо/ховаємо вкладки вітрильництва
+					const $tabSailing = $modal.find( '#mc-tab-sailing' );
+					const $tabDuesSail = $modal.find( '#mc-tab-dues-sail' );
+
+					if ( r.data.permissions && r.data.permissions.can_see_sailing ) {
+						$tabSailing.removeClass( 'fstu-hidden' );
+						$tabDuesSail.removeClass( 'fstu-hidden' );
+
+						// Внески вітрильників
+						mcState.duesSailData = r.data.dues_sail || [];
+						mcState.duesSailPage = 1;
+						renderDuesSailTable();
+
+						// Вітрильні судна та посвідчення
+						renderSailingTable( r.data.vessels || [], r.data.certs || [] );
+					} else {
+						$tabSailing.addClass( 'fstu-hidden' );
+						$tabDuesSail.addClass( 'fstu-hidden' );
+					}
+
+					// Внески загальні
+					mcState.duesData = r.data.dues || [];
+					mcState.duesPage = 1;
+					renderDuesTable();
+
 				} else {
 					$alert.text( r.data?.message || 'Помилка завантаження даних' ).removeClass( 'fstu-hidden' );
 				}
@@ -332,7 +538,16 @@ jQuery( document ).ready( function ( $ ) {
 				$loader.addClass( 'fstu-hidden' );
 				if ( r.success && r.data ) {
 					$table.removeClass( 'fstu-hidden' );
-					$( '#club-val-name' ).text( r.data.name || '—' );
+
+					// Логіка для назви клубу (з посиланням або без)
+					let nameHtml = r.data.name || '—';
+					if ( r.data.www ) {
+						nameHtml = `<a href="${ r.data.www }" target="_blank" style="color: var(--fstu-link); font-weight: 600;">${ nameHtml }</a>`;
+						$( '#club-val-name' ).html( nameHtml );
+					} else {
+						$( '#club-val-name' ).text( nameHtml );
+					}
+
 					$( '#club-val-city' ).text( r.data.city || '—' );
 				} else {
 					$alert.text( r.data?.message || 'Клуб не знайдено' ).removeClass( 'fstu-hidden' );
@@ -366,9 +581,17 @@ jQuery( document ).ready( function ( $ ) {
 	// ─── Модальні вікна ───────────────────────────────────────────────────────
 
 	function bindModalEvents() {
+		// Відкриття модалки по кнопці
 		$( document ).on( 'click', '.fstu-btn--open-modal', function () {
 			const modalId = $( this ).data( 'modal' );
 			openModal( modalId );
+
+			// Якщо це модалка протоколу - вантажимо дані
+			if ( modalId === 'fstu-modal-protocol' ) {
+				loadProtocolData();
+			} else if ( modalId === 'fstu-modal-report' ) {
+				loadReportData();
+			}
 		} );
 
 		$( document ).on( 'click', '#fstu-modal-close, #fstu-app-cancel', function () {
@@ -383,12 +606,14 @@ jQuery( document ).ready( function ( $ ) {
 			closeModal( 'fstu-modal-application' );
 		} );
 
+		// Закриття по кліку на оверлей
 		$( document ).on( 'click', '.fstu-modal-overlay', function ( e ) {
 			if ( $( e.target ).hasClass( 'fstu-modal-overlay' ) ) {
 				closeModal( $( this ).attr( 'id' ) );
 			}
 		} );
 
+		// Закриття по Escape
 		$( document ).on( 'keydown', function ( e ) {
 			if ( e.key === 'Escape' ) {
 				$( '.fstu-modal-overlay:not(.fstu-hidden)' ).each( function () {
@@ -396,6 +621,208 @@ jQuery( document ).ready( function ( $ ) {
 				} );
 			}
 		} );
+
+		// Пагінація модалки: Досвід
+		$( document ).on( 'click', '#mc-exp-prev', function () { if ( mcState.expPage > 1 ) { mcState.expPage--; renderExperienceTable(); } } );
+		$( document ).on( 'click', '#mc-exp-next', function () { const total = Math.ceil( mcState.expData.length / mcState.expPerPage ); if ( mcState.expPage < total ) { mcState.expPage++; renderExperienceTable(); } } );
+
+		// Пагінація модалки: Розряди
+		$( document ).on( 'click', '#mc-rank-prev', function () { if ( mcState.rankPage > 1 ) { mcState.rankPage--; renderRanksTable(); } } );
+		$( document ).on( 'click', '#mc-rank-next', function () { const total = Math.ceil( mcState.rankData.length / mcState.rankPerPage ); if ( mcState.rankPage < total ) { mcState.rankPage++; renderRanksTable(); } } );
+
+		// Пагінація модалки: Внески
+		$( document ).on( 'click', '#mc-dues-prev', function () { if ( mcState.duesPage > 1 ) { mcState.duesPage--; renderDuesTable(); } } );
+		$( document ).on( 'click', '#mc-dues-next', function () { const total = Math.ceil( mcState.duesData.length / mcState.duesPerPage ); if ( mcState.duesPage < total ) { mcState.duesPage++; renderDuesTable(); } } );
+
+		// Пагінація модалки: Внески (Вітрильні)
+		$( document ).on( 'click', '#mc-dues-sail-prev', function () { if ( mcState.duesSailPage > 1 ) { mcState.duesSailPage--; renderDuesSailTable(); } } );
+		$( document ).on( 'click', '#mc-dues-sail-next', function () { const total = Math.ceil( mcState.duesSailData.length / mcState.duesSailPerPage ); if ( mcState.duesSailPage < total ) { mcState.duesSailPage++; renderDuesSailTable(); } } );
+		// Зміна кількості записів у протоколі
+		$( document ).on( 'change', '#fstu-protocol-per-page', function() {
+			state.protocol.per_page = parseInt( $( this ).val() );
+			state.protocol.page = 1;
+			loadProtocolData();
+		});
+
+		// Навігація сторінками протоколу
+		$( document ).on( 'click', '#fstu-protocol-prev', function() {
+			if ( state.protocol.page > 1 ) {
+				state.protocol.page--;
+				loadProtocolData();
+			}
+		});
+
+		$( document ).on( 'click', '#fstu-protocol-next', function() {
+			state.protocol.page++;
+			loadProtocolData();
+		});
+
+	}
+
+	// ─── Функції рендеру таблиць модалки ──────────────────────────────────────
+
+	function renderExperienceTable() {
+		const $list = $( '#mc-val-experience-list' );
+		const total = mcState.expData.length;
+		const totalPages = Math.ceil( total / mcState.expPerPage ) || 1;
+
+		const start = ( mcState.expPage - 1 ) * mcState.expPerPage;
+		const end   = Math.min( start + mcState.expPerPage, total );
+		const pageData = mcState.expData.slice( start, end );
+
+		let expHtml = '';
+		pageData.forEach( function( exp ) {
+			const urlHtml = exp.url
+				? `<a href="${ exp.url }" target="_blank" class="fstu-action-link" style="font-size:12px;">посилання</a>`
+				: '<span style="color:var(--fstu-text-light); font-size:12px;">відсутня</span>';
+
+			expHtml += `
+				<tr class="fstu-row">
+					<td class="fstu-td" style="font-weight:600;">${ exp.category }</td>
+					<td class="fstu-td" style="text-align:center;">${ exp.role }</td>
+					<td class="fstu-td"><a href="/calendar/?ViewID=${ exp.event_id }" target="_blank">${ exp.event }</a></td>
+					<td class="fstu-td">${ exp.tourism }</td>
+					<td class="fstu-td" style="text-align:center; font-size:11px;">${ exp.dates }</td>
+					<td class="fstu-td" style="text-align:center;">${ urlHtml }</td>
+				</tr>`;
+		});
+		$list.html( expHtml );
+
+		$( '#mc-exp-pagin-info' ).text( `Показано ${ start + 1 }–${ end } з ${ total } записів` );
+		$( '#mc-exp-page-nums' ).text( `Стор. ${ mcState.expPage } з ${ totalPages }` );
+		$( '#mc-exp-prev' ).prop( 'disabled', mcState.expPage <= 1 );
+		$( '#mc-exp-next' ).prop( 'disabled', mcState.expPage >= totalPages );
+	}
+
+	function renderRanksTable() {
+		const $list = $( '#mc-val-ranks-list' );
+		const total = mcState.rankData.length;
+		const totalPages = Math.ceil( total / mcState.rankPerPage ) || 1;
+
+		const start = ( mcState.rankPage - 1 ) * mcState.rankPerPage;
+		const end   = Math.min( start + mcState.rankPerPage, total );
+		const pageData = mcState.rankData.slice( start, end );
+
+		let ranksHtml = '';
+		pageData.forEach( function( rank ) {
+			const prikazHtml = rank.url
+				? `<a href="${ rank.url }" target="_blank" style="font-weight:600;">${ rank.prikaz }</a>`
+				: rank.prikaz;
+
+			ranksHtml += `
+				<tr class="fstu-row">
+					<td class="fstu-td" style="font-weight:600;">${ rank.name }</td>
+					<td class="fstu-td" style="text-align:center;">${ prikazHtml }</td>
+					<td class="fstu-td">${ rank.tourism }</td>
+					<td class="fstu-td"><a href="/calendar/?ViewID=${ rank.event_id }" target="_blank">${ rank.event }</a></td>
+					<td class="fstu-td" style="text-align:center; font-size:11px;">${ rank.dates }</td>
+				</tr>`;
+		});
+		$list.html( ranksHtml );
+
+		$( '#mc-rank-pagin-info' ).text( `Показано ${ start + 1 }–${ end } з ${ total } записів` );
+		$( '#mc-rank-page-nums' ).text( `Стор. ${ mcState.rankPage } з ${ totalPages }` );
+		$( '#mc-rank-prev' ).prop( 'disabled', mcState.rankPage <= 1 );
+		$( '#mc-rank-next' ).prop( 'disabled', mcState.rankPage >= totalPages );
+	}
+
+	function renderDuesTable() {
+		const $list = $('#mc-val-dues-list');
+		const total = mcState.duesData.length;
+		const totalPages = Math.ceil( total / mcState.duesPerPage ) || 1;
+		const start = (mcState.duesPage - 1) * mcState.duesPerPage;
+		const pageData = mcState.duesData.slice(start, start + mcState.duesPerPage);
+
+		let html = '';
+		pageData.forEach(d => {
+			let docHtml = '—';
+			if ( d.Dues_URL ) {
+				docHtml = `<a href="${ d.Dues_URL }" target="_blank" style="color:#2980b9; font-weight:600;">📄 Чек</a>`;
+			} else if ( d.Dues_ShopBillid ) {
+				docHtml = `<span style="color:#27ae60; font-weight:600;" title="ID: ${ d.Dues_ShopBillid } | Код: ${ d.Dues_ApprovalCode || '' }">еквайринг</span>`;
+			}
+
+			html += `<tr class="fstu-row">
+				<td class="fstu-td" style="text-align:center;">${d.Year_Name}</td>
+				<td class="fstu-td" style="text-align:right; font-weight:600;">${parseFloat(d.Dues_Summa).toFixed(2)}</td>
+				<td class="fstu-td" style="text-align:center;">${d.DuesType_Name}</td>
+				<td class="fstu-td" style="text-align:center;">${docHtml}</td>
+				<td class="fstu-td">${d.financier} <br><small style="color:var(--fstu-text-light);">${d.Dues_DateCreate}</small></td>
+			</tr>`;
+		});
+
+		$list.html(html);
+		$('#mc-dues-table').toggleClass('fstu-hidden', total === 0);
+		$('#mc-val-dues-empty').toggleClass('fstu-hidden', total > 0);
+
+		if ( total > mcState.duesPerPage ) {
+			$( '#mc-dues-pagination' ).removeClass( 'fstu-hidden' );
+			$( '#mc-dues-pagin-info' ).text( `Показано ${ start + 1 }–${ Math.min( start + mcState.duesPerPage, total ) } з ${ total }` );
+			$( '#mc-dues-page-nums' ).text( `Стор. ${ mcState.duesPage } з ${ totalPages }` );
+			$( '#mc-dues-prev' ).prop( 'disabled', mcState.duesPage <= 1 );
+			$( '#mc-dues-next' ).prop( 'disabled', mcState.duesPage >= totalPages );
+		} else {
+			$( '#mc-dues-pagination' ).addClass( 'fstu-hidden' );
+		}
+	}
+
+	function renderDuesSailTable() {
+		const $list = $( '#mc-val-dues-sail-list' );
+		const total = mcState.duesSailData.length;
+		const totalPages = Math.ceil( total / mcState.duesSailPerPage ) || 1;
+		const start = ( mcState.duesSailPage - 1 ) * mcState.duesSailPerPage;
+		const pageData = mcState.duesSailData.slice( start, start + mcState.duesSailPerPage );
+
+		let html = '';
+		pageData.forEach( d => {
+			html += `<tr class="fstu-row">
+				<td class="fstu-td" style="text-align:center;">${ d.Year_ID }</td>
+				<td class="fstu-td" style="text-align:right; font-weight:600; color:#d35400;">${ parseFloat( d.DuesSail_Summa ).toFixed( 2 ) }</td>
+				<td class="fstu-td" style="text-align:center;">${ d.DuesSail_DateCreate }</td>
+				<td class="fstu-td">${ d.FIOCreate }</td>
+			</tr>`;
+		});
+
+		$list.html( html );
+		$( '#mc-dues-sail-table' ).toggleClass( 'fstu-hidden', total === 0 );
+		$( '#mc-val-dues-sail-empty' ).toggleClass( 'fstu-hidden', total > 0 );
+
+		if ( total > mcState.duesSailPerPage ) {
+			$( '#mc-dues-sail-pagination' ).removeClass( 'fstu-hidden' );
+			$( '#mc-dues-sail-pagin-info' ).text( `Показано ${ start + 1 }–${ Math.min( start + mcState.duesSailPerPage, total ) } з ${ total }` );
+			$( '#mc-dues-sail-page-nums' ).text( `Стор. ${ mcState.duesSailPage } з ${ totalPages }` );
+			$( '#mc-dues-sail-prev' ).prop( 'disabled', mcState.duesSailPage <= 1 );
+			$( '#mc-dues-sail-next' ).prop( 'disabled', mcState.duesSailPage >= totalPages );
+		} else {
+			$( '#mc-dues-sail-pagination' ).addClass( 'fstu-hidden' );
+		}
+	}
+
+	function renderSailingTable( vessels, certs ) {
+		let vHtml = '';
+		vessels.forEach( v => {
+			vHtml += `<tr class="fstu-row">
+				<td class="fstu-td" style="font-weight:600;">${ v.Sailboat_Name }<br><small style="color:var(--fstu-text-light); font-weight:normal;">${ v.RegNumber }</small></td>
+				<td class="fstu-td" style="text-align:center; font-weight:600;">${ v.Sailboat_NumberSail || '—' }</td>
+				<td class="fstu-td">${ v.Verification_Name }</td>
+				<td class="fstu-td" style="text-align:right; color:#d35400;">${ parseFloat( v.AppShipTicket_Summa || 0 ).toFixed( 2 ) }</td>
+			</tr>`;
+		});
+		$( '#mc-val-vessels-list' ).html( vHtml );
+		$( '#mc-vessels-table' ).toggleClass( 'fstu-hidden', vessels.length === 0 );
+		$( '#mc-val-vessels-empty' ).toggleClass( 'fstu-hidden', vessels.length > 0 );
+
+		let cHtml = '';
+		certs.forEach( c => {
+			cHtml += `<tr class="fstu-row">
+				<td class="fstu-td"><b>${ c.type }</b><br><span style="color:var(--fstu-primary);">${ c.num }</span></td>
+				<td class="fstu-td">${ c.status }</td>
+				<td class="fstu-td" style="text-align:center;">${ c.date || '—' }</td>
+			</tr>`;
+		});
+		$( '#mc-val-certs-list' ).html( cHtml );
+		$( '#mc-certs-table' ).toggleClass( 'fstu-hidden', certs.length === 0 );
+		$( '#mc-val-certs-empty' ).toggleClass( 'fstu-hidden', certs.length > 0 );
 	}
 
 	function openModal( modalId ) {

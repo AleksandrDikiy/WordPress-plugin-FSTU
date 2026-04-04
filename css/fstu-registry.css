@@ -3,8 +3,8 @@
  * Компактний дизайн, всі класи з префіксом .fstu-
  * Жодних inline-стилів у PHP файлах!
  *
- * Version:     1.0.0
- * Date_update: 2026-04-03
+ * Version:     1.2.1
+ * Date_update: 2026-04-04
  *
  * @package FSTU
  */
@@ -514,10 +514,6 @@ body.fstu-modal-open { overflow: hidden; }
 	border-radius: 6px;
 	box-shadow:    var(--fstu-shadow-modal);
 	width:         100%;
-	max-width:     620px;
-	max-height:    90vh;
-	overflow-y:    auto;
-	position:      relative;
 	max-width:     720px;
 	max-height:    calc(100vh - 32px); /* Збільшено висоту */
 	display:       flex;
@@ -530,10 +526,6 @@ body.fstu-modal-open { overflow: hidden; }
 	justify-content: space-between;
 	padding:         12px 16px;
 	border-bottom:   1px solid var(--fstu-border);
-	position:        sticky;
-	top:             0;
-	background:      #fff;
-	z-index:         1;
 	flex-shrink:     0;
 }
 
@@ -545,7 +537,6 @@ body.fstu-modal-open { overflow: hidden; }
 }
 
 .fstu-modal-close-btn {
-.fstu-modal__close {
 	background:  none;
 	border:      none;
 	cursor:      pointer;
@@ -554,7 +545,6 @@ body.fstu-modal-open { overflow: hidden; }
 	color:       var(--fstu-text-light);
 	padding:     0 4px;
 }
-.fstu-modal__close:hover { color: var(--fstu-error); }
 .fstu-modal-close-btn:hover { color: var(--fstu-error); }
 
 .fstu-modal__body {
@@ -669,4 +659,165 @@ body.fstu-modal-open { overflow: hidden; }
 	/* Приховуємо колонки внесків на мобільних */
 	.fstu-th--dues, .fstu-td--dues     { display: none; }
 	.fstu-th--dues-locked              { display: none; }
+
+	.fstu-mc-general-grid { flex-direction: column; }
+}
+/* ─── Вкладки (Tabs) для модальних вікон ─────────────────────────────────── */
+.fstu-tabs {
+	display: flex;
+	flex-direction: column;
+	min-height: 0; /* Для flexbox в Firefox */
+}
+
+.fstu-tabs__nav {
+	display: flex;
+	flex-wrap: wrap; /* Дозволяє переносити вкладки */
+	border-bottom: 1px solid var(--fstu-border);
+	padding: 0 12px;
+	flex-shrink: 0;
+}
+
+.fstu-tabs__btn {
+	background: none;
+	border: none;
+	padding: 8px 14px;
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--fstu-text-light);
+	cursor: pointer;
+	white-space: nowrap;
+	border-bottom: 2px solid transparent;
+	transition: color .2s, border-color .2s;
+	margin-bottom: -1px; /* Щоб рамка перекривала лінію контейнера */
+}
+
+.fstu-tabs__btn:hover {
+	color: var(--fstu-text);
+}
+
+.fstu-tabs__btn--active {
+	color: var(--fstu-primary);
+	border-bottom-color: var(--fstu-primary);
+}
+
+.fstu-tabs__content-wrap {
+	padding: 12px 16px;
+	overflow-y: auto;
+}
+
+.fstu-tabs__pane {
+	display: none;
+	animation: fstuFadeIn .3s ease;
+}
+.fstu-tabs__pane--active {
+	display: block;
+}
+
+@keyframes fstuFadeIn {
+	from { opacity: 0; transform: translateY(4px); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Картка члена: Загальна вкладка ─────────────────────────────────────── */
+.fstu-mc-general-grid {
+	display: flex;
+	gap: 16px;
+}
+
+.fstu-mc-photo-wrap {
+	flex: 0 0 150px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.fstu-mc-photo {
+	width: 150px;
+	height: 150px;
+	border-radius: 50%;
+	object-fit: cover;
+	border: 3px solid var(--fstu-border);
+	background: var(--fstu-secondary);
+}
+
+.fstu-mc-pd-note {
+	font-size: 10px;
+	color: var(--fstu-text-light);
+	text-align: center;
+	margin-top: 8px;
+}
+.fstu-mc-pd-note span { vertical-align: middle; }
+#mc-pd-icon-ok { color: var(--fstu-success); font-weight: bold; }
+#mc-pd-icon-no { color: var(--fstu-error); font-weight: bold; }
+
+
+.fstu-mc-info-wrap {
+	flex: 1;
+}
+
+/* ─── Інформаційні таблиці в модалках ────────────────────────────────────── */
+.fstu-info-table,
+.fstu-info-table tr,
+.fstu-info-table th,
+.fstu-info-table td,
+.fstu-info-table tbody {
+	width: 100%;
+	border-collapse: collapse !important;
+	border: none !important;
+	background: transparent !important;
+	box-shadow: none !important;
+}
+
+.fstu-info-table th,
+.fstu-info-table td {
+	padding: 6px 0 !important;
+	vertical-align: top;
+}
+
+.fstu-info-table th {
+	text-align: left;
+	color: var(--fstu-text-light);
+	width: 140px;
+	font-weight: 500;
+}
+
+.fstu-info-table td {
+	color: var(--fstu-text);
+	font-weight: 600;
+}
+
+.fstu-info-table a {
+	color: var(--fstu-link);
+	text-decoration: none;
+}
+.fstu-info-table a:hover {
+	text-decoration: underline;
+}
+
+
+/* ─── Допоміжні елементи модалок ─────────────────────────────────────────── */
+.fstu-loader-inline {
+	padding: 20px;
+	text-align: center;
+	color: var(--fstu-text-light);
+	font-size: 13px;
+}
+
+.fstu-alert {
+	padding: 10px 14px;
+	margin-bottom: 12px;
+	border-radius: var(--fstu-radius);
+	font-size: 13px;
+	background: #fdedec;
+	border: 1px solid #f5b7b1;
+	color: var(--fstu-error);
+}
+
+.fstu-placeholder {
+	padding: 30px;
+	text-align: center;
+	color: var(--fstu-text-light);
+	font-style: italic;
+	background: var(--fstu-secondary);
+	border-radius: var(--fstu-radius);
 }
