@@ -54,6 +54,7 @@ spl_autoload_register( function ( string $class ): void {
 require_once FSTU_PLUGIN_DIR . 'includes/Core/class-activator.php';
 require_once FSTU_PLUGIN_DIR . 'includes/Registry/class-registry-list.php';
 require_once FSTU_PLUGIN_DIR . 'includes/Registry/class-registry-ajax.php';
+require_once FSTU_PLUGIN_DIR . 'includes/Registry/class-registry-modals-ajax.php'; // 2026-04-04
 
 // ─── Активація / Деактивація ──────────────────────────────────────────────────
 
@@ -71,4 +72,7 @@ function fstu_init(): void {
 
 	$registry_ajax = new FSTU\Registry\Registry_Ajax();
 	$registry_ajax->init();
+    // Додаємо ініціалізацію AJAX для модальних вікон
+    $registry_modals_ajax = new FSTU\Registry\Registry_Modals_Ajax();
+    $registry_modals_ajax->init();
 }

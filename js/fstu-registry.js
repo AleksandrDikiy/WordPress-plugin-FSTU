@@ -4,7 +4,7 @@
  * Жодних inline-скриптів у PHP!
  *
  * Version:     1.1.1
- * Date_update: 2026-04-03
+ * Date_update: 2026-04-05
  *
  * @package FSTU
  * @requires jQuery
@@ -224,23 +224,142 @@ jQuery( document ).ready( function ( $ ) {
 	// ─── Обробники подій: Таблиця ─────────────────────────────────────────────
 
 	function bindTableEvents() {
+		// Клік по "Членський квиток" — відкрити Картку члена
 		$( document ).on( 'click', '.fstu-card-link, .fstu-card--download', function ( e ) {
 			e.preventDefault();
 			const userId = $( this ).data( 'user-id' );
 			const card   = $( this ).data( 'card' );
 			console.log( '[FSTU] Членський квиток:', { userId, card } ); // eslint-disable-line no-console
+			openMemberCard( userId );
 		} );
 
+		// Клік по "Клуб" — відкрити інформацію про клуб
 		$( document ).on( 'click', '.fstu-club-link', function ( e ) {
 			e.preventDefault();
 			const clubId = $( this ).data( 'club-id' );
 			console.log( '[FSTU] Клуб ID:', clubId ); // eslint-disable-line no-console
+			openClubInfo( clubId );
 		} );
 
+		// Кнопка деталей рядка ▾
 		$( document ).on( 'click', '.fstu-btn--details', function () {
 			const userId = $( this ).data( 'user-id' );
 			console.log( '[FSTU] Деталі користувача:', userId ); // eslint-disable-line no-console
 			$( this ).toggleClass( 'fstu-btn--details-open' );
+			// Додаткову логіку розгортання рядка можна додати тут
+		} );
+	}
+
+	// ─── Обробка AJAX для Картки Члена ────────────────────────────────────────
+
+	function openMemberCard( userId ) {
+		openModal( 'fstu-modal-member-card' );
+
+		const $modal  = $( '#fstu-modal-member-card' );
+		const $loader = $modal.find( '#fstu-mc-loader' );
+		const $alert  = $modal.find( '#fstu-mc-alert' );
+		const $panes  = $modal.find( '.fstu-tabs__pane' );
+
+		// Ховаємо дані, показуємо лоадер
+		$panes.addClass( 'fstu-hidden' );
+		$alert.addClass( 'fstu-hidden' );
+		$loader.removeClass( 'fstu-hidden' );
+
+		// Скидаємо вкладки на першу
+		$modal.find( '.fstu-tabs__btn' ).removeClass( 'fstu-tabs__btn--active' );
+		$modal.find( '.fstu-tabs__btn[data-tab="mc-general"]' ).addClass( 'fstu-tabs__btn--active' );
+
+		$.ajax( {
+			url:    fstuRegistry.ajaxUrl,
+			method: 'POST',
+			data:   { action: 'fstu_get_member_card', nonce: fstuRegistry.nonce, user_id: userId },
+			success: function ( r ) {
+				$loader.addClass( 'fstu-hidden' );
+				if ( r.success && r.data ) {
+					// Відновлюємо видимість панелей
+					$panes.removeClass( 'fstu-hidden' );
+					$( '.fstu-tabs__pane' ).removeClass( 'fstu-tabs__pane--active' );
+					$( '#mc-general' ).addClass( 'fstu-tabs__pane--active' );
+
+					// Заповнюємо загальні дані
+					if ( r.data.general ) {
+						const general = r.data.general;
+						$modal.find( '#mc-val-name' ).text( general.name || '—' );
+						$modal.find( '#mc-val-birth' ).text( general.birth_date || '—' );
+						$modal.find( '#mc-val-email' ).text( general.email || '—' );
+						$modal.find( '#mc-val-phone' ).text( general.phone || '—' );
+						$modal.find( '#mc-val-skype' ).text( general.skype || '—' );
+						$modal.find( '#mc-val-facebook' ).html( general.facebook ? `<a href="${ general.facebook }" target="_blank">${ general.facebook }</a>` : '—' );
+						$modal.find( '#mc-photo' ).attr( 'src', general.photo_url );
+
+						// Показуємо іконку згоди
+						$modal.find( '#mc-pd-icon-ok' ).toggleClass( 'fstu-hidden', ! general.has_consent );
+						$modal.find( '#mc-pd-icon-no' ).toggleClass( 'fstu-hidden', general.has_consent );
+						$modal.find( '#mc-pd-text' ).text(
+							general.has_consent ? 'Надано згоду на показ ПД' : 'Згоду на показ ПД не надано'
+						);
+					}
+				} else {
+					$alert.text( r.data?.message || 'Помилка завантаження даних' ).removeClass( 'fstu-hidden' );
+				}
+			},
+			error: function () {
+				$loader.addClass( 'fstu-hidden' );
+				$alert.text( fstuRegistry.strings.errorGeneric ).removeClass( 'fstu-hidden' );
+			}
+		} );
+	}
+
+
+	// ─── Обробка AJAX для Клубу ───────────────────────────────────────────────
+
+	function openClubInfo( clubId ) {
+		openModal( 'fstu-modal-club-info' );
+
+		const $loader = $( '#fstu-club-loader' );
+		const $alert  = $( '#fstu-club-alert' );
+		const $table  = $( '#fstu-club-data' );
+
+		$table.addClass( 'fstu-hidden' );
+		$alert.addClass( 'fstu-hidden' );
+		$loader.removeClass( 'fstu-hidden' );
+
+		$.ajax( {
+			url:    fstuRegistry.ajaxUrl,
+			method: 'POST',
+			data:   { action: 'fstu_get_club_info', nonce: fstuRegistry.nonce, club_id: clubId },
+			success: function ( r ) {
+				$loader.addClass( 'fstu-hidden' );
+				if ( r.success && r.data ) {
+					$table.removeClass( 'fstu-hidden' );
+					$( '#club-val-name' ).text( r.data.name || '—' );
+					$( '#club-val-city' ).text( r.data.city || '—' );
+				} else {
+					$alert.text( r.data?.message || 'Клуб не знайдено' ).removeClass( 'fstu-hidden' );
+				}
+			},
+			error: function () {
+				$loader.addClass( 'fstu-hidden' );
+				$alert.text( fstuRegistry.strings.errorGeneric ).removeClass( 'fstu-hidden' );
+			}
+		} );
+	}
+
+	// ─── Обробники подій: Вкладки (Tabs) ──────────────────────────────────────
+
+	function bindTabsEvents() {
+		$( document ).on( 'click', '.fstu-tabs__btn', function () {
+			const $btn = $( this );
+			const targetId = $btn.data( 'tab' );
+			const $container = $btn.closest( '.fstu-tabs' );
+
+			// Перемикаємо кнопки
+			$container.find( '.fstu-tabs__btn' ).removeClass( 'fstu-tabs__btn--active' );
+			$btn.addClass( 'fstu-tabs__btn--active' );
+
+			// Перемикаємо контент
+			$container.find( '.fstu-tabs__pane' ).removeClass( 'fstu-tabs__pane--active' );
+			$( '#' + targetId ).addClass( 'fstu-tabs__pane--active' );
 		} );
 	}
 
@@ -253,11 +372,21 @@ jQuery( document ).ready( function ( $ ) {
 		} );
 
 		$( document ).on( 'click', '#fstu-modal-close, #fstu-app-cancel', function () {
+		// Закриття модалки по кнопці-хрестику
+		$( document ).on( 'click', '.fstu-modal-close-btn', function () {
+			const modalId = $( this ).closest( '.fstu-modal-overlay' ).attr( 'id' );
+			closeModal( modalId );
+		} );
+
+		// Закриття модалки заявки
+		$( document ).on( 'click', '#fstu-app-cancel', function () {
 			closeModal( 'fstu-modal-application' );
 		} );
 
 		$( document ).on( 'click', '.fstu-modal-overlay', function ( e ) {
-			if ( $( e.target ).hasClass( 'fstu-modal-overlay' ) ) closeModal( $( this ).attr( 'id' ) );
+			if ( $( e.target ).hasClass( 'fstu-modal-overlay' ) ) {
+				closeModal( $( this ).attr( 'id' ) );
+			}
 		} );
 
 		$( document ).on( 'keydown', function ( e ) {

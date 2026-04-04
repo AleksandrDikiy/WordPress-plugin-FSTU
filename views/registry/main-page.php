@@ -49,6 +49,13 @@ $is_logged_in = is_user_logged_in();
 	if ( ! $is_logged_in ) :
 		include __DIR__ . '/modal-application.php';
 	endif;
+    // ── Модальні вікна (для авторизованих) ───────────────────────────────────
+    if ( $is_logged_in ) {
+        include __DIR__ . '/modals/member-card.php';
+        include __DIR__ . '/modals/club-info.php';
+        // include __DIR__ . '/modals/protocol.php'; // (Додамо пізніше)
+        // include __DIR__ . '/modals/report.php';   // (Додамо пізніше)
+    }
 	?>
 
 </div><!-- .fstu-registry-wrap -->

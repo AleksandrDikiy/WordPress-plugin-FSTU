@@ -711,14 +711,14 @@ class Registry_Ajax {
 		return ! empty( $body['success'] );
 	}
 
-	/**
-	 * Зберігає заявку на вступ до ФСТУ у БД.
-	 *
-	 * @param array $data Валідовані дані.
-	 * @return int|\WP_Error User ID або помилка.
-	 */
-	private function save_application( array $data ): int|\WP_Error {
-		global $wpdb;
+    /**
+     * Зберігає заявку на вступ до ФСТУ у БД.
+     *
+     * @param array $data Валідовані дані.
+     * @return int|\WP_Error User ID або помилка.
+     */
+    private function save_application( array $data ): int|\WP_Error {
+        global $wpdb;
 
 		// Генеруємо тимчасовий пароль
 		//$password = wp_generate_password( 12, true );
@@ -740,7 +740,7 @@ class Registry_Ajax {
 			return $user_id;
 		}
 
-        // Зберігаємо метадані
+        // Зберігаємо базові метадані
         update_user_meta( $user_id, 'last_name',  $data['last_name'] );
         update_user_meta( $user_id, 'first_name', $data['first_name'] );
         update_user_meta( $user_id, 'Patronymic', $data['patronymic'] );
@@ -750,26 +750,31 @@ class Registry_Ajax {
         if ( ! empty( $data['phone_alt'] ) ) update_user_meta( $user_id, 'Phone_alt', $data['phone_alt'] );
         if ( ! empty( $data['public_titles'] ) ) update_user_meta( $user_id, 'Public_titles', $data['public_titles'] );
 
+        if ( ! empty( $data['phone_alt'] ) ) {
+            update_user_meta( $user_id, 'Phone_alt', $data['phone_alt'] );
+        }
+        if ( ! empty( $data['public_titles'] ) ) {
+            update_user_meta( $user_id, 'Public_titles', $data['public_titles'] );
         // Тут також треба зберігати Клуб та Вид туризму у відповідні таблиці (як у старій логіці)
         if ( $data['club_id'] > 0 ) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery
             $wpdb->insert( 'UserClub', [ 'User_ID' => $user_id, 'Club_ID' => $data['club_id'], 'UserClub_Date' => current_time('mysql') ], [ '%d', '%d', '%s' ] );
         }
 
-		// Реєстрація у регіональному ОФСТ
-		if ( $data['unit_id'] > 0 && $data['region_id'] > 0 ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-			$wpdb->insert(
-				'UserRegistationOFST',
-				[
-					'User_ID'                         => $user_id,
-					'Region_ID'                       => $data['region_id'],
-					'Unit_ID'                         => $data['unit_id'],
-					'UserRegistationOFST_DateCreate'  => current_time( 'mysql' ),
-				],
-				[ '%d', '%d', '%d', '%s' ]
-			);
-		}
+        // Реєстрація в ОФСТ
+        if ( $data['unit_id'] > 0 && $data['region_id'] > 0 ) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+            $wpdb->insert(
+                'UserRegistationOFST',
+                [
+                    'User_ID'                        => $user_id,
+                    'Region_ID'                      => $data['region_id'],
+                    'Unit_ID'                        => $data['unit_id'],
+                    'UserRegistationOFST_DateCreate' => current_time( 'mysql' ),
+                ],
+                [ '%d', '%d', '%d', '%s' ]
+            );
+        }
 
 		// Прив'язка міста
 		if ( $data['city_id'] > 0 ) {
@@ -787,6 +792,22 @@ class Registry_Ajax {
 
 		// Надсилаємо email із даними для входу
 		wp_new_user_notification( $user_id, null, 'user' );
+        // Прив'язка клубу
+        if ( $data['club_id'] > 0 ) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+            $wpdb->insert(
+                'UserClub',
+                [
+                    'User_ID'       => $user_id,
+                    'Club_ID'       => $data['club_id'],
+                    'UserClub_Date' => current_time( 'mysql' ),
+                ],
+                [ '%d', '%d', '%s' ]
+            );
+        }
+
+        // Надсилаємо стандартний email від WP
+        wp_new_user_notification( $user_id, null, 'user' );
 
 		return $user_id;
 	}
