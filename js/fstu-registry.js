@@ -3,8 +3,8 @@
  * Обробка: фільтри, пагінація, модальні вікна, форма заявки.
  * Жодних inline-скриптів у PHP!
  *
- * Version:     1.1.1
- * Date_update: 2026-04-05
+ * Version:     1.2.1
+ * Date_update: 2026-04-04
  *
  * @package FSTU
  * @requires jQuery
@@ -32,8 +32,20 @@ jQuery( document ).ready( function ( $ ) {
 			search:       '',
 			fstu_only:    1,
 		},
+		protocol: {
+			log_name: 'UserFstu',
+			page: 1,
+			per_page: 10
+		},
 		turnstileToken: '',
 		emailCheckTimer: null,
+	};
+	// ─── Стан модальних вікон ─────────────────────────────────────────────────
+	const mcState = {
+		expData: [], expPage: 1, expPerPage: 10,
+		rankData: [], rankPage: 1, rankPerPage: 10,
+		duesData: [], duesPage: 1, duesPerPage: 10, // <--- ТУТ БРАКУВАЛО КОМИ
+		duesSailData: [], duesSailPage: 1, duesSailPerPage: 10
 	};
 
 	// ─── DOM-елементи ─────────────────────────────────────────────────────────
@@ -84,6 +96,10 @@ jQuery( document ).ready( function ( $ ) {
 				if ( response.success ) {
 					renderTableRows( response.data.html );
 					updatePagination( response.data );
+					// ДОДАЄМО ВИВІД У КОНСОЛЬ ДЛЯ АДМІНІВ
+					if ( response.data.debug_sql ) {
+						console.log( '🔍 SQL ЗАПИТ ТАБЛИЦІ:\n', response.data.debug_sql );
+					}
 				} else {
 					showTableError( fstuRegistry.strings.errorGeneric );
 				}
@@ -117,6 +133,10 @@ jQuery( document ).ready( function ( $ ) {
 		state.total       = parseInt( data.total, 10 );
 		state.total_pages = parseInt( data.total_pages, 10 );
 		state.page        = parseInt( data.page, 10 );
+
+		// ДОДАНО: Оновлення блоку статистики під таблицею
+		$( '#fstu-stat-total' ).text( state.total );
+		$( '#fstu-stat-paid' ).text( data.total_paid || 0 );
 
 		if ( state.total === 0 ) {
 			$paginInfo.text( '' );
@@ -245,6 +265,221 @@ jQuery( document ).ready( function ( $ ) {
 			$( this ).toggleClass( 'fstu-btn--details-open' );
 			// Додаткову логіку розгортання рядка можна додати тут
 		} );
+		// Кнопка ПЕРЕГЛЯД
+		$( document ).on( 'click', '.fstu-action-view', function ( e ) {
+			e.preventDefault();
+			const userId = $( this ).data( 'id' );
+			openMemberCard( userId );
+		} );
+		// Кнопка РЕДАГУВАННЯ
+		$( document ).on( 'click', '.fstu-action-edit', function ( e ) {
+			e.preventDefault();
+			const userId = $( this ).data( 'id' );
+			openEditUserModal( userId ); // Цю функцію ми створили в попередньому кроці
+		} );
+		// Кнопка ВИДАЛЕННЯ (Soft Delete)
+		$( document ).on( 'click', '.fstu-action-delete', function ( e ) {
+			e.preventDefault();
+			const userId = $( this ).data( 'id' );
+
+			if ( confirm( 'Ви дійсно хочете ВИКЛЮЧИТИ цю людину з членів ФСТУ?\n\n(Фізично дані залишаться в базі для фінансової історії, але користувач втратить активний статус).' ) ) {
+
+				const $btn = $( this );
+				const originalText = $btn.html();
+				$btn.html( '⏳ Видалення...' ).css( 'pointer-events', 'none' );
+
+				$.ajax( {
+					url: fstuRegistry.ajaxUrl,
+					method: 'POST',
+					data: {
+						action: 'fstu_delete_user',
+						nonce: fstuRegistry.nonce,
+						user_id: userId
+					},
+					success: function ( r ) {
+						if ( r.success ) {
+							// Ховаємо меню і перезавантажуємо таблицю
+							$( '.fstu-opts' ).removeClass( 'fstu-opts--open' ).removeClass( 'fstu-dropup' );
+							fetchRegistry();
+						} else {
+							alert( 'Помилка: ' + ( r.data?.message || 'Невідома помилка' ) );
+							$btn.html( originalText ).css( 'pointer-events', 'auto' );
+						}
+					},
+					error: function () {
+						alert( 'Помилка з\'єднання з сервером.' );
+						$btn.html( originalText ).css( 'pointer-events', 'auto' );
+					}
+				} );
+			}
+		} );
+		// Кнопка ДОДАТИ КЛУБ
+		$( document ).on( 'click', '.fstu-action-club', function ( e ) {
+			e.preventDefault();
+			const userId = $( this ).data( 'id' );
+
+			// Підготовка форми перед відкриттям
+			$( '#add_club_user_id' ).val( userId );
+			$( '#fstu-add-club-form' )[0].reset();
+			$( '#fstu-add-club-alert' ).addClass( 'fstu-hidden' );
+			$( '#fstu-add-club-submit' ).prop( 'disabled', false ).find( '.fstu-btn__text' ).text( '💾 Зберегти' );
+
+			openModal( 'fstu-modal-add-club' );
+		} );
+		// Кнопка ЗМІНИТИ ПАРОЛЬ
+		$( document ).on( 'click', '.fstu-action-password', function ( e ) {
+			e.preventDefault();
+			const userId = $( this ).data( 'id' );
+
+			if ( confirm( 'Ви дійсно хочете згенерувати новий пароль для цього користувача та надіслати йому на пошту?' ) ) {
+
+				// Захист від подвійного кліку і візуалізація процесу
+				const $btn = $( this );
+				const originalText = $btn.html();
+				$btn.html( '⏳ Відправка...' ).css( 'pointer-events', 'none' );
+
+				$.ajax( {
+					url: fstuRegistry.ajaxUrl,
+					method: 'POST',
+					data: {
+						action: 'fstu_reset_send_password',
+						nonce: fstuRegistry.nonce,
+						user_id: userId
+					},
+					success: function ( r ) {
+						if ( r.success ) {
+							alert( r.data.message ); // Показуємо успішне повідомлення
+						} else {
+							alert( 'Помилка: ' + ( r.data?.message || 'Невідома помилка' ) );
+						}
+					},
+					error: function () {
+						alert( 'Помилка з\'єднання з сервером.' );
+					},
+					complete: function () {
+						// Повертаємо кнопку в нормальний стан
+						$btn.html( originalText ).css( 'pointer-events', 'auto' );
+						// Закриваємо меню після дії
+						$( '.fstu-opts' ).removeClass( 'fstu-opts--open' );
+					}
+				} );
+			}
+		} );
+		// Кнопка ЗМІНИТИ ОФСТ
+		$( document ).on( 'click', '.fstu-action-ofst', function ( e ) {
+			e.preventDefault();
+			const userId = $( this ).data( 'id' );
+
+			// Ховаємо меню
+			$( '.fstu-opts' ).removeClass( 'fstu-opts--open' ).removeClass( 'fstu-dropup' );
+
+			// Готуємо модалку
+			$( '#ofst_user_id' ).val( userId );
+			$( '#fstu-change-ofst-form' ).addClass( 'fstu-hidden' );
+			$( '#fstu-ofst-alert' ).addClass( 'fstu-hidden' );
+			$( '#fstu-ofst-loader' ).removeClass( 'fstu-hidden' );
+			$( '#fstu-ofst-submit' ).prop( 'disabled', false ).find( '.fstu-btn__text' ).text( '💾 Зберегти зміни' );
+
+			openModal( 'fstu-modal-change-ofst' );
+
+			// Отримуємо поточний ОФСТ, щоб підставити у селект
+			$.ajax({
+				url: fstuRegistry.ajaxUrl,
+				method: 'POST',
+				data: { action: 'fstu_get_user_ofst', nonce: fstuRegistry.nonce, user_id: userId },
+				success: function(r) {
+					$( '#fstu-ofst-loader' ).addClass( 'fstu-hidden' );
+					if (r.success) {
+						$( '#ofst_unit_id' ).val( r.data.unit_id || '' );
+						$( '#fstu-change-ofst-form' ).removeClass( 'fstu-hidden' );
+					} else {
+						$( '#fstu-ofst-alert' ).text( r.data?.message || 'Помилка' ).removeClass( 'fstu-hidden' );
+					}
+				}
+			});
+		} );
+		// Кнопка ПОВІДОМИТИ ПРО ВНЕСОК
+		$( document ).on( 'click', '.fstu-action-notify', function ( e ) {
+			e.preventDefault();
+			const userId = $( this ).data( 'id' );
+
+			if ( confirm( 'Надіслати користувачу нагадування про сплату членських внесків на email?' ) ) {
+
+				const $btn = $( this );
+				const originalText = $btn.html();
+
+				// Змінюємо текст і блокуємо кнопку
+				$btn.html( '⏳ Відправка...' ).css( 'pointer-events', 'none' );
+
+				$.ajax( {
+					url: fstuRegistry.ajaxUrl,
+					method: 'POST',
+					data: {
+						action: 'fstu_notify_dues',
+						nonce: fstuRegistry.nonce,
+						user_id: userId
+					},
+					success: function ( r ) {
+						if ( r.success ) {
+							alert( r.data.message );
+						} else {
+							alert( 'Помилка: ' + ( r.data?.message || 'Невідома помилка' ) );
+						}
+					},
+					error: function () {
+						alert( 'Помилка з\'єднання з сервером.' );
+					},
+					complete: function () {
+						// Відновлюємо кнопку та ховаємо меню
+						$btn.html( originalText ).css( 'pointer-events', 'auto' );
+						$( '.fstu-opts' ).removeClass( 'fstu-opts--open' ).removeClass( 'fstu-dropup' );
+					}
+				} );
+			}
+		} );
+		// Кнопка ДОДАТИ ВНЕСОК
+		$( document ).on( 'click', '.fstu-action-dues', function ( e ) {
+			e.preventDefault();
+			const userId = $( this ).data( 'id' );
+
+			// Ховаємо меню
+			$( '.fstu-opts' ).removeClass( 'fstu-opts--open' ).removeClass( 'fstu-dropup' );
+
+			// Готуємо модалку
+			$( '#add_dues_user_id' ).val( userId );
+			$( '#fstu-add-dues-form' ).addClass( 'fstu-hidden' );
+			$( '#fstu-add-dues-form' )[0].reset();
+			$( '#fstu-dues-alert' ).addClass( 'fstu-hidden' );
+			$( '#fstu-dues-loader' ).removeClass( 'fstu-hidden' );
+			$( '#fstu-dues-submit' ).prop( 'disabled', false ).find( '.fstu-btn__text' ).text( '💾 Зберегти квитанцію' );
+
+			openModal( 'fstu-modal-add-dues' );
+
+			// Отримуємо доступні роки через AJAX
+			$.ajax({
+				url: fstuRegistry.ajaxUrl,
+				method: 'POST',
+				data: { action: 'fstu_get_user_dues_years', nonce: fstuRegistry.nonce, user_id: userId },
+				success: function(r) {
+					$( '#fstu-dues-loader' ).addClass( 'fstu-hidden' );
+					if (r.success) {
+						let options = '';
+						if ( r.data.years.length > 0 ) {
+							r.data.years.forEach( y => {
+								const selected = ( y === r.data.current_year ) ? 'selected' : '';
+								options += `<option value="${y}" ${selected}>${y}</option>`;
+							});
+							$( '#add_dues_year' ).html( options );
+							$( '#fstu-add-dues-form' ).removeClass( 'fstu-hidden' );
+						} else {
+							$( '#fstu-dues-alert' ).text( 'Користувач вже сплатив внески за всі доступні роки.' ).removeClass( 'fstu-hidden' );
+						}
+					} else {
+						$( '#fstu-dues-alert' ).text( r.data?.message || 'Помилка' ).removeClass( 'fstu-hidden' );
+					}
+				}
+			});
+		} );
 	}
 
 	// ─── Обробка AJAX для Картки Члена ────────────────────────────────────────
@@ -362,6 +597,30 @@ jQuery( document ).ready( function ( $ ) {
 					} else {
 						$clubsTable.addClass( 'fstu-hidden' );
 						$clubsEmpty.removeClass( 'fstu-hidden' );
+					}
+					// Заповнюємо вкладку "Осередки"
+					const $ofstList  = $modal.find( '#mc-val-ofst-list' );
+					const $ofstEmpty = $modal.find( '#mc-val-ofst-empty' );
+					const $ofstTable = $modal.find( '#mc-ofst-table' );
+
+					$ofstList.empty();
+					if ( r.data.ofst && r.data.ofst.length > 0 ) {
+						$ofstEmpty.addClass( 'fstu-hidden' );
+						$ofstTable.removeClass( 'fstu-hidden' );
+
+						let ofstHtml = '';
+						r.data.ofst.forEach( function( item ) {
+							ofstHtml += `
+								<tr class="fstu-row">
+									<td class="fstu-td" style="font-weight:600;">${ item.unit }</td>
+									<td class="fstu-td">${ item.region }</td>
+									<td class="fstu-td" style="color: var(--fstu-text-light);">${ item.date }</td>
+								</tr>`;
+						});
+						$ofstList.html( ofstHtml );
+					} else {
+						$ofstTable.addClass( 'fstu-hidden' );
+						$ofstEmpty.removeClass( 'fstu-hidden' );
 					}
 					// Заповнюємо вкладку "Міста"
 					const $citiesList  = $modal.find( '#mc-val-cities-list' );
@@ -593,6 +852,12 @@ jQuery( document ).ready( function ( $ ) {
 				loadReportData();
 			}
 		} );
+		// Клік по кнопці "Редагувати" у випадаючому списку
+		$( document ).on( 'click', '.action-edit-user', function ( e ) {
+			e.preventDefault();
+			const userId = $( this ).data( 'id' );
+			openEditUserModal( userId );
+		});
 
 		$( document ).on( 'click', '#fstu-modal-close, #fstu-app-cancel', function () {
 		// Закриття модалки по кнопці-хрестику
@@ -656,7 +921,89 @@ jQuery( document ).ready( function ( $ ) {
 			state.protocol.page++;
 			loadProtocolData();
 		});
+		// Обробка збереження Клубу
+		$( document ).on( 'submit', '#fstu-add-club-form', function( e ) {
+			e.preventDefault();
+			const $form  = $( this );
+			const $alert = $( '#fstu-add-club-alert' );
+			const $btn   = $( '#fstu-add-club-submit' );
 
+			$btn.prop( 'disabled', true ).find( '.fstu-btn__text' ).text( 'Збереження...' );
+			$alert.addClass( 'fstu-hidden' );
+
+			$.ajax( {
+				url: fstuRegistry.ajaxUrl,
+				method: 'POST',
+				data: $form.serialize() + '&action=fstu_save_user_club&nonce=' + fstuRegistry.nonce,
+				success: function ( r ) {
+					if ( r.success ) {
+						closeModal( 'fstu-modal-add-club' );
+						fetchRegistry(); // Оновлюємо таблицю
+					} else {
+						$alert.text( r.data?.message || 'Помилка' ).removeClass( 'fstu-hidden' ).css('color', 'red');
+					}
+				},
+				complete: function() {
+					// Скидаємо стан кнопки
+					$btn.prop( 'disabled', false ).find( '.fstu-btn__text' ).text( '💾 Зберегти' );
+				}
+			});
+		});
+		// Збереження зміни ОФСТ
+		$( document ).on( 'submit', '#fstu-change-ofst-form', function( e ) {
+			e.preventDefault();
+			const $form  = $( this );
+			const $alert = $( '#fstu-ofst-alert' );
+			const $btn   = $( '#fstu-ofst-submit' );
+
+			$btn.prop( 'disabled', true ).find( '.fstu-btn__text' ).text( 'Збереження...' );
+			$alert.addClass( 'fstu-hidden' );
+
+			$.ajax( {
+				url: fstuRegistry.ajaxUrl,
+				method: 'POST',
+				data: $form.serialize() + '&action=fstu_save_user_ofst&nonce=' + fstuRegistry.nonce,
+				success: function ( r ) {
+					if ( r.success ) {
+						closeModal( 'fstu-modal-change-ofst' );
+						fetchRegistry(); // Оновлюємо таблицю, щоб побачити нову назву ОФСТ у колонці
+					} else {
+						$alert.text( r.data?.message || 'Помилка' ).removeClass( 'fstu-hidden' ).css('color', 'red');
+					}
+				},
+				complete: function() {
+					$btn.prop( 'disabled', false ).find( '.fstu-btn__text' ).text( '💾 Зберегти зміни' );
+				}
+			});
+		});
+		// Збереження внеску
+		$( document ).on( 'submit', '#fstu-add-dues-form', function( e ) {
+			e.preventDefault();
+			const $form  = $( this );
+			const $alert = $( '#fstu-dues-alert' );
+			const $btn   = $( '#fstu-dues-submit' );
+
+			$btn.prop( 'disabled', true ).find( '.fstu-btn__text' ).text( 'Збереження...' );
+			$alert.addClass( 'fstu-hidden' );
+
+			$.ajax( {
+				url: fstuRegistry.ajaxUrl,
+				method: 'POST',
+				data: $form.serialize() + '&action=fstu_save_user_dues&nonce=' + fstuRegistry.nonce,
+				success: function ( r ) {
+					if ( r.success ) {
+						alert( r.data.message ); // Показуємо успіх
+						closeModal( 'fstu-modal-add-dues' );
+						fetchRegistry(); // Оновлюємо таблицю (щоб сума з'явилася в колонці)
+					} else {
+						$alert.text( r.data?.message || 'Помилка' ).removeClass( 'fstu-hidden' ).css('color', 'red');
+					}
+				},
+				complete: function() {
+					$btn.prop( 'disabled', false ).find( '.fstu-btn__text' ).text( '💾 Зберегти квитанцію' );
+				}
+			});
+		});
 	}
 
 	// ─── Функції рендеру таблиць модалки ──────────────────────────────────────
@@ -1077,6 +1424,172 @@ jQuery( document ).ready( function ( $ ) {
 		$loader.toggleClass( 'fstu-hidden', ! show );
 		$tbody.toggleClass( 'fstu-tbody--loading', show );
 	}
+	function loadProtocolData() {
+		const $loader  = $( '#fstu-protocol-loader' );
+		const $alert   = $( '#fstu-protocol-alert' );
+		const $content = $( '#fstu-protocol-content' );
+		const $tbody   = $( '#fstu-protocol-tbody' );
+
+		$content.addClass( 'fstu-hidden' );
+		$alert.addClass( 'fstu-hidden' );
+		$loader.removeClass( 'fstu-hidden' );
+
+		$.ajax({
+			url:    fstuRegistry.ajaxUrl,
+			method: 'POST',
+			data:   {
+				action:   'fstu_get_protocol',
+				nonce:    fstuRegistry.nonce,
+				log_name: state.protocol.log_name,
+				page:     state.protocol.page,
+				per_page: state.protocol.per_page
+			},
+			success: function ( r ) {
+				$loader.addClass( 'fstu-hidden' );
+				if ( r.success ) {
+					$tbody.html( r.data.html );
+					$content.removeClass( 'fstu-hidden' );
+
+					// Оновлення інфо пагінації
+					const totalPages = r.data.total_pages;
+					$( '#fstu-protocol-pagin-info' ).text( `Всього записів: ${ r.data.total }` );
+					$( '#fstu-protocol-page-nums' ).text( `Стор. ${ r.data.page } з ${ totalPages }` );
+
+					// Активація кнопок
+					$( '#fstu-protocol-prev' ).prop( 'disabled', r.data.page <= 1 );
+					$( '#fstu-protocol-next' ).prop( 'disabled', r.data.page >= totalPages );
+				} else {
+					$alert.text( r.data?.message || 'Помилка завантаження' ).removeClass( 'fstu-hidden' );
+				}
+			}
+		});
+	}
+	function loadReportData() {
+		const $loader  = $( '#fstu-report-loader' );
+		const $alert   = $( '#fstu-report-alert' );
+		const $content = $( '#fstu-report-content' );
+		const $thead   = $( '#fstu-report-thead' );
+		const $tbody   = $( '#fstu-report-tbody' );
+		const $title   = $( '#fstu-report-year-title' );
+
+		$content.addClass( 'fstu-hidden' );
+		$alert.addClass( 'fstu-hidden' );
+		$loader.removeClass( 'fstu-hidden' );
+
+		$.ajax( {
+			url:    fstuRegistry.ajaxUrl,
+			method: 'POST',
+			data:   {
+				action: 'fstu_get_report',
+				nonce: fstuRegistry.nonce,
+				year: state.filters.year // Передаємо рік, який зараз вибраний у фільтрі
+			},
+			success: function ( r ) {
+				$loader.addClass( 'fstu-hidden' );
+				if ( r.success ) {
+					$thead.html( r.data.thead );
+					$tbody.html( r.data.tbody );
+					$title.text( `За ${ r.data.year } рік` );
+					$content.removeClass( 'fstu-hidden' );
+				} else {
+					$alert.text( r.data?.message || 'Помилка завантаження звіту' ).removeClass( 'fstu-hidden' );
+				}
+			},
+			error: function () {
+				$loader.addClass( 'fstu-hidden' );
+				$alert.text( fstuRegistry.strings.errorGeneric ).removeClass( 'fstu-hidden' );
+			}
+		} );
+	}
+	function openEditUserModal( userId ) {
+		openModal( 'fstu-modal-edit-user' );
+
+		const $loader = $( '#fstu-edit-loader' );
+		const $alert  = $( '#fstu-edit-alert' );
+		const $form   = $( '#fstu-edit-user-form' );
+
+		// Скидаємо кнопку про всяк випадок при кожному відкритті
+		$( '#fstu-edit-submit' ).prop( 'disabled', false ).find( '.fstu-btn__text' ).text( '💾 Зберегти зміни' );
+
+		$form.addClass( 'fstu-hidden' );
+		$alert.addClass( 'fstu-hidden' );
+		$loader.removeClass( 'fstu-hidden' );
+		$( '#edit_user_id' ).val( userId );
+
+		$.ajax( {
+			url: fstuRegistry.ajaxUrl,
+			method: 'POST',
+			data: { action: 'fstu_get_user_edit_data', nonce: fstuRegistry.nonce, user_id: userId },
+			success: function ( r ) {
+				$loader.addClass( 'fstu-hidden' );
+				if ( r.success ) {
+					// Заповнюємо поля
+					Object.keys( r.data ).forEach( key => {
+						$form.find( `[name="${ key }"]` ).val( r.data[ key ] );
+					});
+					$form.removeClass( 'fstu-hidden' );
+				} else {
+					$alert.text( r.data?.message || 'Помилка завантаження' ).removeClass( 'fstu-hidden' );
+				}
+			}
+		});
+	}
+
+	// Обробка збереження форми
+	$( document ).on( 'submit', '#fstu-edit-user-form', function( e ) {
+		e.preventDefault();
+		const $form  = $( this );
+		const $alert = $( '#fstu-edit-alert' );
+		const $btn   = $( '#fstu-edit-submit' );
+
+		$btn.prop( 'disabled', true ).find( '.fstu-btn__text' ).text( 'Збереження...' );
+		$alert.addClass( 'fstu-hidden' );
+
+		$.ajax( {
+			url: fstuRegistry.ajaxUrl,
+			method: 'POST',
+			data: $form.serialize() + '&action=fstu_save_user_edit_data&nonce=' + fstuRegistry.nonce,
+			success: function ( r ) {
+				if ( r.success ) {
+					closeModal( 'fstu-modal-edit-user' );
+					fetchRegistry(); // Оновлюємо таблицю, щоб побачити нове ПІБ
+
+					// ВАЖЛИВО: Скидаємо стан кнопки для наступних відкриттів!
+					$btn.prop( 'disabled', false ).find( '.fstu-btn__text' ).text( '💾 Зберегти зміни' );
+				} else {
+					$alert.text( r.data?.message || 'Помилка збереження' ).removeClass( 'fstu-hidden' ).css('color', 'red');
+					$btn.prop( 'disabled', false ).find( '.fstu-btn__text' ).text( '💾 Зберегти зміни' );
+				}
+			}
+		});
+	});
+	// ─── Обробка меню опцій (Розумне позиціонування) ──────────────────────────
+	$( document ).on( 'click', '.fstu-opts-btn', function ( e ) {
+		e.stopPropagation();
+		const $parent = $( this ).parent();
+
+		// Закриваємо всі інші відкриті меню
+		$( '.fstu-opts' ).not( $parent ).removeClass( 'fstu-opts--open' );
+
+		// Розумне відкриття (вгору чи вниз)
+		const menuHeight = 280; // Приблизна висота меню
+		const windowHeight = $( window ).height();
+		const rect = this.getBoundingClientRect();
+
+		// Якщо знизу немає місця, але зверху є — відкриваємо вгору
+		if ( rect.bottom + menuHeight > windowHeight && rect.top > menuHeight ) {
+			$parent.addClass( 'fstu-dropup' );
+		} else {
+			$parent.removeClass( 'fstu-dropup' );
+		}
+
+		$parent.toggleClass( 'fstu-opts--open' );
+	} );
+
+	// Закриття меню при кліку в будь-якому іншому місці
+	$( document ).on( 'click', function () {
+		$( '.fstu-opts' ).removeClass( 'fstu-opts--open' ).removeClass( 'fstu-dropup' );
+	} );
 
 	// ─── Старт ────────────────────────────────────────────────────────────────
 	init();

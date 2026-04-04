@@ -31,27 +31,47 @@ class Registry_List {
 		add_shortcode( 'fstu_registry', [ $this, 'render_shortcode' ] );
 	}
 
-	/**
-	 * Рендерить HTML модуля реєстру.
-	 * Підключає скрипти/стилі тільки при наявності шорткоду на сторінці.
-	 *
-	 * @param array $atts Атрибути шорткоду (наразі не використовуються).
-	 * @return string HTML-вміст модуля.
-	 */
-	public function render_shortcode( array $atts = [] ): string {
-		$this->enqueue_assets();
+    /**
+     * Рендерить HTML модуля реєстру.
+     * Підключає скрипти/стилі тільки при наявності шорткоду на сторінці.
+     *
+     * @param array $atts Атрибути шорткоду (наразі не використовуються).
+     * @return string HTML-вміст модуля.
+     */
+    public function render_shortcode( array $atts = [] ): string {
+        $this->enqueue_assets();
 
-		ob_start();
-		include FSTU_PLUGIN_DIR . 'views/registry/main-page.php';
-		return ob_get_clean();
-	}
+        global $wpdb;
+
+        // ── Автоматична ініціалізація посилань у БД ──
+        // Перевіряємо та додаємо посилання на Інструкцію, якщо його немає
+        $link_instruction = $wpdb->get_var( "SELECT ParamValue FROM Settings WHERE ParamName = 'LinkInstruction'" );
+        if ( ! $link_instruction ) {
+            $link_instruction = 'https://docs.google.com/document/d/1nLpqnfvWs7l5vqO8r-oiaAWOBjVD1aRiRUs22hPCQ8E/edit?usp=sharing';
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+            $wpdb->insert( 'Settings', [ 'ParamName' => 'LinkInstruction', 'ParamValue' => $link_instruction ], [ '%s', '%s' ] );
+        }
+
+        // Перевіряємо та додаємо посилання на Постанову, якщо його немає
+        $link_postanova = $wpdb->get_var( "SELECT ParamValue FROM Settings WHERE ParamName = 'LinkPostanova'" );
+        if ( ! $link_postanova ) {
+            $link_postanova = 'https://drive.google.com/file/d/1YP49GY4yljBVwA-nd6ZxV-JvFA4naJDp/view';
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+            $wpdb->insert( 'Settings', [ 'ParamName' => 'LinkPostanova', 'ParamValue' => $link_postanova ], [ '%s', '%s' ] );
+        }
+
+        ob_start();
+        include FSTU_PLUGIN_DIR . 'views/registry/main-page.php';
+        return ob_get_clean();
+    }
 
 	/**
 	 * Підключає CSS та JS для модуля реєстру.
 	 * Передає бекенд-змінні у JS через wp_localize_script.
 	 */
 	private function enqueue_assets(): void {
-		$ver = FSTU_VERSION;
+		//$ver = FSTU_VERSION;
+        $ver = time(); // Тимчасово для скидання кешу!
 
 		wp_enqueue_style(
 			self::ASSET_HANDLE,

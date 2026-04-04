@@ -73,42 +73,32 @@ $prev_year = $current_year - 1;
 </div><!-- .fstu-table-wrap -->
 
 <!-- ── Пагінація ─────────────────────────────────────────────────────────── -->
-<div class="fstu-pagination" id="fstu-pagination" role="navigation" aria-label="Навігація по сторінках">
+<div class="fstu-pagination-wrapper" style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; flex-wrap: wrap; gap: 15px;">
 
-	<div class="fstu-pagination__info" id="fstu-pagination-info" aria-live="polite">
-		<!-- Заповнюється JS: "Показано 1–10 з 1234 записів" -->
-	</div>
+    <div class="fstu-pagination__info" id="fstu-pagination-info" style="color: var(--fstu-text-light); font-size: 14px;"></div>
 
-	<div class="fstu-pagination__controls">
-		<button type="button"
-		        class="fstu-btn fstu-btn--page"
-		        id="fstu-page-first"
-		        data-page="1"
-		        aria-label="Перша сторінка"
-		        disabled>«</button>
+    <div style="display: flex; align-items: center; gap: 20px;">
 
-		<button type="button"
-		        class="fstu-btn fstu-btn--page"
-		        id="fstu-page-prev"
-		        data-action="prev"
-		        aria-label="Попередня сторінка"
-		        disabled>‹</button>
+        <div class="fstu-filter-item fstu-filter-item--perpage" style="display: flex; align-items: center; gap: 8px;">
+            <label for="fstu-filter-perpage" style="font-size: 13px; color: var(--fstu-text-light); white-space: nowrap; margin: 0;">Показувати по:</label>
+            <select id="fstu-filter-perpage" name="per_page" class="fstu-select fstu-filter-trigger" data-filter="per_page" style="width: 70px; padding: 4px 8px;">
+                <option value="10" selected>10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+            </select>
+        </div>
 
-		<span class="fstu-pagination__pages" id="fstu-page-numbers" aria-label="Сторінки">
-			<!-- Номери сторінок генеруються через JS -->
-		</span>
+        <div class="fstu-pagination__controls" id="fstu-pagination" style="display: flex; gap: 4px;">
+            <button type="button" class="fstu-btn fstu-btn--secondary" id="fstu-page-first" disabled aria-label="Перша">«</button>
+            <button type="button" class="fstu-btn fstu-btn--secondary" id="fstu-page-prev" disabled aria-label="Попередня">‹</button>
 
-		<button type="button"
-		        class="fstu-btn fstu-btn--page"
-		        id="fstu-page-next"
-		        data-action="next"
-		        aria-label="Наступна сторінка">›</button>
+            <span id="fstu-page-numbers" class="fstu-pagination__numbers" style="display: flex; gap: 4px; margin: 0 5px;"></span>
 
-		<button type="button"
-		        class="fstu-btn fstu-btn--page"
-		        id="fstu-page-last"
-		        data-action="last"
-		        aria-label="Остання сторінка">»</button>
-	</div>
+            <button type="button" class="fstu-btn fstu-btn--secondary" id="fstu-page-next" disabled aria-label="Наступна">›</button>
+            <button type="button" class="fstu-btn fstu-btn--secondary" id="fstu-page-last" disabled aria-label="Остання">»</button>
+        </div>
 
-</div><!-- .fstu-pagination -->
+    </div>
+</div>
+<!-- .fstu-pagination -->

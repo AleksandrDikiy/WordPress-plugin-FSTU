@@ -36,7 +36,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 		<span class="fstu-btn__icon" aria-hidden="true">↻</span> Оновити
 	</button>
 
-	<?php if ( $is_logged_in ) : ?>
+    <?php if ( $is_admin || in_array( 'userregistrar', (array) wp_get_current_user()->roles, true ) ) : ?>
 		<!-- Протокол — тільки для авторизованих -->
         <button type="button"
                 class="fstu-btn fstu-btn--secondary fstu-btn--open-modal"
@@ -46,8 +46,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                 <?php echo ! $is_admin ? 'disabled aria-disabled="true"' : ''; ?>>
             <span class="fstu-btn__icon" aria-hidden="true">📋</span> Протокол
         </button>
-
-		<!-- Звіт — тільки для адміністраторів -->
+		<!-- Звіт — тільки для адміністраторів та реєстраторам-->
         <button type="button"
                 class="fstu-btn fstu-btn--secondary fstu-btn--open-modal"
                 data-modal="fstu-modal-report"
@@ -56,17 +55,22 @@ if ( ! defined( 'ABSPATH' ) ) {
 		        <?php echo ! $is_admin ? 'disabled aria-disabled="true"' : ''; ?>>
 			<span class="fstu-btn__icon" aria-hidden="true">📊</span> Звіт
 		</button>
+        <!-- Реєстр платежів (Групові) — тільки для адміністраторів та реєстраторам-->
+        <a href="/personal/rejestr-platizhok/" class="fstu-btn fstu-btn--primary" style="margin-left: 10px;">
+            <span class="fstu-btn__icon">💰</span> Реєстр платежів (Групові)
+        </a>
 	<?php endif; ?>
 
 	<!-- Зовнішні посилання -->
-	<a href="https://www.fstu.com.ua/instrukciya/"
-	   class="fstu-action-link"
-	   target="_blank"
-	   rel="noopener noreferrer">Інструкція</a>
+    <a href="<?php echo esc_url( $link_instruction ); ?>"
+       class="fstu-action-link"
+       target="_blank"
+       rel="noopener noreferrer">Інструкція</a>
 
-	<a href="https://www.fstu.com.ua/postanova/"
-	   class="fstu-action-link"
-	   target="_blank"
-	   rel="noopener noreferrer">ПОСТАНОВА та ПОЛОЖЕННЯ</a>
+    <a href="<?php echo esc_url( $link_postanova ); ?>"
+       class="fstu-action-link"
+       target="_blank"
+       rel="noopener noreferrer"
+       title="Протокол №1 від 30.01.2020р.">ПОСТАНОВА та ПОЛОЖЕННЯ</a>
 
 </div><!-- .fstu-action-bar -->

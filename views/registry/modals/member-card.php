@@ -26,6 +26,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<button class="fstu-tabs__btn fstu-tabs__btn--active" role="tab" aria-selected="true" data-tab="mc-general">Загальні</button>
                     <button class="fstu-tabs__btn fstu-hidden" role="tab" aria-selected="false" data-tab="mc-private" id="mc-tab-private">Приватне</button>
                     <button class="fstu-tabs__btn fstu-hidden" role="tab" aria-selected="false" data-tab="mc-service" id="mc-tab-service">Службове</button>
+                    <button class="fstu-tabs__btn" role="tab" aria-selected="false" data-tab="mc-ofst">Осередки</button>
 					<button class="fstu-tabs__btn" role="tab" aria-selected="false" data-tab="mc-clubs">Клуби</button>
 					<button class="fstu-tabs__btn" role="tab" aria-selected="false" data-tab="mc-cities">Міста</button>
 					<button class="fstu-tabs__btn" role="tab" aria-selected="false" data-tab="mc-tourism">Види туризму</button>
@@ -102,7 +103,20 @@ if ( ! defined( 'ABSPATH' ) ) {
                             <i>* Технічна інформація (доступна лише Адміністраторам)</i>
                         </p>
                     </div>
-
+                    <div class="fstu-tabs__pane" id="mc-ofst" role="tabpanel">
+                        <h3 class="fstu-modal__title" style="margin-bottom: 12px;">Історія членства в осередках ФСТУ</h3>
+                        <table class="fstu-table fstu-info-table fstu-hidden" id="mc-ofst-table">
+                            <thead>
+                            <tr style="border-bottom: 2px solid var(--fstu-border);">
+                                <th>Осередок (ОФСТ)</th>
+                                <th>Область</th>
+                                <th>Дата додавання</th>
+                            </tr>
+                            </thead>
+                            <tbody id="mc-val-ofst-list"></tbody>
+                        </table>
+                        <div id="mc-val-ofst-empty" class="fstu-placeholder fstu-hidden">Немає записів про членство в ОФСТ</div>
+                    </div>
                     <div class="fstu-tabs__pane" id="mc-clubs" role="tabpanel">
                         <table class="fstu-table fstu-hidden" id="mc-clubs-table">
                             <thead class="fstu-thead">

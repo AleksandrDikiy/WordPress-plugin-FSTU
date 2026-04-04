@@ -821,3 +821,101 @@ body.fstu-modal-open { overflow: hidden; }
 	background: var(--fstu-secondary);
 	border-radius: var(--fstu-radius);
 }
+
+/* ==========================================================================
+   МЕНЮ ОПЦІЙ (Без конфліктів з Bootstrap та темою)
+   ========================================================================== */
+#fstu-registry .fstu-opts {
+	position: relative;
+	display: inline-block;
+}
+
+/* Кнопка */
+#fstu-registry .fstu-opts-btn {
+	background-color: #c0392b !important;
+	color: #ffffff !important;
+	border: none !important;
+	padding: 4px 10px !important;
+	border-radius: 4px !important;
+	cursor: pointer !important;
+	font-size: 14px !important;
+	line-height: 1 !important;
+	box-shadow: none !important;
+	height: auto !important;
+	width: auto !important;
+}
+#fstu-registry .fstu-opts-btn:hover {
+	background-color: #a93226 !important;
+}
+
+/* Список меню */
+#fstu-registry ul.fstu-opts-list {
+	display: none;
+	position: absolute !important;
+	right: 0 !important;
+	top: 100% !important;
+	min-width: 220px !important;
+	background: #ffffff !important;
+	border: 1px solid #ccc !important;
+	box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+	padding: 5px 0 !important;
+	margin: 2px 0 0 0 !important;
+	z-index: 99999 !important;
+}
+#fstu-registry .fstu-opts--open ul.fstu-opts-list {
+	display: block !important;
+}
+
+/* Відкриття ВГОРУ (керується через JS) */
+#fstu-registry .fstu-opts.fstu-dropup ul.fstu-opts-list {
+	top: auto !important;
+	bottom: 100% !important;
+	margin-top: 0 !important;
+	margin-bottom: 2px !important;
+	box-shadow: 0 -4px 12px rgba(0,0,0,0.15) !important;
+}
+
+/* Елементи списку */
+#fstu-registry ul.fstu-opts-list li {
+	padding: 0 !important;
+	margin: 0 !important;
+	list-style: none !important;
+	text-indent: 0 !important;
+}
+#fstu-registry ul.fstu-opts-list li::before {
+	display: none !important;
+}
+
+/* Посилання в меню */
+#fstu-registry ul.fstu-opts-list li a {
+	padding: 8px 15px !important;
+	margin: 0 !important;
+	display: block !important;
+	white-space: nowrap !important;
+	text-decoration: none !important;
+	color: #333 !important;
+	text-align: left !important;
+	font-size: 13px !important;
+	border: none !important;
+	background: transparent !important;
+}
+#fstu-registry ul.fstu-opts-list li a:hover {
+	background-color: #f8f9fa !important;
+	color: #c0392b !important;
+}
+
+/* Розділювач */
+#fstu-registry hr.fstu-opts-divider {
+	height: 1px !important;
+	background-color: #eee !important;
+	margin: 5px 0 !important;
+	border: none !important;
+}
+
+/* Вимикаємо скрол таблиці на десктопі, щоб меню вільно накладалося поверх сторінки */
+@media (min-width: 992px) {
+	#fstu-registry .fstu-table-wrap {
+		overflow: visible !important;
+		overflow-x: visible !important;
+	}
+}

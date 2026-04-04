@@ -112,13 +112,21 @@ class Registry_Ajax {
 		// 4. Формування HTML рядків таблиці
 		$rows_html = $this->build_table_rows( $result['rows'], $filters['page'], $filters['per_page'] );
 
-		wp_send_json_success( [
-			'html'       => $rows_html,
-			'total'      => (int) $result['total'],
-			'page'       => (int) $filters['page'],
-			'per_page'   => (int) $filters['per_page'],
-			'total_pages' => (int) ceil( $result['total'] / $filters['per_page'] ),
-		] );
+        $response_data = [
+            'html'        => $rows_html,
+            'total'      => (int) $result['total'],
+            'page'       => (int) $filters['page'],
+            'per_page'   => (int) $filters['per_page'],
+            'total_paid'  => (int) $result['total_paid'], // Додаємо кількість сплативших до відповіді
+            'total_pages' => (int) ceil( $result['total'] / $filters['per_page'] ),
+        ];
+
+        // ДОДАЄМО ВИВІД ЗАПИТУ ДЛЯ ДЕБАГУ АДМІНІСТРАТОРАМ
+        if ( current_user_can( 'administrator' ) && ! empty( $result['debug_sql'] ) ) {
+            $response_data['debug_sql'] = preg_replace('/\s+/', ' ', $result['debug_sql']);
+        }
+
+        wp_send_json_success( $response_data );
 	}
 
 	/**
@@ -326,32 +334,40 @@ class Registry_Ajax {
 		}
 
 		// Пошук по ПІБ
-		if ( ! empty( $filters['search'] ) ) {
-			$like = '%' . $wpdb->esc_like( $filters['search'] ) . '%';
-			$where_parts[] = "CONCAT(
-				IFNULL(m_ln.meta_value,''), ' ',
-				IFNULL(m_fn.meta_value,''), ' ',
-				IFNULL(m_pt.meta_value,'')
-			) LIKE %s";
-			$params[] = $like;
-		}
+        // Пошук по ПІБ (шукаємо і в мета-полях, і в display_name)
+        if ( ! empty( $filters['search'] ) ) {
+            $like = '%' . $wpdb->esc_like( $filters['search'] ) . '%';
+            $where_parts[] = "(
+				CONCAT_WS(' ', m_ln.meta_value, m_fn.meta_value, m_pt.meta_value) LIKE %s
+				OR u.display_name LIKE %s
+			)";
+            $params[] = $like; // Для CONCAT_WS
+            $params[] = $like; // Для display_name
+        }
 
-		// Виключаємо службові облікові записи ФСТУ та заблокованих
-		$where_parts[] = "(cap.meta_value NOT LIKE '%bbp_blocked%' OR cap.meta_value IS NULL)";
-		$where_parts[] = "u.user_email NOT LIKE '%@fstu.com.ua'";
+        // Виключаємо заблокованих (безпечно через %s)
+        //$where_parts[] = "(cap.meta_value NOT LIKE %s OR cap.meta_value IS NULL)";
+        //$params[]      = '%bbp_blocked%';
 
 		$where_sql = ! empty( $where_parts )
 			? 'WHERE ' . implode( ' AND ', $where_parts )
 			: '';
 
 		// ── Базовий SQL ───────────────────────────────────────────────────────
-		$base_sql = "
+        // ── Базовий SQL ───────────────────────────────────────────────────────
+        $base_sql = "
 			FROM {$wpdb->users} u
 			LEFT JOIN {$wpdb->usermeta} cap  ON (cap.user_id  = u.ID AND cap.meta_key  = 'wp_capabilities')
 			LEFT JOIN {$wpdb->usermeta} m_ln ON (m_ln.user_id = u.ID AND m_ln.meta_key = 'last_name')
 			LEFT JOIN {$wpdb->usermeta} m_fn ON (m_fn.user_id = u.ID AND m_fn.meta_key = 'first_name')
 			LEFT JOIN {$wpdb->usermeta} m_pt ON (m_pt.user_id = u.ID AND m_pt.meta_key = 'Patronymic')
-			LEFT JOIN UserRegistationOFST ur  ON ur.User_ID = u.ID
+			LEFT JOIN (
+				SELECT u1.* FROM UserRegistationOFST u1
+				INNER JOIN (
+					SELECT User_ID, MAX(UserRegistationOFST_DateCreate) as max_date 
+					FROM UserRegistationOFST GROUP BY User_ID
+				) u2 ON u1.User_ID = u2.User_ID AND u1.UserRegistationOFST_DateCreate = u2.max_date
+			) ur ON ur.User_ID = u.ID
 			LEFT JOIN S_Unit su               ON su.Unit_ID = ur.Unit_ID
 			LEFT JOIN S_Region sr             ON sr.Region_ID = ur.Region_ID
 			{$where_sql}
@@ -367,6 +383,11 @@ class Registry_Ajax {
 			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery
 			$total = (int) $wpdb->get_var( $count_sql );
 		}
+        // ── Підрахунок тих, хто сплатив (за поточним фільтром і роком) ───────
+        $paid_sql = "SELECT COUNT(DISTINCT u.ID) {$base_sql} AND GetSumPayToTypeYear(u.ID, 1, %d) > 0";
+        $paid_params = array_merge( $params, [ $curr_year ] );
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+        $total_paid = (int) $wpdb->get_var( $wpdb->prepare( $paid_sql, ...$paid_params ) );
 
 		// ── Основний запит ────────────────────────────────────────────────────
 		$select_sql = "
@@ -397,15 +418,15 @@ class Registry_Ajax {
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery
 		$rows = $wpdb->get_results( $prepare_sql, ARRAY_A );
 
-		if ( empty( $rows ) ) {
-			return [ 'rows' => [], 'total' => $total ];
-		}
+        if ( empty( $rows ) ) {
+            return [ 'rows' => [], 'total' => $total, 'debug_sql' => $prepare_sql ];
+        }
 
 		// ── Збагачення рядків додатковими даними ─────────────────────────────
 		$user_ids = array_column( $rows, 'user_id' );
 		$enriched = $this->enrich_rows( $rows, $user_ids, $prev_year, $curr_year, $filters );
 
-		return [ 'rows' => $enriched, 'total' => $total ];
+        return [ 'rows' => $enriched, 'total' => $total, 'total_paid' => $total_paid, 'debug_sql' => $prepare_sql ];
 	}
 
 	/**
@@ -636,11 +657,32 @@ class Registry_Ajax {
 				   <td class=\"fstu-td fstu-td--dues\">{$sail_curr_html}</td>"
 				: '<td colspan="4" class="fstu-td fstu-td--locked" title="Тільки для авторизованих">—</td>';
 
-			// Кнопка деталей (для адмінів — більше опцій)
-			$btn_html = sprintf(
-				'<button type="button" class="fstu-btn-action fstu-btn--details" data-user-id="%d" title="Деталі">▾</button>',
-				$uid
-			);
+            // ── Формування меню опцій (БЕЗ КОНФЛІКТІВ З ТЕМОЮ) ─────────────
+            $btn_html = '';
+            if ( $is_logged_in ) {
+                $btn_html = '
+				<div class="fstu-opts">
+					<button type="button" class="fstu-btn-action fstu-opts-btn" title="Опції">▾</button>
+					<ul class="fstu-opts-list">
+						<li><a href="#" class="fstu-action-view" data-id="'.$uid.'">🔍 Перегляд</a></li>';
+
+                if ( $is_admin ) {
+                    $btn_html .= '
+						<li><a href="#" class="fstu-action-edit" data-id="'.$uid.'">📝 Редагування</a></li>
+						<li><a href="#" class="fstu-action-dues" data-id="'.$uid.'">💰 Додати чл. внесок</a></li>
+						<li><a href="#" class="fstu-action-club" data-id="'.$uid.'">👤 Додати клуб</a></li>
+						<li><a href="#" class="fstu-action-ofst" data-id="'.$uid.'">⛺ Змінити ОФСТ</a></li>
+						<li><hr class="fstu-opts-divider"></li>
+						<li><a href="#" class="fstu-action-password" data-id="'.$uid.'">✉️ Змінити пароль</a></li>
+						<li><a href="#" class="fstu-action-notify" data-id="'.$uid.'">📧 Повідомити про внесок</a></li>
+						<li><hr class="fstu-opts-divider"></li>
+						<li><a href="#" class="fstu-action-delete" data-id="'.$uid.'" style="color:#c0392b !important;">❌ Видалення</a></li>';
+                }
+
+                $btn_html .= '
+					</ul>
+				</div>';
+            }
 
 			$html .= "
 			<tr class=\"fstu-row\" data-user-id=\"{$uid}\">
