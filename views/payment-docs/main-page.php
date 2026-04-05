@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
                 <span class="fstu-btn__icon">↻</span> Оновити
             </button>
 
-            <button type="button" class="fstu-btn fstu-btn--primary fstu-btn--open-modal" data-modal="fstu-modal-doc-editor" id="fstu-pd-btn-add">
+            <button type="button" class="fstu-btn fstu-btn--secondary fstu-btn--open-modal" data-modal="fstu-modal-doc-editor" id="fstu-pd-btn-add">
                 <span class="fstu-btn__icon">➕</span> Створити документ
             </button>
         </div>
@@ -87,7 +87,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 
             <div style="display: flex; align-items: center; gap: 15px; flex: 1; justify-content: flex-end;">
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <label for="pd-filter-per-page" style="font-size: 14px; color: var(--fstu-text-light); margin: 0;">Показувати по:</label>
+                    <label for="pd-filter-per-page" style="font-size: 14px; color: var(--fstu-text-light); margin: 0; white-space: nowrap;">Показувати по:</label>
                     <select id="pd-filter-per-page" class="fstu-select" style="width: 70px; height: 32px; padding: 2px 20px 2px 8px;">
                         <option value="10" selected>10</option>
                         <option value="25">25</option>

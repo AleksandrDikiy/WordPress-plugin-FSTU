@@ -102,7 +102,7 @@ class Payment_Docs_Ajax {
                 $html .= '<tr class="fstu-row">';
                 $html .= '<td class="fstu-td" style="text-align:center;">' . esc_html( $row['Doc_DuesPayment_ID'] ) . '</td>';
                 $html .= '<td class="fstu-td">' . esc_html( $date ) . '</td>';
-                $html .= '<td class="fstu-td">' . esc_html( $row['Unit_ShortName'] ) . '</td>';
+                $html .= '<td class="fstu-td"><a href="#" class="fstu-action-view" data-id="' . esc_attr( $row['Doc_DuesPayment_ID'] ) . '" style="color: var(--fstu-primary, #c0392b); font-weight: 500; text-decoration: none;" onmouseover="this.style.textDecoration=\'underline\'" onmouseout="this.style.textDecoration=\'none\'">' . esc_html( $row['Unit_ShortName'] ) . '</a></td>';
                 $html .= '<td class="fstu-td" style="text-align:right; font-weight:bold; color:var(--fstu-primary);">' . esc_html( $sum ) . '</td>';
                 $html .= '<td class="fstu-td">' . esc_html( $row['FIO'] ) . '</td>';
                 $html .= '<td class="fstu-td" style="font-size:11px;">' . esc_html( $row['Doc_DuesPayment_Comment'] ) . '</td>';

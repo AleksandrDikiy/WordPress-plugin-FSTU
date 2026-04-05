@@ -73,23 +73,26 @@ $prev_year = $current_year - 1;
 </div><!-- .fstu-table-wrap -->
 
 <!-- ── Пагінація ─────────────────────────────────────────────────────────── -->
-<div class="fstu-pagination-wrapper" style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; flex-wrap: wrap; gap: 15px;">
+<div class="fstu-pagination" id="fstu-pagination" style="margin-top: 15px; border-top: 1px solid var(--fstu-border); padding-top: 15px; display: flex; justify-content: space-between; align-items: center;">
 
-    <div class="fstu-pagination__info" id="fstu-pagination-info" style="color: var(--fstu-text-light); font-size: 14px;"></div>
+    <div class="fstu-pagination__info" id="fstu-pagination-info" style="flex: 1;"></div>
 
-    <div style="display: flex; align-items: center; gap: 20px;">
+    <div id="fstu-stat-wrap" style="flex: 1; text-align: center; font-size: 13px; font-weight: 500; display: none;">
+        Сплатили членські внески: <span id="fstu-stat-paid" style="color: var(--fstu-success); font-weight: bold; font-size: 15px;">0</span>
+    </div>
 
-        <div class="fstu-filter-item fstu-filter-item--perpage" style="display: flex; align-items: center; gap: 8px;">
-            <label for="fstu-filter-perpage" style="font-size: 13px; color: var(--fstu-text-light); white-space: nowrap; margin: 0;">Показувати по:</label>
-            <select id="fstu-filter-perpage" name="per_page" class="fstu-select fstu-filter-trigger" data-filter="per_page" style="width: 70px; padding: 4px 8px;">
+    <div style="display: flex; align-items: center; gap: 15px; flex: 1; justify-content: flex-end;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <label for="fstu-filter-per-page" style="font-size: 14px; color: var(--fstu-text-light); margin: 0; white-space: nowrap;">Показувати по:</label>
+            <select id="fstu-filter-per-page" class="fstu-select fstu-filter-trigger" data-filter="per_page" style="width: 70px; height: 32px; padding: 2px 20px 2px 8px;">
                 <option value="10" selected>10</option>
-                <option value="20">20</option>
+                <option value="25">25</option>
                 <option value="50">50</option>
                 <option value="100">100</option>
             </select>
         </div>
 
-        <div class="fstu-pagination__controls" id="fstu-pagination" style="display: flex; gap: 4px;">
+        <div class="fstu-pagination__controls" id="fstu-pagination-controls" style="display: flex; gap: 4px;">
             <button type="button" class="fstu-btn fstu-btn--secondary" id="fstu-page-first" disabled aria-label="Перша">«</button>
             <button type="button" class="fstu-btn fstu-btn--secondary" id="fstu-page-prev" disabled aria-label="Попередня">‹</button>
 
@@ -98,7 +101,6 @@ $prev_year = $current_year - 1;
             <button type="button" class="fstu-btn fstu-btn--secondary" id="fstu-page-next" disabled aria-label="Наступна">›</button>
             <button type="button" class="fstu-btn fstu-btn--secondary" id="fstu-page-last" disabled aria-label="Остання">»</button>
         </div>
-
     </div>
 </div>
 <!-- .fstu-pagination -->

@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	<?php if ( ! $is_logged_in ) : ?>
 		<!-- Кнопка заявки — тільки для незареєстрованих -->
 		<button type="button"
-		        class="fstu-btn fstu-btn--primary fstu-btn--open-modal"
+		        class="fstu-btn fstu-btn--secondary fstu-btn--open-modal"
 		        data-modal="fstu-modal-application"
 		        aria-haspopup="dialog">
 			<span class="fstu-btn__icon" aria-hidden="true">+</span> Заявка
@@ -56,7 +56,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 			<span class="fstu-btn__icon" aria-hidden="true">📊</span> Звіт
 		</button>
         <!-- Реєстр платежів (Групові) — тільки для адміністраторів та реєстраторам-->
-        <a href="/personal/rejestr-platizhok/" class="fstu-btn fstu-btn--primary" style="margin-left: 10px;">
+        <a href="/personal/rejestr-platizhok/" class="fstu-btn fstu-btn--secondary" style="margin-left: 10px;">
             <span class="fstu-btn__icon">💰</span> Реєстр платежів (Групові)
         </a>
 	<?php endif; ?>

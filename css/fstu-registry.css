@@ -180,6 +180,9 @@
 .fstu-filter-item--perpage { flex: 0 0 60px; }
 .fstu-filter-item--checkbox { flex: 0 0 auto; }
 
+/* Відступ тексту від іконки лупи */
+#fstu-filter-search { padding-left: 28px !important; }
+
 /* Select */
 .fstu-select {
 	width:         100%;
@@ -230,17 +233,19 @@
 }
 
 .fstu-search-icon {
-	padding:     0 6px;
+	position:    absolute;
+	left:        8px;
 	font-size:   14px;
 	color:       var(--fstu-text-light);
-	flex-shrink: 0;
+	z-index:     2;
+	pointer-events: none; /* Щоб клік проходив крізь лупу на інпут */
 }
 
 .fstu-search-input {
-	flex:         1;
+	width:        100%;
 	border:       none;
 	outline:      none;
-	padding:      4px 4px;
+	padding:      4px 4px 4px 30px !important; /* ВАЖЛИВО: відступ 30px зліва */
 	font-size:    var(--fstu-font-size);
 	color:        var(--fstu-text);
 	background:   transparent;

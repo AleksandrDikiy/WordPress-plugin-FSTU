@@ -47,15 +47,6 @@ $link_postanova   = $wpdb->get_var( "SELECT ParamValue FROM Settings WHERE Param
     include __DIR__ . '/table-list.php';
     ?>
 
-    <div class="fstu-registry-stats" style="margin-top: 15px; font-size: 14px; margin-bottom: 15px;">
-		<span class="fstu-badge" style="display:inline-block; padding:5px 10px; background:#eef2f5; border-radius:4px; margin-right:10px;">
-			Усього : <b id="fstu-stat-total">0</b>
-		</span>
-        <span class="fstu-badge" style="display:inline-block; padding:5px 10px; background:#eef2f5; border-radius:4px;">
-			Сплатили членські внески : <b id="fstu-stat-paid" style="color:#27ae60;">0</b>
-		</span>
-    </div>
-
     <?php
     // ── Модальні вікна ───────────────────────────────────────────────────────
     if ( ! $is_logged_in ) {

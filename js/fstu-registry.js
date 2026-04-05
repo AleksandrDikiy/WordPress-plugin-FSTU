@@ -134,9 +134,13 @@ jQuery( document ).ready( function ( $ ) {
 		state.total_pages = parseInt( data.total_pages, 10 );
 		state.page        = parseInt( data.page, 10 );
 
-		// ДОДАНО: Оновлення блоку статистики під таблицею
-		$( '#fstu-stat-total' ).text( state.total );
-		$( '#fstu-stat-paid' ).text( data.total_paid || 0 );
+		// Оновлення центрального блоку статистики (без дублювання "Усього")
+		if ( state.total > 0 ) {
+			$( '#fstu-stat-paid' ).text( data.total_paid || 0 );
+			$( '#fstu-stat-wrap' ).show();
+		} else {
+			$( '#fstu-stat-wrap' ).hide();
+		}
 
 		if ( state.total === 0 ) {
 			$paginInfo.text( '' );
@@ -201,17 +205,17 @@ jQuery( document ).ready( function ( $ ) {
 			state.page = 1;
 			fetchRegistry();
 		} );
-
-		$( document ).on( 'input', '#fstu-filter-search', debounce( function () {
+		// обробники поля пошуку
+		$( document ).on( 'input', '#fstu-filter-search, .fstu-search-input', debounce( function () {
 			const val = $( this ).val().trim();
 			state.filters.search = val;
 			state.page = 1;
-			$searchClear.toggleClass( 'fstu-hidden', val === '' );
+			$( '#fstu-search-clear, .fstu-search-clear' ).toggleClass( 'fstu-hidden', val === '' );
 			fetchRegistry();
 		}, 400 ) );
 
-		$( document ).on( 'click', '#fstu-search-clear', function () {
-			$searchInput.val( '' ).trigger( 'input' );
+		$( document ).on( 'click', '#fstu-search-clear, .fstu-search-clear', function () {
+			$( '#fstu-filter-search, .fstu-search-input' ).val( '' ).trigger( 'input' );
 		} );
 
 		$( document ).on( 'click', '#fstu-btn-refresh', function () {
@@ -246,7 +250,7 @@ jQuery( document ).ready( function ( $ ) {
 
 	function bindTableEvents() {
 		// Клік по "Членський квиток" — відкрити Картку члена
-		$( document ).on( 'click', '.fstu-card-link, .fstu-card--download', function ( e ) {
+		$( document ).on( 'click', '.fstu-card--link, .fstu-card--download', function ( e ) {
 			e.preventDefault();
 			const userId = $( this ).data( 'user-id' );
 			openMemberCard( userId );
@@ -859,7 +863,6 @@ jQuery( document ).ready( function ( $ ) {
 			openEditUserModal( userId );
 		});
 
-		$( document ).on( 'click', '#fstu-modal-close, #fstu-app-cancel', function () {
 		// Закриття модалки по кнопці-хрестику
 		$( document ).on( 'click', '.fstu-modal-close-btn', function () {
 			const modalId = $( this ).closest( '.fstu-modal-overlay' ).attr( 'id' );
@@ -867,7 +870,7 @@ jQuery( document ).ready( function ( $ ) {
 		} );
 
 		// Закриття модалки заявки
-		$( document ).on( 'click', '#fstu-app-cancel', function () {
+		$( document ).on( 'click', '#fstu-modal-close, #fstu-app-cancel', function () {
 			closeModal( 'fstu-modal-application' );
 		} );
 

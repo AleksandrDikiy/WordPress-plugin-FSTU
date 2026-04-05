@@ -353,7 +353,6 @@ class Registry_Ajax {
 			? 'WHERE ' . implode( ' AND ', $where_parts )
 			: '';
 
-		// ── Базовий SQL ───────────────────────────────────────────────────────
         // ── Базовий SQL ───────────────────────────────────────────────────────
         $base_sql = "
 			FROM {$wpdb->users} u
@@ -759,28 +758,32 @@ class Registry_Ajax {
      * @param array $data Валідовані дані.
      * @return int|\WP_Error User ID або помилка.
      */
+    /**
+     * Зберігає заявку на вступ до ФСТУ у БД.
+     *
+     * @param array $data Валідовані дані.
+     * @return int|\WP_Error User ID або помилка.
+     */
     private function save_application( array $data ): int|\WP_Error {
         global $wpdb;
 
-		// Генеруємо тимчасовий пароль
-		//$password = wp_generate_password( 12, true );
         // Використовуємо пароль з форми
         $password = $data['password'];
 
-		// Логін = email до @
-		$login_base = sanitize_user( strstr( $data['email'], '@', true ) );
-		$login      = wp_unique_username( $login_base );
+        // Логін = email до @
+        $login_base = sanitize_user( strstr( $data['email'], '@', true ) );
+        $login      = wp_unique_username( $login_base );
 
-		$user_id = wp_insert_user( [
-			'user_login' => $login,
-			'user_pass'  => $password,
-			'user_email' => $data['email'],
-			'role'       => 'applicants', // кастомна роль "заявник"
-		] );
+        $user_id = wp_insert_user( [
+            'user_login' => $login,
+            'user_pass'  => $password,
+            'user_email' => $data['email'],
+            'role'       => 'applicants', // кастомна роль "заявник"
+        ] );
 
-		if ( is_wp_error( $user_id ) ) {
-			return $user_id;
-		}
+        if ( is_wp_error( $user_id ) ) {
+            return $user_id;
+        }
 
         // Зберігаємо базові метадані
         update_user_meta( $user_id, 'last_name',  $data['last_name'] );
@@ -789,15 +792,15 @@ class Registry_Ajax {
         update_user_meta( $user_id, 'BirthDate',  $data['birth_date'] );
         update_user_meta( $user_id, 'Sex',        $data['sex'] );
         update_user_meta( $user_id, 'Phone',      $data['phone'] );
-        if ( ! empty( $data['phone_alt'] ) ) update_user_meta( $user_id, 'Phone_alt', $data['phone_alt'] );
-        if ( ! empty( $data['public_titles'] ) ) update_user_meta( $user_id, 'Public_titles', $data['public_titles'] );
 
         if ( ! empty( $data['phone_alt'] ) ) {
             update_user_meta( $user_id, 'Phone_alt', $data['phone_alt'] );
         }
         if ( ! empty( $data['public_titles'] ) ) {
             update_user_meta( $user_id, 'Public_titles', $data['public_titles'] );
-        // Тут також треба зберігати Клуб та Вид туризму у відповідні таблиці (як у старій логіці)
+        }
+
+        // Прив'язка клубу
         if ( $data['club_id'] > 0 ) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery
             $wpdb->insert( 'UserClub', [ 'User_ID' => $user_id, 'Club_ID' => $data['club_id'], 'UserClub_Date' => current_time('mysql') ], [ '%d', '%d', '%s' ] );
@@ -818,31 +821,15 @@ class Registry_Ajax {
             );
         }
 
-		// Прив'язка міста
-		if ( $data['city_id'] > 0 ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-			$wpdb->insert(
-				'UserCity',
-				[
-					'User_ID'               => $user_id,
-					'City_ID'               => $data['city_id'],
-					'UserCity_DateCreate'   => current_time( 'mysql' ),
-				],
-				[ '%d', '%d', '%s' ]
-			);
-		}
-
-		// Надсилаємо email із даними для входу
-		wp_new_user_notification( $user_id, null, 'user' );
-        // Прив'язка клубу
-        if ( $data['club_id'] > 0 ) {
+        // Прив'язка міста
+        if ( $data['city_id'] > 0 ) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery
             $wpdb->insert(
-                'UserClub',
+                'UserCity',
                 [
-                    'User_ID'       => $user_id,
-                    'Club_ID'       => $data['club_id'],
-                    'UserClub_Date' => current_time( 'mysql' ),
+                    'User_ID'               => $user_id,
+                    'City_ID'               => $data['city_id'],
+                    'UserCity_DateCreate'   => current_time( 'mysql' ),
                 ],
                 [ '%d', '%d', '%s' ]
             );
@@ -851,6 +838,6 @@ class Registry_Ajax {
         // Надсилаємо стандартний email від WP
         wp_new_user_notification( $user_id, null, 'user' );
 
-		return $user_id;
-	}
+        return $user_id;
+    }
 }
