@@ -55,6 +55,10 @@ require_once FSTU_PLUGIN_DIR . 'includes/Core/class-activator.php';
 require_once FSTU_PLUGIN_DIR . 'includes/Registry/class-registry-list.php';
 require_once FSTU_PLUGIN_DIR . 'includes/Registry/class-registry-ajax.php';
 require_once FSTU_PLUGIN_DIR . 'includes/Registry/class-registry-modals-ajax.php'; // 2026-04-04
+require_once FSTU_PLUGIN_DIR . '/includes/Admin/class-admin-menu.php'; // адмінка
+
+// ... ініціалізація інших класів ...
+( new \FSTU\Admin\Admin_Menu() )->init();
 
 // Десь поруч з ініціалізацією Registry_List
 require_once FSTU_PLUGIN_DIR . 'includes/PaymentDocs/class-payment-docs-list.php';
