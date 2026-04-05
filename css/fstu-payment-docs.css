@@ -1,0 +1,203 @@
+/**
+ * CSS модуля "Реєстр платіжних документів".
+ * * Version:     1.0.0
+ * Date_update: 2026-04-05
+ *
+ * @package FSTU\PaymentDocs
+ */
+
+:root {
+    --fstu-primary:      #c0392b;
+    --fstu-primary-dark: #a93226;
+    --fstu-secondary:    #f2f2f2;
+    --fstu-text:         #2c3e50;
+    --fstu-text-light:   #7f8c8d;
+    --fstu-border:       #dde0e3;
+    --fstu-bg-header:    #d5e8d4;
+    --fstu-radius:       4px;
+    --fstu-font-size:    13px;
+}
+
+#fstu-payment-docs {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: var(--fstu-font-size);
+    color: var(--fstu-text);
+}
+
+#fstu-payment-docs .fstu-registry-title { font-size: 24px; font-weight: bold; margin-bottom: 5px; }
+#fstu-payment-docs .fstu-registry-role-note { font-size: 12px; color: var(--fstu-text-light); margin-bottom: 15px; }
+
+/* Кнопки */
+#fstu-payment-docs .fstu-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 6px 12px; font-size: 13px; border-radius: var(--fstu-radius);
+    cursor: pointer; border: none; text-decoration: none; font-weight: 500;
+}
+#fstu-payment-docs .fstu-btn--primary { background: var(--fstu-primary); color: #fff; }
+#fstu-payment-docs .fstu-btn--primary:hover { background: var(--fstu-primary-dark); }
+#fstu-payment-docs .fstu-btn--secondary { background: var(--fstu-secondary); color: var(--fstu-text); border: 1px solid var(--fstu-border); }
+#fstu-payment-docs .fstu-btn--secondary:hover { background: #e5e5e5; }
+
+/* Фільтри (в один рядок) */
+#fstu-payment-docs .fstu-filter-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+#fstu-payment-docs .fstu-filter-item { flex: 1 1 200px; }
+#fstu-payment-docs .fstu-filter-item--year { flex: 0 0 120px; }
+#fstu-payment-docs .fstu-select {
+    width: 100%; padding: 6px 8px; border: 1px solid var(--fstu-border);
+    border-radius: var(--fstu-radius); height: 32px; font-size: 13px;
+}
+
+/* Таблиця */
+#fstu-payment-docs .fstu-table-wrap { overflow-x: auto; position: relative; margin-top: 15px; }
+#fstu-payment-docs .fstu-table { width: 100%; border-collapse: collapse; }
+#fstu-payment-docs .fstu-th { background: var(--fstu-bg-header); padding: 8px; text-align: left; border: 1px solid #b7d7b7; font-weight: 600; white-space: nowrap; }
+#fstu-payment-docs .fstu-td { padding: 6px 8px; border: 1px solid var(--fstu-border); vertical-align: middle; }
+#fstu-payment-docs .fstu-row:nth-child(even) { background: #f9f9f9; }
+#fstu-payment-docs .fstu-row:hover { background: #eaf4ff; }
+
+/* Лоадер */
+#fstu-payment-docs .fstu-loader { padding: 20px; text-align: center; color: var(--fstu-text-light); }
+#fstu-payment-docs .fstu-hidden { display: none !important; }
+
+/* Пагінація */
+#fstu-payment-docs .fstu-pagination { display: flex; justify-content: space-between; margin-top: 15px; align-items: center; }
+#fstu-payment-docs .fstu-btn--page { min-width: 30px; height: 30px; padding: 0 5px; background: #fff; border: 1px solid var(--fstu-border); border-radius: 3px; cursor: pointer; }
+#fstu-payment-docs .fstu-btn--page-active { background: var(--fstu-primary); color: #fff; border-color: var(--fstu-primary); }
+
+/* Дії (Кнопка випадаючого списку) */
+#fstu-payment-docs .fstu-btn-action { background: var(--fstu-primary); color: #fff; border: none; padding: 3px 8px; border-radius: 3px; cursor: pointer; }
+
+/* ==========================================================================
+   Пагінація (Ідентично до Реєстру членів)
+   ========================================================================== */
+#fstu-payment-docs .fstu-pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#fstu-payment-docs .fstu-pagination__info {
+    font-size: var(--fstu-font-size-sm, 11px);
+    color: var(--fstu-text-light);
+}
+
+#fstu-payment-docs .fstu-pagination__controls {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+#fstu-payment-docs .fstu-btn--page,
+#fstu-payment-docs .fstu-btn--page-nav {
+    min-width: 28px !important;
+    height: 28px !important;
+    padding: 0 6px !important;
+    font-size: 12px !important;
+    background: #ffffff !important;
+    border: 1px solid var(--fstu-border, #dde0e3) !important;
+    border-radius: var(--fstu-radius, 4px) !important;
+    color: var(--fstu-text, #2c3e50) !important; /* ВАЖЛИВО: примусово темний колір тексту! */
+    cursor: pointer !important;
+    transition: background .12s, border-color .12s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1 !important;
+}
+
+#fstu-payment-docs .fstu-btn--page:hover:not(:disabled),
+#fstu-payment-docs .fstu-btn--page-nav:hover:not(:disabled) {
+    background: var(--fstu-secondary, #f2f2f2) !important;
+    border-color: #bbb !important;
+}
+
+#fstu-payment-docs .fstu-btn--page-active,
+#fstu-payment-docs .fstu-btn--page-active:hover {
+    background: var(--fstu-primary, #c0392b) !important;
+    border-color: var(--fstu-primary, #c0392b) !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+}
+
+#fstu-payment-docs .fstu-btn--page:disabled,
+#fstu-payment-docs .fstu-btn--page-nav:disabled {
+    opacity: 0.4 !important;
+    cursor: not-allowed !important;
+}
+/* ==========================================================================
+   МЕНЮ ОПЦІЙ (Бронебійний варіант)
+   ========================================================================== */
+#fstu-payment-docs .fstu-opts { position: relative; display: inline-block; }
+#fstu-payment-docs .fstu-opts-btn {
+    background-color: #c0392b !important; color: #ffffff !important;
+    border: none !important; padding: 4px 10px !important;
+    border-radius: 4px !important; cursor: pointer !important;
+    font-size: 14px !important; line-height: 1 !important;
+    box-shadow: none !important; width: auto !important; height: auto !important;
+}
+#fstu-payment-docs .fstu-opts-btn:hover { background-color: #a93226 !important; }
+#fstu-payment-docs ul.fstu-opts-list {
+    display: none; position: absolute !important; right: 0 !important; top: 100% !important;
+    min-width: 220px !important; background: #ffffff !important;
+    border: 1px solid #ccc !important; box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+    padding: 5px 0 !important; margin: 2px 0 0 0 !important; z-index: 99999 !important;
+}
+#fstu-payment-docs .fstu-opts--open ul.fstu-opts-list { display: block !important; }
+#fstu-payment-docs .fstu-opts.fstu-dropup ul.fstu-opts-list {
+    top: auto !important; bottom: 100% !important; margin-top: 0 !important;
+    margin-bottom: 2px !important; box-shadow: 0 -4px 12px rgba(0,0,0,0.15) !important;
+}
+#fstu-payment-docs ul.fstu-opts-list li { padding: 0 !important; margin: 0 !important; list-style: none !important; }
+#fstu-payment-docs ul.fstu-opts-list li::before { display: none !important; }
+#fstu-payment-docs ul.fstu-opts-list li a {
+    padding: 8px 15px !important; margin: 0 !important; display: block !important;
+    white-space: nowrap !important; text-decoration: none !important;
+    color: #333 !important; text-align: left !important; font-size: 13px !important;
+    border: none !important; background: transparent !important;
+}
+#fstu-payment-docs ul.fstu-opts-list li a:hover { background-color: #f8f9fa !important; color: #c0392b !important; }
+#fstu-payment-docs hr.fstu-opts-divider { height: 1px !important; background-color: #eee !important; margin: 5px 0 !important; border: none !important; }
+
+/* ==========================================================================
+   МОДАЛЬНЕ ВІКНО
+   ========================================================================== */
+body.fstu-modal-open { overflow: hidden; }
+
+#fstu-payment-docs .fstu-modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.55);
+    z-index: 99999; display: flex; align-items: center; justify-content: center; padding: 16px;
+}
+
+#fstu-payment-docs .fstu-modal {
+    background: #fff; border-radius: 6px; box-shadow: 0 8px 32px rgba(0,0,0,.22);
+    width: 100%; display: flex; flex-direction: column;
+    max-height: calc(100vh - 32px);
+}
+
+#fstu-payment-docs .fstu-modal__header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px; border-bottom: 1px solid var(--fstu-border); flex-shrink: 0;
+}
+
+#fstu-payment-docs .fstu-modal__title { font-size: 16px; font-weight: 700; margin: 0; color: var(--fstu-text); }
+
+#fstu-payment-docs .fstu-modal-close-btn {
+    background: none; border: none; cursor: pointer; font-size: 18px;
+    line-height: 1; color: var(--fstu-text-light); padding: 0 4px;
+}
+
+#fstu-payment-docs .fstu-modal-close-btn:hover { color: var(--fstu-error, #e74c3c); }
+
+#fstu-payment-docs .fstu-modal__body { padding: 16px; overflow-y: auto; }
+
+/* Форми всередині модалки */
+#fstu-payment-docs .fstu-form-row { display: flex; gap: 10px; margin-bottom: 8px; }
+#fstu-payment-docs .fstu-form-row--3col .fstu-form-group { flex: 1; }
+#fstu-payment-docs .fstu-form-row--2col .fstu-form-group { flex: 1; }
+#fstu-payment-docs .fstu-form-group { display: flex; flex-direction: column; gap: 3px; }
+#fstu-payment-docs .fstu-label { font-size: 12px; font-weight: 500; color: var(--fstu-text); }
+#fstu-payment-docs .fstu-input { width: 100%; padding: 4px 8px; font-size: 13px; border: 1px solid var(--fstu-border); border-radius: 3px; height: 30px; box-sizing: border-box; }
+#fstu-payment-docs .fstu-input:focus { outline: none; border-color: var(--fstu-primary); }
+
+/* Дозволяємо меню виходити за межі таблиці */
+#fstu-payment-docs .fstu-table-wrap { overflow: visible !important; }

@@ -56,6 +56,16 @@ require_once FSTU_PLUGIN_DIR . 'includes/Registry/class-registry-list.php';
 require_once FSTU_PLUGIN_DIR . 'includes/Registry/class-registry-ajax.php';
 require_once FSTU_PLUGIN_DIR . 'includes/Registry/class-registry-modals-ajax.php'; // 2026-04-04
 
+// Десь поруч з ініціалізацією Registry_List
+require_once FSTU_PLUGIN_DIR . 'includes/PaymentDocs/class-payment-docs-list.php';
+require_once FSTU_PLUGIN_DIR . 'includes/PaymentDocs/class-payment-docs-ajax.php'; // ДОДАНО
+
+$fstu_payment_docs = new \FSTU\PaymentDocs\Payment_Docs_List();
+$fstu_payment_docs->init();
+
+$fstu_payment_docs_ajax = new \FSTU\PaymentDocs\Payment_Docs_Ajax(); // ДОДАНО
+$fstu_payment_docs_ajax->init(); // ДОДАНО
+
 // ─── Активація / Деактивація ──────────────────────────────────────────────────
 
 register_activation_hook( FSTU_PLUGIN_FILE, [ 'FSTU\\Core\\Activator', 'activate' ] );
