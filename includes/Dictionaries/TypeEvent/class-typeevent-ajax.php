@@ -3,7 +3,7 @@
  * AJAX-обробники модуля "Довідник видів змагань ФСТУ".
  * Всі запити до БД виконуються виключно через $wpdb->prepare().
  *
- * Version:     1.2.0
+ * Version:     1.3.0
  * Date_update: 2026-04-06
  *
  * @package FSTU\Dictionaries\TypeEvent
@@ -25,6 +25,21 @@ class TypeEvent_Ajax {
 
 	/** Максимальна довжина пошукового рядка. */
 	private const MAX_SEARCH_LENGTH = 100;
+
+	/** Назва модуля для таблиці Logs. */
+	private const LOG_NAME = 'TypeEvent';
+
+	/** Тип логування створення. */
+	private const LOG_TYPE_INSERT = 'INSERT';
+
+	/** Тип логування оновлення. */
+	private const LOG_TYPE_UPDATE = 'UPDATE';
+
+	/** Тип логування видалення. */
+	private const LOG_TYPE_DELETE = 'DELETE';
+
+	/** Успішний статус логування. */
+	private const LOG_STATUS_SUCCESS = 'успішно';
 
 	/** Доступні значення пагінації для протоколу. */
 	private const PROTOCOL_PER_PAGE_ALLOWED = [ 10, 20, 50 ];
@@ -76,7 +91,7 @@ class TypeEvent_Ajax {
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
-		$total = (int) $wpdb->get_var( $wpdb->prepare( $count_query, $params ) );
+		$total = (int) ( $params ? $wpdb->get_var( $wpdb->prepare( $count_query, ...$params ) ) : $wpdb->get_var( $count_query ) );
 
 		$offset = ( $page - 1 ) * $per_page;
 		$query .= ' ORDER BY TypeEvent_Code ASC, TypeEvent_Name ASC LIMIT %d OFFSET %d';
@@ -86,7 +101,7 @@ class TypeEvent_Ajax {
 		$list_params[] = $offset;
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
-		$items = $wpdb->get_results( $wpdb->prepare( $query, $list_params ), ARRAY_A );
+		$items = $wpdb->get_results( $wpdb->prepare( $query, ...$list_params ), ARRAY_A );
 
 		wp_send_json_success(
 			[
@@ -146,46 +161,13 @@ class TypeEvent_Ajax {
 		$data         = $this->get_sanitized_payload();
 		$this->validate_payload( $data );
 
-		global $wpdb;
-
 		if ( $typeevent_id > 0 ) {
-			$updated = $wpdb->update(
-				'S_TypeEvent',
-				[
-					'TypeEvent_Name' => $data['typeevent_name'],
-					'TypeEvent_Code' => $data['typeevent_code'],
-				],
-				[ 'TypeEvent_ID' => $typeevent_id ],
-				[ '%s', '%d' ],
-				[ '%d' ]
-			);
-
-			if ( false === $updated ) {
-				wp_send_json_error( [ 'message' => __( 'Помилка при редагуванні виду змагань.', 'fstu' ) ] );
-			}
-
-			wp_send_json_success( [ 'message' => __( 'Вид змагань успішно відредагований.', 'fstu' ) ] );
+			$this->handle_update( $typeevent_id, $data );
+			return;
 		}
 
-		$inserted = $wpdb->insert(
-			'S_TypeEvent',
-			[
-				'TypeEvent_Name' => $data['typeevent_name'],
-				'TypeEvent_Code' => $data['typeevent_code'],
-			],
-			[ '%s', '%d' ]
-		);
-
-		if ( ! $inserted ) {
-			wp_send_json_error( [ 'message' => __( 'Помилка при додаванні виду змагань.', 'fstu' ) ] );
-		}
-
-		wp_send_json_success(
-			[
-				'message'      => __( 'Вид змагань успішно додано.', 'fstu' ),
-				'typeevent_id' => $wpdb->insert_id,
-			]
-		);
+		$this->handle_create( $data );
+		return;
 	}
 
 	/**
@@ -203,14 +185,40 @@ class TypeEvent_Ajax {
 			wp_send_json_error( [ 'message' => __( 'Невірний ID виду змагань.', 'fstu' ) ] );
 		}
 
-		global $wpdb;
-
-		$deleted = $wpdb->delete( 'S_TypeEvent', [ 'TypeEvent_ID' => $typeevent_id ], [ '%d' ] );
-		if ( ! $deleted ) {
-			wp_send_json_error( [ 'message' => __( 'Помилка при видаленні виду змагань.', 'fstu' ) ] );
+		$item = $this->get_typeevent_by_id( $typeevent_id );
+		if ( ! is_array( $item ) ) {
+			wp_send_json_error( [ 'message' => __( 'Вид змагань не знайдено.', 'fstu' ) ] );
 		}
 
-		wp_send_json_success( [ 'message' => __( 'Вид змагань успішно видалений.', 'fstu' ) ] );
+		global $wpdb;
+
+		try {
+			$this->begin_transaction();
+
+			$deleted = $wpdb->delete( 'S_TypeEvent', [ 'TypeEvent_ID' => $typeevent_id ], [ '%d' ] );
+			if ( false === $deleted || 1 !== (int) $deleted ) {
+				throw new \RuntimeException( 'typeevent_delete_failed' );
+			}
+
+			$this->log_action(
+				self::LOG_TYPE_DELETE,
+				sprintf( 'Видалено вид змагань: %s', (string) $item['TypeEvent_Name'] ),
+				self::LOG_STATUS_SUCCESS
+			);
+
+			$this->commit_transaction();
+
+			wp_send_json_success( [ 'message' => __( 'Вид змагань успішно видалений.', 'fstu' ) ] );
+		} catch ( \Throwable $exception ) {
+			$this->rollback_transaction();
+			$this->try_log_action(
+				self::LOG_TYPE_DELETE,
+				sprintf( 'Помилка видалення виду змагань: %s', (string) $item['TypeEvent_Name'] ),
+				'error'
+			);
+
+			wp_send_json_error( [ 'message' => __( 'Помилка при видаленні виду змагань.', 'fstu' ) ] );
+		}
 	}
 
 	/**
@@ -227,9 +235,9 @@ class TypeEvent_Ajax {
 
 		global $wpdb;
 
-		$page     = absint( $_POST['page'] ?? 1 );
-		$per_page = absint( $_POST['per_page'] ?? 10 );
-		$filter_name = sanitize_text_field( wp_unslash( $_POST['filter_name'] ?? '' ) );
+		$page        = absint( $_POST['page'] ?? 1 );
+		$per_page    = absint( $_POST['per_page'] ?? 10 );
+		$filter_name = sanitize_text_field( wp_unslash( $_POST['filter_name'] ?? ( $_POST['search'] ?? '' ) ) );
 
 		if ( $page < 1 ) {
 			$page = 1;
@@ -241,9 +249,8 @@ class TypeEvent_Ajax {
 
 		$filter_name = substr( $filter_name, 0, self::MAX_SEARCH_LENGTH );
 
-		// Будуємо запит до таблиці Logs для логів операцій модуля TypeEvent.
-		$where  = " WHERE l.Logs_Name = 'TypeEvent'";
-		$params = [];
+		$where  = ' WHERE l.Logs_Name = %s';
+		$params = [ self::LOG_NAME ];
 
 		if ( '' !== $filter_name ) {
 			$where .= ' AND (l.Logs_Text LIKE %s OR u.FIO LIKE %s)';
@@ -257,27 +264,27 @@ class TypeEvent_Ajax {
 			{$where}";
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
-		$total = (int) $wpdb->get_var( $wpdb->prepare( $count_sql, $params ) );
+		$total = (int) $wpdb->get_var( $wpdb->prepare( $count_sql, ...$params ) );
 
 		$offset = ( $page - 1 ) * $per_page;
-		$list_sql = "SELECT l.Logs_DateCreate, l.Logs_Type, l.Logs_Name, l.Logs_Text, l.Logs_Error, u.FIO 
+		$list_sql = "SELECT l.User_ID, l.Logs_DateCreate, l.Logs_Type, l.Logs_Name, l.Logs_Text, l.Logs_Error, u.FIO 
 			FROM Logs l 
 			LEFT JOIN vUserFSTU u ON u.User_ID = l.User_ID
 			{$where}
 			ORDER BY l.Logs_DateCreate DESC 
 			LIMIT %d OFFSET %d";
 
-		$list_params = $params;
+		$list_params   = $params;
 		$list_params[] = $per_page;
 		$list_params[] = $offset;
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
-		$items = $wpdb->get_results( $wpdb->prepare( $list_sql, $list_params ), ARRAY_A );
+		$items = $wpdb->get_results( $wpdb->prepare( $list_sql, ...$list_params ), ARRAY_A );
 		$total_pages = max( 1, (int) ceil( $total / $per_page ) );
 
 		wp_send_json_success(
 			[
-				'items'       => is_array( $items ) ? $items : [],
+				'items'       => $this->prepare_protocol_items( is_array( $items ) ? $items : [] ),
 				'generated'   => current_time( 'mysql' ),
 				'itemsCount'  => is_array( $items ) ? count( $items ) : 0,
 				'total'       => $total,
@@ -309,6 +316,111 @@ class TypeEvent_Ajax {
 	}
 
 	/**
+	 * Створює новий запис у strict transactional flow.
+	 *
+	 * @param array<string,mixed> $data Дані форми.
+	 */
+	private function handle_create( array $data ): void {
+		global $wpdb;
+
+		try {
+			$this->begin_transaction();
+
+			$inserted = $wpdb->insert(
+				'S_TypeEvent',
+				[
+					'TypeEvent_Name' => $data['typeevent_name'],
+					'TypeEvent_Code' => $data['typeevent_code'],
+				],
+				[ '%s', '%d' ]
+			);
+
+			if ( false === $inserted ) {
+				throw new \RuntimeException( 'typeevent_insert_failed' );
+			}
+
+			$typeevent_id = (int) $wpdb->insert_id;
+
+			$this->log_action(
+				self::LOG_TYPE_INSERT,
+				sprintf( 'Додано вид змагань: %s', (string) $data['typeevent_name'] ),
+				self::LOG_STATUS_SUCCESS
+			);
+
+			$this->commit_transaction();
+
+			wp_send_json_success(
+				[
+					'message'      => __( 'Вид змагань успішно додано.', 'fstu' ),
+					'typeevent_id' => $typeevent_id,
+				]
+			);
+		} catch ( \Throwable $exception ) {
+			$this->rollback_transaction();
+			$this->try_log_action(
+				self::LOG_TYPE_INSERT,
+				sprintf( 'Помилка додавання виду змагань: %s', (string) $data['typeevent_name'] ),
+				'error'
+			);
+
+			wp_send_json_error( [ 'message' => __( 'Помилка при додаванні виду змагань.', 'fstu' ) ] );
+		}
+	}
+
+	/**
+	 * Оновлює запис у strict transactional flow.
+	 *
+	 * @param array<string,mixed> $data Дані форми.
+	 */
+	private function handle_update( int $typeevent_id, array $data ): void {
+		$item = $this->get_typeevent_by_id( $typeevent_id );
+
+		if ( ! is_array( $item ) ) {
+			wp_send_json_error( [ 'message' => __( 'Вид змагань не знайдено.', 'fstu' ) ] );
+		}
+
+		global $wpdb;
+
+		try {
+			$this->begin_transaction();
+
+			$updated = $wpdb->update(
+				'S_TypeEvent',
+				[
+					'TypeEvent_Name' => $data['typeevent_name'],
+					'TypeEvent_Code' => $data['typeevent_code'],
+				],
+				[ 'TypeEvent_ID' => $typeevent_id ],
+				[ '%s', '%d' ],
+				[ '%d' ]
+			);
+
+			if ( false === $updated ) {
+				throw new \RuntimeException( 'typeevent_update_failed' );
+			}
+
+			$this->log_action(
+				self::LOG_TYPE_UPDATE,
+				sprintf( 'Оновлено вид змагань: %s', (string) $data['typeevent_name'] ),
+				self::LOG_STATUS_SUCCESS
+			);
+
+			$this->commit_transaction();
+
+			wp_send_json_success( [ 'message' => __( 'Вид змагань успішно відредагований.', 'fstu' ) ] );
+		} catch ( \Throwable $exception ) {
+			$this->rollback_transaction();
+			$this->try_log_action(
+				self::LOG_TYPE_UPDATE,
+				sprintf( 'Помилка оновлення виду змагань: %s', (string) $item['TypeEvent_Name'] ),
+				'error'
+			);
+
+			wp_send_json_error( [ 'message' => __( 'Помилка при редагуванні виду змагань.', 'fstu' ) ] );
+		}
+	}
+
+	/**
 	 * Перевіряє honeypot поле.
 	 */
 	private function is_honeypot_triggered(): bool {
@@ -329,6 +441,26 @@ class TypeEvent_Ajax {
 	}
 
 	/**
+	 * Повертає запис довідника за ID.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function get_typeevent_by_id( int $typeevent_id ): ?array {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$item = $wpdb->get_row(
+			$wpdb->prepare(
+				'SELECT TypeEvent_ID, TypeEvent_Name, TypeEvent_Code FROM S_TypeEvent WHERE TypeEvent_ID = %d LIMIT 1',
+				$typeevent_id
+			),
+			ARRAY_A
+		);
+
+		return is_array( $item ) ? $item : null;
+	}
+
+	/**
 	 * Валідує дані форми.
 	 *
 	 * @param array<string,mixed> $data Дані форми.
@@ -341,6 +473,152 @@ class TypeEvent_Ajax {
 		if ( $data['typeevent_code'] < 0 ) {
 			wp_send_json_error( [ 'message' => __( 'Сортування не може бути від’ємним.', 'fstu' ) ] );
 		}
+	}
+
+	/**
+	 * Повертає підготовлений набір рядків протоколу для UI.
+	 *
+	 * @param array<int,array<string,mixed>> $items Рядки таблиці Logs.
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function prepare_protocol_items( array $items ): array {
+		foreach ( $items as &$item ) {
+			$item['Logs_Type']  = $this->get_log_type_label( (string) ( $item['Logs_Type'] ?? '' ) );
+			$item['Logs_Error'] = $this->get_log_status_label( (string) ( $item['Logs_Error'] ?? '' ) );
+			$item['FIO']        = $this->get_log_user_label( $item );
+		}
+		unset( $item );
+
+		return $items;
+	}
+
+	/**
+	 * Нормалізує тип логування для UI.
+	 */
+	private function get_log_type_label( string $type ): string {
+		return match ( strtoupper( $type ) ) {
+			self::LOG_TYPE_INSERT, 'I' => 'INSERT',
+			self::LOG_TYPE_UPDATE, 'U' => 'UPDATE',
+			self::LOG_TYPE_DELETE, 'D' => 'DELETE',
+			default => $type,
+		};
+	}
+
+	/**
+	 * Нормалізує статус логування для UI.
+	 */
+	private function get_log_status_label( string $status ): string {
+		return match ( trim( mb_strtolower( $status ) ) ) {
+			'✓', 'успішно', 'success' => self::LOG_STATUS_SUCCESS,
+			default => $status,
+		};
+	}
+
+	/**
+	 * Повертає підпис користувача для рядка протоколу з fallback.
+	 *
+	 * @param array<string,mixed> $item Рядок протоколу.
+	 */
+	private function get_log_user_label( array $item ): string {
+		$fio = trim( (string) ( $item['FIO'] ?? '' ) );
+
+		if ( '' !== $fio ) {
+			return $fio;
+		}
+
+		$user_id = (int) ( $item['User_ID'] ?? 0 );
+		if ( $user_id <= 0 ) {
+			return __( 'Система', 'fstu' );
+		}
+
+		$user = get_userdata( $user_id );
+		if ( $user ) {
+			$display_name = trim( (string) $user->display_name );
+			if ( '' !== $display_name ) {
+				return $display_name;
+			}
+
+			$user_login = trim( (string) $user->user_login );
+			if ( '' !== $user_login ) {
+				return $user_login;
+			}
+		}
+
+		return sprintf( 'ID:%d', $user_id );
+	}
+
+	/**
+	 * Записує подію в таблицю Logs. Для success-flow метод є strict.
+	 */
+	private function log_action( string $type, string $text, string $status ): void {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$inserted = $wpdb->insert(
+			'Logs',
+			[
+				'User_ID'         => get_current_user_id(),
+				'Logs_DateCreate' => current_time( 'mysql' ),
+				'Logs_Type'       => $type,
+				'Logs_Name'       => self::LOG_NAME,
+				'Logs_Text'       => $text,
+				'Logs_Error'      => $status,
+			],
+			[ '%d', '%s', '%s', '%s', '%s', '%s' ]
+		);
+
+		if ( false === $inserted ) {
+			throw new \RuntimeException( 'typeevent_log_insert_failed' );
+		}
+	}
+
+	/**
+	 * Пише лог поза strict-транзакцією без викидання винятку назовні.
+	 */
+	private function try_log_action( string $type, string $text, string $status ): void {
+		try {
+			$this->log_action( $type, $text, $status );
+		} catch ( \Throwable $exception ) {
+			// Не виводимо технічні деталі на фронтенд.
+		}
+	}
+
+	/**
+	 * Починає транзакцію для atomic CRUD + Logs flow.
+	 */
+	private function begin_transaction(): void {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$result = $wpdb->query( 'START TRANSACTION' );
+
+		if ( false === $result ) {
+			throw new \RuntimeException( 'typeevent_transaction_start_failed' );
+		}
+	}
+
+	/**
+	 * Підтверджує транзакцію.
+	 */
+	private function commit_transaction(): void {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$result = $wpdb->query( 'COMMIT' );
+
+		if ( false === $result ) {
+			throw new \RuntimeException( 'typeevent_transaction_commit_failed' );
+		}
+	}
+
+	/**
+	 * Скасовує транзакцію.
+	 */
+	private function rollback_transaction(): void {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$wpdb->query( 'ROLLBACK' );
 	}
 }
 

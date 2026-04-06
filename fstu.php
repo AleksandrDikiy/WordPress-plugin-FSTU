@@ -3,7 +3,7 @@
  * Plugin Name:  FSTU Portal
  * Plugin URI:   https://www.fstu.com.ua/
  * Description:  Офіційний плагін Федерації спортивного туризму України. Enterprise ERP/CRM система управління реєстрами, структурою та фінансами федерації.
- * Version:      1.8.0
+ * Version:      1.10.1
  * Author:       Oleksandr Dykyi
  * Author URI:   https://www.fstu.com.ua/
  * Text Domain:  fstu
@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // ─── Константи плагіна ────────────────────────────────────────────────────────
 
-define( 'FSTU_VERSION',      '1.8.0' );
+define( 'FSTU_VERSION',      '1.10.1' );
 define( 'FSTU_DB_VERSION',   '1.0.0' );
 define( 'FSTU_PLUGIN_FILE',  __FILE__ );
 define( 'FSTU_PLUGIN_DIR',   plugin_dir_path( __FILE__ ) );
@@ -82,6 +82,14 @@ require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/MemberRegional/class-membe
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/MemberGuidance/class-member-guidance-list.php';
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/MemberGuidance/class-member-guidance-ajax.php';
 
+// Country — Довідник країн ФСТУ (2026-04-06)
+require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/Country/class-country-list.php';
+require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/Country/class-country-ajax.php';
+
+// Region — Довідник областей ФСТУ (2026-04-06)
+require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/Region/class-region-list.php';
+require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/Region/class-region-ajax.php';
+
 // Commission — Довідник комісій та колегій ФСТУ (2026-04-06)
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/Commission/class-commission-list.php';
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/Commission/class-commission-ajax.php';
@@ -97,6 +105,14 @@ if ( file_exists( FSTU_PLUGIN_DIR . 'includes/PaymentDocs/class-payment-docs-lis
 }
 if ( file_exists( FSTU_PLUGIN_DIR . 'includes/PaymentDocs/class-payment-docs-ajax.php' ) ) {
 	require_once FSTU_PLUGIN_DIR . 'includes/PaymentDocs/class-payment-docs-ajax.php';
+}
+
+// Applications — Заявки в ФСТУ (2026-04-06)
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Applications/class-applications-list.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Applications/class-applications-list.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Applications/class-applications-ajax.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Applications/class-applications-ajax.php';
 }
 // ── Довідники (Хаб) ──────────────────────────────────────────────────────
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/class-dictionaries-hub.php';
@@ -143,6 +159,14 @@ function fstu_init(): void {
 	( new FSTU\Dictionaries\MemberGuidance\Member_Guidance_List() )->init();
 	( new FSTU\Dictionaries\MemberGuidance\Member_Guidance_Ajax() )->init();
 
+	// ── Довідник країн ФСТУ ────────────────────────────────────────────────────
+	( new FSTU\Dictionaries\Country\Country_List() )->init();
+	( new FSTU\Dictionaries\Country\Country_Ajax() )->init();
+
+	// ── Довідник областей ФСТУ ─────────────────────────────────────────────────
+	( new FSTU\Dictionaries\Region\Region_List() )->init();
+	( new FSTU\Dictionaries\Region\Region_Ajax() )->init();
+
 	// ── Довідник комісій та колегій ФСТУ ──────────────────────────────────────
 	( new FSTU\Dictionaries\Commission\Commission_List() )->init();
 	( new FSTU\Dictionaries\Commission\Commission_Ajax() )->init();
@@ -158,5 +182,13 @@ function fstu_init(): void {
 	}
 	if ( class_exists( 'FSTU\\PaymentDocs\\Payment_Docs_Ajax' ) ) {
 		( new FSTU\PaymentDocs\Payment_Docs_Ajax() )->init();
+	}
+
+	// ── Заявки в ФСТУ ───────────────────────────────────────────────────────
+	if ( class_exists( 'FSTU\\Modules\\Applications\\Applications_List' ) ) {
+		( new FSTU\Modules\Applications\Applications_List() )->init();
+	}
+	if ( class_exists( 'FSTU\\Modules\\Applications\\Applications_Ajax' ) ) {
+		( new FSTU\Modules\Applications\Applications_Ajax() )->init();
 	}
 }

@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Клас-контролер для Хабу довідників (Dashboard).
- * * Version:     1.5.0
+ * * Version:     1.7.0
  * Date_update: 2026-04-06
  */
 class Dictionaries_Hub {
@@ -52,6 +52,8 @@ class Dictionaries_Hub {
         $typeguidance_list_class = 'FSTU\\Dictionaries\\TypeGuidance\\TypeGuidance_List';
         $member_regional_list_class = 'FSTU\\Dictionaries\\MemberRegional\\Member_Regional_List';
         $member_guidance_list_class = 'FSTU\\Dictionaries\\MemberGuidance\\Member_Guidance_List';
+        $country_list_class = 'FSTU\\Dictionaries\\Country\\Country_List';
+        $region_list_class = 'FSTU\\Dictionaries\\Region\\Region_List';
         $commission_url = class_exists( Commission_List::class )
             ? Commission_List::get_module_url( 'hub' )
           : '';
@@ -64,6 +66,12 @@ class Dictionaries_Hub {
             $member_guidance_url = class_exists( $member_guidance_list_class )
               ? $member_guidance_list_class::get_module_url( 'hub' )
               : '';
+        $country_url = class_exists( $country_list_class )
+          ? $country_list_class::get_module_url( 'hub' )
+          : '';
+        $region_url = class_exists( $region_list_class )
+          ? $region_list_class::get_module_url( 'hub' )
+          : '';
 
         if ( '' === $commission_url ) {
           $commission_url = '#';
@@ -80,6 +88,14 @@ class Dictionaries_Hub {
                 if ( '' === $member_guidance_url ) {
                   $member_guidance_url = '#';
                 }
+
+        if ( '' === $country_url ) {
+          $country_url = '#';
+        }
+
+        if ( '' === $region_url ) {
+          $region_url = '#';
+        }
 
         return [
             'structure' => [
@@ -98,8 +114,8 @@ class Dictionaries_Hub {
                 'title' => 'Географія',
                 'icon'  => '🌍',
                 'items' => [
-                    [ 'title' => 'Країни', 'desc' => 'Довідник країн', 'url' => '/adm/Country/' ],
-                    [ 'title' => 'Області', 'desc' => 'Довідник областей України', 'url' => '/adm/Region/' ],
+                    [ 'title' => 'Країни', 'desc' => 'Довідник країн', 'url' => $country_url ],
+                    [ 'title' => 'Області', 'desc' => 'Довідник областей України', 'url' => $region_url ],
                     [ 'title' => 'Населені пункти', 'desc' => 'Довідник міст та сіл', 'url' => '/adm/City/' ],
                 ],
             ],

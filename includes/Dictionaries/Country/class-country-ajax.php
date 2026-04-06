@@ -1,14 +1,14 @@
 <?php
 /**
- * AJAX-обробники модуля "Довідник керівних органів ФСТУ".
+ * AJAX-обробники модуля "Довідник країн".
  *
- * Version:     1.0.1
+ * Version:     1.0.2
  * Date_update: 2026-04-06
  *
- * @package FSTU\Dictionaries\TypeGuidance
+ * @package FSTU\Dictionaries\Country
  */
 
-namespace FSTU\Dictionaries\TypeGuidance;
+namespace FSTU\Dictionaries\Country;
 
 use FSTU\Core\Capabilities;
 
@@ -16,11 +16,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class TypeGuidance_Ajax {
+class Country_Ajax {
 
+	private const DEFAULT_PER_PAGE      = 10;
 	private const MAX_PER_PAGE          = 50;
 	private const MAX_PROTOCOL_PER_PAGE = 50;
-	private const LOG_NAME              = 'TypeGuidance';
+	private const MAX_SEARCH_LENGTH     = 100;
+	private const LOG_NAME              = 'Country';
 	private const LOG_TYPE_INSERT       = 'I';
 	private const LOG_TYPE_UPDATE       = 'U';
 	private const LOG_TYPE_DELETE       = 'D';
@@ -30,27 +32,28 @@ class TypeGuidance_Ajax {
 	 * Реєструє AJAX-обробники.
 	 */
 	public function init(): void {
-		add_action( 'wp_ajax_fstu_typeguidance_get_list', [ $this, 'handle_get_list' ] );
-		add_action( 'wp_ajax_fstu_typeguidance_get_single', [ $this, 'handle_get_single' ] );
-		add_action( 'wp_ajax_fstu_typeguidance_create', [ $this, 'handle_create' ] );
-		add_action( 'wp_ajax_fstu_typeguidance_update', [ $this, 'handle_update' ] );
-		add_action( 'wp_ajax_fstu_typeguidance_delete', [ $this, 'handle_delete' ] );
-		add_action( 'wp_ajax_fstu_typeguidance_get_protocol', [ $this, 'handle_get_protocol' ] );
+		add_action( 'wp_ajax_fstu_country_get_list', [ $this, 'handle_get_list' ] );
+		add_action( 'wp_ajax_fstu_country_get_single', [ $this, 'handle_get_single' ] );
+		add_action( 'wp_ajax_fstu_country_create', [ $this, 'handle_create' ] );
+		add_action( 'wp_ajax_fstu_country_update', [ $this, 'handle_update' ] );
+		add_action( 'wp_ajax_fstu_country_delete', [ $this, 'handle_delete' ] );
+		add_action( 'wp_ajax_fstu_country_get_protocol', [ $this, 'handle_get_protocol' ] );
 	}
 
 	/**
 	 * Повертає список записів.
 	 */
 	public function handle_get_list(): void {
-		check_ajax_referer( TypeGuidance_List::NONCE_ACTION, 'nonce' );
+		check_ajax_referer( Country_List::NONCE_ACTION, 'nonce' );
 
 		if ( ! $this->current_user_can_view() ) {
 			wp_send_json_error( [ 'message' => __( 'Немає прав для перегляду довідника.', 'fstu' ) ] );
 		}
 
 		$search   = sanitize_text_field( wp_unslash( $_POST['search'] ?? '' ) );
+		$search   = mb_substr( $search, 0, self::MAX_SEARCH_LENGTH );
 		$page     = max( 1, absint( $_POST['page'] ?? 1 ) );
-		$per_page = min( max( 1, absint( $_POST['per_page'] ?? 10 ) ), self::MAX_PER_PAGE );
+		$per_page = min( max( 1, absint( $_POST['per_page'] ?? self::DEFAULT_PER_PAGE ) ), self::MAX_PER_PAGE );
 		$offset   = ( $page - 1 ) * $per_page;
 
 		global $wpdb;
@@ -59,19 +62,19 @@ class TypeGuidance_Ajax {
 		$params = [];
 
 		if ( '' !== $search ) {
-			$like    = '%' . $wpdb->esc_like( $search ) . '%';
-			$where  .= ' AND TypeGuidance_Name LIKE %s';
+			$like     = '%' . $wpdb->esc_like( $search ) . '%';
+			$where   .= ' AND Country_Name LIKE %s';
 			$params[] = $like;
 		}
 
-		$count_sql = "SELECT COUNT(*) FROM vTypeGuidance WHERE {$where}";
+		$count_sql = "SELECT COUNT(*) FROM vCountry WHERE {$where}";
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.NotPrepared
 		$total = (int) ( $params ? $wpdb->get_var( $wpdb->prepare( $count_sql, ...$params ) ) : $wpdb->get_var( $count_sql ) );
 
-		$list_sql = "SELECT TypeGuidance_ID, TypeGuidance_Name, TypeGuidance_Number, TypeGuidance_Order
-			FROM vTypeGuidance
+		$list_sql = "SELECT Country_ID, Country_Name, Country_NameEng, Country_Order
+			FROM vCountry
 			WHERE {$where}
-			ORDER BY TypeGuidance_Order ASC, TypeGuidance_Name ASC
+			ORDER BY Country_Order ASC, Country_Name ASC
 			LIMIT %d OFFSET %d";
 
 		$list_params = array_merge( $params, [ $per_page, $offset ] );
@@ -93,18 +96,18 @@ class TypeGuidance_Ajax {
 	 * Повертає один запис.
 	 */
 	public function handle_get_single(): void {
-		check_ajax_referer( TypeGuidance_List::NONCE_ACTION, 'nonce' );
+		check_ajax_referer( Country_List::NONCE_ACTION, 'nonce' );
 
 		if ( ! $this->current_user_can_view() ) {
 			wp_send_json_error( [ 'message' => __( 'Немає прав для перегляду запису.', 'fstu' ) ] );
 		}
 
-		$typeguidance_id = absint( $_POST['typeguidance_id'] ?? 0 );
-		if ( $typeguidance_id <= 0 ) {
+		$country_id = absint( $_POST['country_id'] ?? 0 );
+		if ( $country_id <= 0 ) {
 			wp_send_json_error( [ 'message' => __( 'Невірний ідентифікатор запису.', 'fstu' ) ] );
 		}
 
-		$item = $this->get_typeguidance_by_id( $typeguidance_id );
+		$item = $this->get_country_by_id( $country_id );
 		if ( ! is_array( $item ) ) {
 			wp_send_json_error( [ 'message' => __( 'Запис не знайдено.', 'fstu' ) ] );
 		}
@@ -112,10 +115,11 @@ class TypeGuidance_Ajax {
 		wp_send_json_success(
 			[
 				'item' => [
-					'typeguidance_id'     => (int) $item['TypeGuidance_ID'],
-					'typeguidance_name'   => (string) $item['TypeGuidance_Name'],
-					'typeguidance_number' => (string) ( $item['TypeGuidance_Number'] ?? '' ),
-					'typeguidance_order'  => (int) ( $item['TypeGuidance_Order'] ?? 0 ),
+					'country_id'         => (int) $item['Country_ID'],
+					'country_name'       => (string) $item['Country_Name'],
+					'country_name_eng'   => (string) ( $item['Country_NameEng'] ?? '' ),
+					'country_order'      => (int) ( $item['Country_Order'] ?? 0 ),
+					'country_date_create'=> (string) ( $item['Country_DateCreate'] ?? '' ),
 				],
 			]
 		);
@@ -125,7 +129,7 @@ class TypeGuidance_Ajax {
 	 * Створює запис.
 	 */
 	public function handle_create(): void {
-		check_ajax_referer( TypeGuidance_List::NONCE_ACTION, 'nonce' );
+		check_ajax_referer( Country_List::NONCE_ACTION, 'nonce' );
 
 		if ( ! $this->current_user_can_manage() ) {
 			wp_send_json_error( [ 'message' => __( 'Недостатньо прав для додавання запису.', 'fstu' ) ] );
@@ -144,37 +148,41 @@ class TypeGuidance_Ajax {
 
 		global $wpdb;
 
-		$order = $data['typeguidance_order'];
+		$order = $data['country_order'];
 		if ( null === $order ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-			$order = (int) $wpdb->get_var( 'SELECT COALESCE(MAX(TypeGuidance_Order), 0) FROM S_TypeGuidance' ) + 1;
+			$order = (int) $wpdb->get_var( 'SELECT COALESCE(MAX(Country_Order), 0) FROM S_Country' ) + 1;
 		}
 
 		try {
 			$this->begin_transaction();
 
 			$inserted = $wpdb->insert(
-				'S_TypeGuidance',
+				'S_Country',
 				[
-					'TypeGuidance_DateCreate' => current_time( 'mysql' ),
-					'TypeGuidance_Name'       => $data['typeguidance_name'],
-					'TypeGuidance_Number'     => $data['typeguidance_number'],
-					'TypeGuidance_Order'      => $order,
+					'Country_DateCreate' => current_time( 'mysql' ),
+					'Country_Name'       => $data['country_name'],
+					'Country_NameEng'    => $data['country_name_eng'],
+					'Country_Order'      => $order,
 				],
 				[ '%s', '%s', '%s', '%d' ]
 			);
 
 			if ( false === $inserted ) {
-				throw new \RuntimeException( 'typeguidance_insert_failed' );
+				throw new \RuntimeException( 'country_insert_failed' );
 			}
 
-			$this->log_action( self::LOG_TYPE_INSERT, sprintf( 'Додано керівний орган: %s', $data['typeguidance_name'] ), self::LOG_STATUS_SUCCESS );
+			$this->log_action( self::LOG_TYPE_INSERT, sprintf( 'Додано нову країну: %s', $data['country_name'] ), self::LOG_STATUS_SUCCESS );
 			$this->commit_transaction();
 
-			wp_send_json_success( [ 'message' => __( 'Запис успішно додано.', 'fstu' ) ] );
+			wp_send_json_success( [ 'message' => __( 'Країну успішно додано.', 'fstu' ) ] );
 		} catch ( \Throwable $exception ) {
 			$this->rollback_transaction();
-			$this->try_log_action( self::LOG_TYPE_INSERT, __( 'Помилка додавання керівного органу.', 'fstu' ), 'error' );
+			$this->try_log_action(
+				self::LOG_TYPE_INSERT,
+				sprintf( 'Помилка додавання країни: %s', $data['country_name'] ),
+				'error'
+			);
 
 			wp_send_json_error( [ 'message' => __( 'Помилка при збереженні запису.', 'fstu' ) ] );
 		}
@@ -184,7 +192,7 @@ class TypeGuidance_Ajax {
 	 * Оновлює запис.
 	 */
 	public function handle_update(): void {
-		check_ajax_referer( TypeGuidance_List::NONCE_ACTION, 'nonce' );
+		check_ajax_referer( Country_List::NONCE_ACTION, 'nonce' );
 
 		if ( ! $this->current_user_can_manage() ) {
 			wp_send_json_error( [ 'message' => __( 'Недостатньо прав для редагування запису.', 'fstu' ) ] );
@@ -194,11 +202,11 @@ class TypeGuidance_Ajax {
 			wp_send_json_error( [ 'message' => __( 'Запит відхилено.', 'fstu' ) ] );
 		}
 
-		$typeguidance_id = absint( $_POST['typeguidance_id'] ?? 0 );
-		$data            = $this->sanitize_form_data();
-		$error_message   = $this->validate_form_data( $data, $typeguidance_id );
+		$country_id     = absint( $_POST['country_id'] ?? 0 );
+		$data           = $this->sanitize_form_data();
+		$error_message  = $this->validate_form_data( $data, $country_id );
 
-		if ( $typeguidance_id <= 0 ) {
+		if ( $country_id <= 0 ) {
 			wp_send_json_error( [ 'message' => __( 'Невірний ідентифікатор запису.', 'fstu' ) ] );
 		}
 
@@ -206,43 +214,48 @@ class TypeGuidance_Ajax {
 			wp_send_json_error( [ 'message' => $error_message ] );
 		}
 
-		$item = $this->get_typeguidance_by_id( $typeguidance_id );
+		$item = $this->get_country_by_id( $country_id );
 		if ( ! is_array( $item ) ) {
 			wp_send_json_error( [ 'message' => __( 'Запис не знайдено.', 'fstu' ) ] );
 		}
 
 		global $wpdb;
 
-		$order = null === $data['typeguidance_order']
-			? (int) ( $item['TypeGuidance_Order'] ?? 0 )
-			: $data['typeguidance_order'];
+		$order = null === $data['country_order']
+			? (int) ( $item['Country_Order'] ?? 0 )
+			: $data['country_order'];
+
 
 		try {
 			$this->begin_transaction();
 
 			$updated = $wpdb->update(
-				'S_TypeGuidance',
+				'S_Country',
 				[
-					'TypeGuidance_Name'   => $data['typeguidance_name'],
-					'TypeGuidance_Number' => $data['typeguidance_number'],
-					'TypeGuidance_Order'  => $order,
+					'Country_Name'    => $data['country_name'],
+					'Country_NameEng' => $data['country_name_eng'],
+					'Country_Order'   => $order,
 				],
-				[ 'TypeGuidance_ID' => $typeguidance_id ],
+				[ 'Country_ID' => $country_id ],
 				[ '%s', '%s', '%d' ],
 				[ '%d' ]
 			);
 
 			if ( false === $updated ) {
-				throw new \RuntimeException( 'typeguidance_update_failed' );
+				throw new \RuntimeException( 'country_update_failed' );
 			}
 
-			$this->log_action( self::LOG_TYPE_UPDATE, sprintf( 'Оновлено керівний орган: %s', $data['typeguidance_name'] ), self::LOG_STATUS_SUCCESS );
+			$this->log_action( self::LOG_TYPE_UPDATE, sprintf( 'Оновлено країну: %s', $data['country_name'] ), self::LOG_STATUS_SUCCESS );
 			$this->commit_transaction();
 
-			wp_send_json_success( [ 'message' => __( 'Запис успішно оновлено.', 'fstu' ) ] );
+			wp_send_json_success( [ 'message' => __( 'Країну успішно оновлено.', 'fstu' ) ] );
 		} catch ( \Throwable $exception ) {
 			$this->rollback_transaction();
-			$this->try_log_action( self::LOG_TYPE_UPDATE, sprintf( 'Помилка оновлення керівного органу: %s', (string) $item['TypeGuidance_Name'] ), 'error' );
+			$this->try_log_action(
+				self::LOG_TYPE_UPDATE,
+				sprintf( 'Помилка оновлення країни: %s', (string) $item['Country_Name'] ),
+				'error'
+			);
 
 			wp_send_json_error( [ 'message' => __( 'Помилка при збереженні запису.', 'fstu' ) ] );
 		}
@@ -252,25 +265,25 @@ class TypeGuidance_Ajax {
 	 * Видаляє запис.
 	 */
 	public function handle_delete(): void {
-		check_ajax_referer( TypeGuidance_List::NONCE_ACTION, 'nonce' );
+		check_ajax_referer( Country_List::NONCE_ACTION, 'nonce' );
 
 		if ( ! $this->current_user_can_delete() ) {
 			wp_send_json_error( [ 'message' => __( 'Недостатньо прав для видалення запису.', 'fstu' ) ] );
 		}
 
-		$typeguidance_id = absint( $_POST['typeguidance_id'] ?? 0 );
-		if ( $typeguidance_id <= 0 ) {
+		$country_id = absint( $_POST['country_id'] ?? 0 );
+		if ( $country_id <= 0 ) {
 			wp_send_json_error( [ 'message' => __( 'Невірний ідентифікатор запису.', 'fstu' ) ] );
 		}
 
-		$item = $this->get_typeguidance_by_id( $typeguidance_id );
+		$item = $this->get_country_by_id( $country_id );
 		if ( ! is_array( $item ) ) {
 			wp_send_json_error( [ 'message' => __( 'Запис не знайдено.', 'fstu' ) ] );
 		}
 
-		$dependency_check = $this->check_delete_dependencies( $typeguidance_id );
+		$dependency_check = $this->check_delete_dependencies( $country_id );
 		if ( ! $dependency_check['can_delete'] ) {
-			$this->try_log_action( self::LOG_TYPE_DELETE, sprintf( 'Заблоковано видалення керівного органу: %s', (string) $item['TypeGuidance_Name'] ), $dependency_check['status'] );
+			$this->try_log_action( self::LOG_TYPE_DELETE, sprintf( 'Заблоковано видалення країни: %s', (string) $item['Country_Name'] ), $dependency_check['status'] );
 			wp_send_json_error( [ 'message' => $dependency_check['message'] ] );
 		}
 
@@ -279,19 +292,23 @@ class TypeGuidance_Ajax {
 		try {
 			$this->begin_transaction();
 
-			$deleted = $wpdb->delete( 'S_TypeGuidance', [ 'TypeGuidance_ID' => $typeguidance_id ], [ '%d' ] );
+			$deleted = $wpdb->delete( 'S_Country', [ 'Country_ID' => $country_id ], [ '%d' ] );
 
 			if ( false === $deleted || 1 !== (int) $deleted ) {
-				throw new \RuntimeException( 'typeguidance_delete_failed' );
+				throw new \RuntimeException( 'country_delete_failed' );
 			}
 
-			$this->log_action( self::LOG_TYPE_DELETE, sprintf( 'Видалено керівний орган: %s', (string) $item['TypeGuidance_Name'] ), self::LOG_STATUS_SUCCESS );
+			$this->log_action( self::LOG_TYPE_DELETE, sprintf( 'Видалено країну: %s', (string) $item['Country_Name'] ), self::LOG_STATUS_SUCCESS );
 			$this->commit_transaction();
 
-			wp_send_json_success( [ 'message' => __( 'Запис успішно видалено.', 'fstu' ) ] );
+			wp_send_json_success( [ 'message' => __( 'Країну успішно видалено.', 'fstu' ) ] );
 		} catch ( \Throwable $exception ) {
 			$this->rollback_transaction();
-			$this->try_log_action( self::LOG_TYPE_DELETE, sprintf( 'Помилка видалення керівного органу: %s', (string) $item['TypeGuidance_Name'] ), 'error' );
+			$this->try_log_action(
+				self::LOG_TYPE_DELETE,
+				sprintf( 'Помилка видалення країни: %s', (string) $item['Country_Name'] ),
+				'error'
+			);
 
 			wp_send_json_error( [ 'message' => __( 'Не вдалося видалити запис.', 'fstu' ) ] );
 		}
@@ -301,15 +318,16 @@ class TypeGuidance_Ajax {
 	 * Повертає протокол модуля.
 	 */
 	public function handle_get_protocol(): void {
-		check_ajax_referer( TypeGuidance_List::NONCE_ACTION, 'nonce' );
+		check_ajax_referer( Country_List::NONCE_ACTION, 'nonce' );
 
 		if ( ! $this->current_user_can_protocol() ) {
 			wp_send_json_error( [ 'message' => __( 'Немає прав для перегляду протоколу.', 'fstu' ) ] );
 		}
 
 		$search   = sanitize_text_field( wp_unslash( $_POST['search'] ?? '' ) );
+		$search   = mb_substr( $search, 0, self::MAX_SEARCH_LENGTH );
 		$page     = max( 1, absint( $_POST['page'] ?? 1 ) );
-		$per_page = min( max( 1, absint( $_POST['per_page'] ?? 10 ) ), self::MAX_PROTOCOL_PER_PAGE );
+		$per_page = min( max( 1, absint( $_POST['per_page'] ?? self::DEFAULT_PER_PAGE ) ), self::MAX_PROTOCOL_PER_PAGE );
 		$offset   = ( $page - 1 ) * $per_page;
 
 		global $wpdb;
@@ -357,9 +375,9 @@ class TypeGuidance_Ajax {
 	/**
 	 * Будує HTML рядків таблиці.
 	 *
-	 * @param array<int,array<string,mixed>> $items
-	 * @param int                            $offset
-	 * @param array<string,bool>             $permissions
+	 * @param array<int,array<string,mixed>> $items       Рядки таблиці.
+	 * @param int                            $offset      Зсув пагінації.
+	 * @param array<string,bool>             $permissions Права поточного користувача.
 	 */
 	private function build_rows( array $items, int $offset, array $permissions ): string {
 		if ( empty( $items ) ) {
@@ -372,29 +390,29 @@ class TypeGuidance_Ajax {
 		foreach ( $items as $item ) {
 			++$index;
 
-			$typeguidance_id     = (int) ( $item['TypeGuidance_ID'] ?? 0 );
-			$typeguidance_name   = (string) ( $item['TypeGuidance_Name'] ?? '' );
-			$typeguidance_number = (string) ( $item['TypeGuidance_Number'] ?? '' );
+			$country_id       = (int) ( $item['Country_ID'] ?? 0 );
+			$country_name     = (string) ( $item['Country_Name'] ?? '' );
+			$country_name_eng = (string) ( $item['Country_NameEng'] ?? '' );
 
 			$actions   = [];
-			$actions[] = '<button type="button" class="fstu-typeguidance-dropdown__item fstu-typeguidance-view-btn" data-typeguidance-id="' . esc_attr( (string) $typeguidance_id ) . '">' . esc_html__( 'Перегляд', 'fstu' ) . '</button>';
+			$actions[] = '<button type="button" class="fstu-country-dropdown__item fstu-country-view-btn" data-country-id="' . esc_attr( (string) $country_id ) . '">' . esc_html__( 'Перегляд', 'fstu' ) . '</button>';
 
 			if ( ! empty( $permissions['canManage'] ) ) {
-				$actions[] = '<button type="button" class="fstu-typeguidance-dropdown__item fstu-typeguidance-edit-btn" data-typeguidance-id="' . esc_attr( (string) $typeguidance_id ) . '">' . esc_html__( 'Редагування', 'fstu' ) . '</button>';
+				$actions[] = '<button type="button" class="fstu-country-dropdown__item fstu-country-edit-btn" data-country-id="' . esc_attr( (string) $country_id ) . '">' . esc_html__( 'Редагування', 'fstu' ) . '</button>';
 			}
 
 			if ( ! empty( $permissions['canDelete'] ) ) {
-				$actions[] = '<button type="button" class="fstu-typeguidance-dropdown__item fstu-typeguidance-dropdown__item--danger fstu-typeguidance-delete-btn" data-typeguidance-id="' . esc_attr( (string) $typeguidance_id ) . '">' . esc_html__( 'Видалення', 'fstu' ) . '</button>';
+				$actions[] = '<button type="button" class="fstu-country-dropdown__item fstu-country-dropdown__item--danger fstu-country-delete-btn" data-country-id="' . esc_attr( (string) $country_id ) . '">' . esc_html__( 'Видалення', 'fstu' ) . '</button>';
 			}
 
 			$html .= '<tr class="fstu-row">';
 			$html .= '<td class="fstu-td fstu-td--num">' . esc_html( (string) $index ) . '</td>';
-			$html .= '<td class="fstu-td fstu-td--name"><button type="button" class="fstu-typeguidance-link-button fstu-typeguidance-view-btn" data-typeguidance-id="' . esc_attr( (string) $typeguidance_id ) . '">' . esc_html( $typeguidance_name ) . '</button></td>';
-			$html .= '<td class="fstu-td fstu-td--number">' . ( '' !== $typeguidance_number ? esc_html( $typeguidance_number ) : '<span class="fstu-text-muted">—</span>' ) . '</td>';
+			$html .= '<td class="fstu-td fstu-td--name"><button type="button" class="fstu-country-link-button fstu-country-view-btn" data-country-id="' . esc_attr( (string) $country_id ) . '">' . esc_html( $country_name ) . '</button></td>';
+			$html .= '<td class="fstu-td fstu-td--name-eng">' . ( '' !== $country_name_eng ? esc_html( $country_name_eng ) : '<span class="fstu-text-muted">—</span>' ) . '</td>';
 			$html .= '<td class="fstu-td fstu-td--actions">';
-			$html .= '<div class="fstu-typeguidance-dropdown">';
-			$html .= '<button type="button" class="fstu-typeguidance-dropdown__toggle" aria-expanded="false" title="' . esc_attr__( 'Меню дій', 'fstu' ) . '">▼</button>';
-			$html .= '<div class="fstu-typeguidance-dropdown__menu">' . implode( '', $actions ) . '</div>';
+			$html .= '<div class="fstu-country-dropdown">';
+			$html .= '<button type="button" class="fstu-country-dropdown__toggle" aria-expanded="false" title="' . esc_attr__( 'Меню дій', 'fstu' ) . '">▼</button>';
+			$html .= '<div class="fstu-country-dropdown__menu">' . implode( '', $actions ) . '</div>';
 			$html .= '</div>';
 			$html .= '</td>';
 			$html .= '</tr>';
@@ -406,7 +424,7 @@ class TypeGuidance_Ajax {
 	/**
 	 * Будує HTML рядків протоколу.
 	 *
-	 * @param array<int,array<string,mixed>> $items
+	 * @param array<int,array<string,mixed>> $items Рядки протоколу.
 	 */
 	private function build_protocol_rows( array $items ): string {
 		if ( empty( $items ) ) {
@@ -435,25 +453,26 @@ class TypeGuidance_Ajax {
 	 * @return array<string,mixed>
 	 */
 	private function sanitize_form_data(): array {
-		$order_raw = sanitize_text_field( wp_unslash( $_POST['typeguidance_order'] ?? '' ) );
+		$order_raw = sanitize_text_field( wp_unslash( $_POST['country_order'] ?? '' ) );
 
 		return [
-			'typeguidance_name'      => sanitize_text_field( wp_unslash( $_POST['typeguidance_name'] ?? '' ) ),
-			'typeguidance_number'    => sanitize_text_field( wp_unslash( $_POST['typeguidance_number'] ?? '' ) ),
-			'typeguidance_order_raw' => $order_raw,
-			'typeguidance_order'     => '' === $order_raw ? null : absint( $order_raw ),
+			'country_name'         => $this->normalize_form_string( sanitize_text_field( wp_unslash( $_POST['country_name'] ?? '' ) ) ),
+			'country_name_eng'     => $this->normalize_form_string( sanitize_text_field( wp_unslash( $_POST['country_name_eng'] ?? '' ) ) ),
+			'country_order_raw'    => $order_raw,
+			'country_order'        => '' === $order_raw ? null : absint( $order_raw ),
 		];
 	}
 
 	/**
 	 * Валідує форму.
 	 *
-	 * @param array<string,mixed> $data Дані форми.
+	 * @param array<string,mixed> $data       Дані форми.
+	 * @param int                 $country_id Поточний ID для update.
 	 */
-	private function validate_form_data( array $data, int $typeguidance_id = 0 ): string {
-		$name = (string) ( $data['typeguidance_name'] ?? '' );
-		$number = (string) ( $data['typeguidance_number'] ?? '' );
-		$order_raw = (string) ( $data['typeguidance_order_raw'] ?? '' );
+	private function validate_form_data( array $data, int $country_id = 0 ): string {
+		$name      = (string) ( $data['country_name'] ?? '' );
+		$name_eng  = (string) ( $data['country_name_eng'] ?? '' );
+		$order_raw = (string) ( $data['country_order_raw'] ?? '' );
 
 		if ( mb_strlen( $name ) < 2 ) {
 			return __( 'Поле «Найменування» є обов’язковим.', 'fstu' );
@@ -463,20 +482,20 @@ class TypeGuidance_Ajax {
 			return __( 'Поле «Найменування» не може бути довшим за 255 символів.', 'fstu' );
 		}
 
-		if ( mb_strlen( $number ) > 50 ) {
-			return __( 'Поле «№ статті/сторінки» не може бути довшим за 50 символів.', 'fstu' );
-		}
-
-		if ( '' !== $number && ! preg_match( '/^[\p{L}\p{N}\s\/\-.,()№#]+$/u', $number ) ) {
-			return __( 'Поле «№ статті/сторінки» містить недопустимі символи.', 'fstu' );
+		if ( '' !== $name_eng && mb_strlen( $name_eng ) > 255 ) {
+			return __( 'Поле «Англійською» не може бути довшим за 255 символів.', 'fstu' );
 		}
 
 		if ( '' !== $order_raw && ! preg_match( '/^\d+$/', $order_raw ) ) {
 			return __( 'Поле «Сортування» повинно містити лише невід’ємне число.', 'fstu' );
 		}
 
-		if ( $this->typeguidance_name_exists( $name, $typeguidance_id ) ) {
+		if ( $this->country_name_exists( $name, $country_id ) ) {
 			return __( 'Запис з таким найменуванням уже існує.', 'fstu' );
+		}
+
+		if ( '' !== $name_eng && $this->country_name_eng_exists( $name_eng, $country_id ) ) {
+			return __( 'Запис з такою англійською назвою уже існує.', 'fstu' );
 		}
 
 		return '';
@@ -496,35 +515,35 @@ class TypeGuidance_Ajax {
 	 * @return array<string,bool>
 	 */
 	private function get_permissions(): array {
-		return Capabilities::get_typeguidance_permissions();
+		return Capabilities::get_country_permissions();
 	}
 
 	/**
 	 * Чи може користувач переглядати модуль.
 	 */
 	private function current_user_can_view(): bool {
-		return Capabilities::current_user_can_view_typeguidance();
+		return Capabilities::current_user_can_view_country();
 	}
 
 	/**
 	 * Чи може користувач керувати модулем.
 	 */
 	private function current_user_can_manage(): bool {
-		return Capabilities::current_user_can_manage_typeguidance();
+		return Capabilities::current_user_can_manage_country();
 	}
 
 	/**
 	 * Чи може користувач видаляти записи.
 	 */
 	private function current_user_can_delete(): bool {
-		return Capabilities::current_user_can_delete_typeguidance();
+		return Capabilities::current_user_can_delete_country();
 	}
 
 	/**
 	 * Чи може користувач переглядати протокол.
 	 */
 	private function current_user_can_protocol(): bool {
-		return Capabilities::current_user_can_view_typeguidance_protocol();
+		return Capabilities::current_user_can_view_country_protocol();
 	}
 
 	/**
@@ -532,17 +551,14 @@ class TypeGuidance_Ajax {
 	 *
 	 * @return array<string,mixed>|null
 	 */
-	private function get_typeguidance_by_id( int $typeguidance_id ): ?array {
+	private function get_country_by_id( int $country_id ): ?array {
 		global $wpdb;
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		$item = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT TypeGuidance_ID, TypeGuidance_Name, TypeGuidance_Number, TypeGuidance_Order
-				 FROM S_TypeGuidance
-				 WHERE TypeGuidance_ID = %d
-				 LIMIT 1",
-				$typeguidance_id
+				'SELECT Country_ID, Country_DateCreate, Country_Name, Country_NameEng, Country_Order FROM S_Country WHERE Country_ID = %d LIMIT 1',
+				$country_id
 			),
 			ARRAY_A
 		);
@@ -553,23 +569,59 @@ class TypeGuidance_Ajax {
 	/**
 	 * Перевіряє, чи існує запис з таким найменуванням.
 	 */
-	private function typeguidance_name_exists( string $typeguidance_name, int $exclude_id = 0 ): bool {
-		global $wpdb;
+	private function country_name_exists( string $country_name, int $exclude_id = 0 ): bool {
+		$rows = $this->get_existing_country_names();
+		$needle = $this->normalize_compare_string( $country_name );
 
-		$sql    = 'SELECT TypeGuidance_ID FROM S_TypeGuidance WHERE TypeGuidance_Name = %s';
-		$params = [ $typeguidance_name ];
+		foreach ( $rows as $row ) {
+			$current_id = (int) ( $row['Country_ID'] ?? 0 );
+			if ( $exclude_id > 0 && $exclude_id === $current_id ) {
+				continue;
+			}
 
-		if ( $exclude_id > 0 ) {
-			$sql     .= ' AND TypeGuidance_ID != %d';
-			$params[] = $exclude_id;
+			$current_name = $this->normalize_compare_string( (string) ( $row['Country_Name'] ?? '' ) );
+			if ( '' !== $current_name && $current_name === $needle ) {
+				return true;
+			}
 		}
 
-		$sql .= ' LIMIT 1';
+		return false;
+	}
+
+	/**
+	 * Перевіряє, чи існує запис з такою англійською назвою.
+	 */
+	private function country_name_eng_exists( string $country_name_eng, int $exclude_id = 0 ): bool {
+		$rows   = $this->get_existing_country_names();
+		$needle = $this->normalize_compare_string( $country_name_eng );
+
+		foreach ( $rows as $row ) {
+			$current_id = (int) ( $row['Country_ID'] ?? 0 );
+			if ( $exclude_id > 0 && $exclude_id === $current_id ) {
+				continue;
+			}
+
+			$current_name_eng = $this->normalize_compare_string( (string) ( $row['Country_NameEng'] ?? '' ) );
+			if ( '' !== $current_name_eng && $current_name_eng === $needle ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Повертає всі наявні назви країн для duplicate-check.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function get_existing_country_names(): array {
+		global $wpdb;
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		$existing_id = $wpdb->get_var( $wpdb->prepare( $sql, ...$params ) );
+		$rows = $wpdb->get_results( 'SELECT Country_ID, Country_Name, Country_NameEng FROM S_Country', ARRAY_A );
 
-		return null !== $existing_id;
+		return is_array( $rows ) ? $rows : [];
 	}
 
 	/**
@@ -577,44 +629,90 @@ class TypeGuidance_Ajax {
 	 *
 	 * @return array<string,mixed>
 	 */
-	private function check_delete_dependencies( int $typeguidance_id ): array {
+	private function check_delete_dependencies( int $country_id ): array {
 		global $wpdb;
 
-		$dependencies = [];
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		$member_guidance_count = (int) $wpdb->get_var(
-			$wpdb->prepare(
-				'SELECT COUNT(*) FROM S_MemberGuidance WHERE TypeGuidance_ID = %d',
-				$typeguidance_id
-			)
-		);
-
-		if ( ! empty( $wpdb->last_error ) ) {
+		$schema_name = defined( 'DB_NAME' ) ? (string) DB_NAME : '';
+		if ( '' === $schema_name ) {
 			return [
 				'can_delete' => false,
 				'message'    => __( 'Неможливо перевірити зв’язки запису. Видалення заблоковано з міркувань безпеки.', 'fstu' ),
-				'status'     => 'dependency query error',
+				'status'     => 'dependency check unavailable',
 			];
 		}
 
-		if ( $member_guidance_count > 0 ) {
-			$dependencies[] = 'S_MemberGuidance: ' . $member_guidance_count;
+		$metadata_sql = 'SELECT TABLE_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = %s AND COLUMN_NAME = %s AND TABLE_NAME NOT IN (%s, %s) GROUP BY TABLE_NAME ORDER BY TABLE_NAME ASC';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$tables = $wpdb->get_col( $wpdb->prepare( $metadata_sql, $schema_name, 'Country_ID', 'S_Country', 'vCountry' ) );
+
+		if ( ! is_array( $tables ) ) {
+			return [
+				'can_delete' => false,
+				'message'    => __( 'Неможливо перевірити зв’язки запису. Видалення заблоковано з міркувань безпеки.', 'fstu' ),
+				'status'     => 'dependency check failed',
+			];
+		}
+
+		/**
+		 * Дає змогу розширити список таблиць / views, які треба перевірити перед delete.
+		 *
+		 * @param array<int,string> $tables Список об’єктів БД з колонкою Country_ID.
+		 */
+		$tables = apply_filters( 'fstu_country_dependency_tables', $tables );
+		$tables = is_array( $tables ) ? array_values( array_unique( array_filter( array_map( 'strval', $tables ) ) ) ) : [];
+
+		$dependencies = [];
+
+		foreach ( $tables as $table_name ) {
+			if ( ! preg_match( '/^[A-Za-z0-9_]+$/', $table_name ) ) {
+				continue;
+			}
+
+			$sql = "SELECT COUNT(*) FROM `{$table_name}` WHERE `Country_ID` = %d";
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$count = (int) $wpdb->get_var( $wpdb->prepare( $sql, $country_id ) );
+
+			if ( ! empty( $wpdb->last_error ) ) {
+				return [
+					'can_delete' => false,
+					'message'    => __( 'Неможливо перевірити зв’язки запису. Видалення заблоковано з міркувань безпеки.', 'fstu' ),
+					'status'     => 'dependency query error',
+				];
+			}
+
+			if ( $count > 0 ) {
+				$dependencies[] = $table_name . ': ' . $count;
+			}
 		}
 
 		if ( ! empty( $dependencies ) ) {
 			return [
 				'can_delete' => false,
-				'message'    => __( 'Керівний орган неможливо видалити, оскільки він використовується в інших даних.', 'fstu' ),
-				'status'     => 'dependency',
+				'message'    => __( 'Країну неможливо видалити, оскільки вона використовується в інших даних.', 'fstu' ),
+				'status'     => implode( '; ', $dependencies ),
 			];
 		}
 
 		return [
 			'can_delete' => true,
 			'message'    => '',
-			'status'     => self::LOG_STATUS_SUCCESS,
+			'status'     => '✓',
 		];
+	}
+
+	/**
+	 * Нормалізує рядок для duplicate-check.
+	 */
+	private function normalize_compare_string( string $value ): string {
+		$value = $this->normalize_form_string( $value );
+		return mb_strtolower( $value );
+	}
+
+	/**
+	 * Нормалізує рядок форми без зміни початкового регістру символів.
+	 */
+	private function normalize_form_string( string $value ): string {
+		return trim( preg_replace( '/\s+/u', ' ', $value ) ?? $value );
 	}
 
 	/**
@@ -693,7 +791,7 @@ class TypeGuidance_Ajax {
 		);
 
 		if ( false === $inserted ) {
-			throw new \RuntimeException( 'typeguidance_log_insert_failed' );
+			throw new \RuntimeException( 'country_log_insert_failed' );
 		}
 	}
 
@@ -718,7 +816,7 @@ class TypeGuidance_Ajax {
 		$result = $wpdb->query( 'START TRANSACTION' );
 
 		if ( false === $result ) {
-			throw new \RuntimeException( 'typeguidance_transaction_start_failed' );
+			throw new \RuntimeException( 'country_transaction_start_failed' );
 		}
 	}
 
@@ -732,7 +830,7 @@ class TypeGuidance_Ajax {
 		$result = $wpdb->query( 'COMMIT' );
 
 		if ( false === $result ) {
-			throw new \RuntimeException( 'typeguidance_transaction_commit_failed' );
+			throw new \RuntimeException( 'country_transaction_commit_failed' );
 		}
 	}
 

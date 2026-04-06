@@ -2,7 +2,7 @@
 /**
  * Клас централізованого керування capability-моделлю ФСТУ.
  *
- * Version:     1.3.0
+ * Version:     1.5.0
  * Date_update: 2026-04-06
  *
  * @package FSTU\Core
@@ -33,6 +33,14 @@ class Capabilities {
 	public const DELETE_MEMBER_GUIDANCE        = 'fstu_delete_member_guidance';
 	public const DELETE_OWN_MEMBER_GUIDANCE    = 'fstu_delete_own_member_guidance';
 	public const VIEW_MEMBER_GUIDANCE_PROTOCOL = 'fstu_view_member_guidance_protocol';
+	public const VIEW_COUNTRY                  = 'fstu_view_country';
+	public const MANAGE_COUNTRY                = 'fstu_manage_country';
+	public const DELETE_COUNTRY                = 'fstu_delete_country';
+	public const VIEW_COUNTRY_PROTOCOL         = 'fstu_view_country_protocol';
+	public const VIEW_REGION                   = 'fstu_view_region';
+	public const MANAGE_REGION                 = 'fstu_manage_region';
+	public const DELETE_REGION                 = 'fstu_delete_region';
+	public const VIEW_REGION_PROTOCOL          = 'fstu_view_region_protocol';
 
 	/**
 	 * Ініціалізує capability-модель для поточного запиту.
@@ -70,6 +78,14 @@ class Capabilities {
 				self::MANAGE_MEMBER_GUIDANCE        => true,
 				self::DELETE_MEMBER_GUIDANCE        => true,
 				self::VIEW_MEMBER_GUIDANCE_PROTOCOL => true,
+				self::VIEW_COUNTRY                  => true,
+				self::MANAGE_COUNTRY                => true,
+				self::DELETE_COUNTRY                => true,
+				self::VIEW_COUNTRY_PROTOCOL         => true,
+				self::VIEW_REGION                   => true,
+				self::MANAGE_REGION                 => true,
+				self::DELETE_REGION                 => true,
+				self::VIEW_REGION_PROTOCOL          => true,
 			],
 			'userregistrar' => [
 				self::ACCESS_ADMIN             => true,
@@ -81,6 +97,12 @@ class Capabilities {
 				self::MANAGE_MEMBER_GUIDANCE     => true,
 				self::DELETE_OWN_MEMBER_GUIDANCE => true,
 				self::VIEW_MEMBER_GUIDANCE_PROTOCOL => true,
+				self::VIEW_COUNTRY               => true,
+				self::MANAGE_COUNTRY             => true,
+				self::DELETE_COUNTRY             => true,
+				self::VIEW_COUNTRY_PROTOCOL      => true,
+				self::VIEW_REGION                => true,
+				self::VIEW_REGION_PROTOCOL       => true,
 			],
 			'userfstu' => [
 				self::VIEW_TYPEGUIDANCE => true,
@@ -167,6 +189,38 @@ class Capabilities {
 			'canDeleteAny' => $can_delete_any,
 			'canDeleteOwn' => $can_delete_own,
 			'canProtocol'  => self::current_user_can_view_member_guidance_protocol(),
+		];
+	}
+
+	/**
+	 * Повертає прапорці прав для модуля довідника країн.
+	 *
+	 * @return array<string,bool>
+	 */
+	public static function get_country_permissions(): array {
+		$can_view = self::current_user_can_view_country();
+
+		return [
+			'canView'     => $can_view,
+			'canManage'   => self::current_user_can_manage_country(),
+			'canDelete'   => self::current_user_can_delete_country(),
+			'canProtocol' => self::current_user_can_view_country_protocol(),
+		];
+	}
+
+	/**
+	 * Повертає прапорці прав для модуля довідника областей.
+	 *
+	 * @return array<string,bool>
+	 */
+	public static function get_region_permissions(): array {
+		$can_view = self::current_user_can_view_region();
+
+		return [
+			'canView'     => $can_view,
+			'canManage'   => self::current_user_can_manage_region(),
+			'canDelete'   => self::current_user_can_delete_region(),
+			'canProtocol' => self::current_user_can_view_region_protocol(),
 		];
 	}
 
@@ -287,5 +341,61 @@ class Capabilities {
 	 */
 	public static function current_user_can_view_member_guidance_protocol(): bool {
 		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_MEMBER_GUIDANCE_PROTOCOL );
+	}
+
+	/**
+	 * Чи може користувач переглядати довідник країн.
+	 */
+	public static function current_user_can_view_country(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_COUNTRY );
+	}
+
+	/**
+	 * Чи може користувач керувати довідником країн.
+	 */
+	public static function current_user_can_manage_country(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_COUNTRY );
+	}
+
+	/**
+	 * Чи може користувач видаляти записи довідника країн.
+	 */
+	public static function current_user_can_delete_country(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::DELETE_COUNTRY );
+	}
+
+	/**
+	 * Чи може користувач переглядати протокол довідника країн.
+	 */
+	public static function current_user_can_view_country_protocol(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_COUNTRY_PROTOCOL );
+	}
+
+	/**
+	 * Чи може користувач переглядати довідник областей.
+	 */
+	public static function current_user_can_view_region(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_REGION );
+	}
+
+	/**
+	 * Чи може користувач керувати довідником областей.
+	 */
+	public static function current_user_can_manage_region(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_REGION );
+	}
+
+	/**
+	 * Чи може користувач видаляти записи довідника областей.
+	 */
+	public static function current_user_can_delete_region(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::DELETE_REGION );
+	}
+
+	/**
+	 * Чи може користувач переглядати протокол довідника областей.
+	 */
+	public static function current_user_can_view_region_protocol(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_REGION_PROTOCOL );
 	}
 }

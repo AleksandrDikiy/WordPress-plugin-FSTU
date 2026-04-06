@@ -277,6 +277,65 @@ public function handle_get_protocol(): void {
         'total_pages' => $total_pages,
     ]);
 }
+
+        **Обов'язковий алгоритм логування для всіх нових модулів:**
+
+        1. У класі AJAX модуля оголошуй константу:
+           ```php
+           private const LOG_NAME = 'ModuleName';
+           ```
+
+        2. Створи приватний helper-метод `log_action()` або `log_operation()`:
+           ```php
+           private function log_action( string $type, string $text, string $status ): void {
+               global $wpdb;
+
+               $wpdb->insert(
+                   'Logs',
+                   [
+                       'User_ID'         => get_current_user_id(),
+                       'Logs_DateCreate' => current_time( 'mysql' ),
+                       'Logs_Type'       => $type,
+                       'Logs_Name'       => self::LOG_NAME,
+                       'Logs_Text'       => $text,
+                       'Logs_Error'      => $status,
+                   ],
+                   [ '%d', '%s', '%s', '%s', '%s', '%s' ]
+               );
+           }
+           ```
+
+        3. Викликай логування **одразу після** кожної CRUD-операції:
+           - після успішного `INSERT` → `log_action( 'INSERT', ... , '✓' )`
+           - після успішного `UPDATE` → `log_action( 'UPDATE', ... , '✓' )`
+           - після успішного `DELETE` → `log_action( 'DELETE', ... , '✓' )`
+
+        4. Для **успішних** `INSERT / UPDATE / DELETE` обов'язкова **одна атомарна транзакція** для бізнес-операції та логування:
+           - порядок виконання: `START TRANSACTION` → CRUD-операція → `INSERT` у `Logs` → `COMMIT`
+           - якщо `INSERT` у `Logs` не виконався, потрібно зробити `ROLLBACK` **усієї** CRUD-операції
+           - заборонено комітити зміну в основній таблиці без успішного запису в `Logs`
+           - `log_action()` / `log_operation()` у transactional success-flow повинні вважатися **strict** helper-методами: якщо лог не записався, операція має завершитися помилкою
+
+        5. Якщо сталася помилка БД під час `INSERT / UPDATE / DELETE`, теж виконуй логування, але:
+           - на фронтенд повертай **лише безпечне повідомлення**;
+           - у `Logs_Error` записуй безпечний статус або технічний маркер для внутрішнього аналізу.
+
+        6. Якщо delete **заблоковано бізнес-правилом** (наприклад, є зовнішні залежності), рекомендовано також створювати запис у `Logs`:
+           - `Logs_Type = 'DELETE'`
+           - `Logs_Text = 'Заблоковано видалення ...'`
+           - `Logs_Error = 'dependency'` або інший безпечний службовий статус.
+
+        7. Для кожного нового модуля розділ `ПРОТОКОЛ` має працювати з:
+           - `Logs_Name = self::LOG_NAME`
+           - пошуком по `Logs_Text` та `FIO`
+           - compact pagination внизу
+
+        8. Заборонено:
+           - пропускати логування `INSERT / UPDATE / DELETE`;
+           - комітити CRUD-операцію без успішного запису в `Logs`;
+           - писати сирі stack trace у `Logs_Text`;
+           - повертати `$wpdb->last_error` напряму на фронтенд.
+
 ```
 
 **HTML-структура та CSS-класи протоколу:**
