@@ -180,6 +180,139 @@ PHP
 
     Таблиці: Обов'язкова зелена шапка (background-color: #dcead6;) та ефект "зебри" для рядків (nth-child(even) { background-color: #f8faf6; }).
 
+## Стандарт UI для основних таблиць довідників та реєстрів (ОБОВ'ЯЗКОВО для всіх нових форм)
+
+Ці правила застосовуються до **ВСІХ** таблиць — як до основного довідника, так і до розділу «Протокол».
+
+1. **Вибір кількості записів на сторінці (per-page selector)** — розміщується **ТІЛЬКИ внизу**, зліва від кнопок пагінації. Верхній тулбар (filter-bar) **заборонений** для цього елемента. Макет нижнього рядка:
+   ```
+   [10 ▼]  [«] [1] [2] [3] [»]    Записів: 50 | Сторінка 1 з 5
+   ```
+   HTML-структура (використовувати `fstu-pagination--compact`):
+   ```html
+   <div class="fstu-pagination fstu-pagination--compact">
+       <div class="fstu-pagination__left">
+           <label class="fstu-pagination__per-page-label" for="fstu-MODULE-per-page">Показувати по:</label>
+           <select id="fstu-MODULE-per-page" class="fstu-select fstu-select--compact">
+               <option value="10">10</option>
+               <option value="15" selected>15</option>
+               <option value="25">25</option>
+               <option value="50">50</option>
+           </select>
+       </div>
+       <div class="fstu-pagination__controls"><!-- кнопки сторінок --></div>
+       <div class="fstu-pagination__info"><!-- текст з кількістю --></div>
+   </div>
+   ```
+
+2. **Пошуковий рядок** — розміщується **ВСЕРЕДИНІ шапки таблиці** (`<thead>`), у комірці `<th>` колонки **«Найменування»**, **праворуч від назви колонки** через flex-контейнер. Окремий блок `fstu-filter-bar` для поля пошуку — **заборонений**. Макет `<th>`:
+   ```html
+   <th class="fstu-th fstu-th--wide-name">
+       <div class="fstu-th-with-search">
+           <span>Найменування</span>
+           <input type="text" id="fstu-MODULE-search" class="fstu-input--in-header" placeholder="🔍 Пошук...">
+       </div>
+   </th>
+   ```
+
+3. **Колонка «Сортування»** — **не відображається** у таблицях довідників та реєстрів. Поле сортування (code/order) за потреби відображається лише у модальному вікні перегляду/редагування.
+
+4. **CSS-класи** (визначати у CSS-файлі кожного модуля):
+   - `.fstu-th-with-search` — `display: flex; align-items: center; gap: 8px; white-space: nowrap;`
+   - `.fstu-input--in-header` — компактний інпут, `background: rgba(255,255,255,0.85)`, висота ≈ 24px, легка рамка
+   - `.fstu-pagination__left` — `display: flex; align-items: center; gap: 6px;`
+   - `.fstu-select--compact` / `.fstu-input--compact` — `height: 26px; padding: 2px 6px; font-size: 12px;`
+
+## Стандарт UI для розділу ПРОТОКОЛ (журнал записів)
+
+Розділи «Протокол» — це **журнали операцій** (логи) модуля, які записуються в таблицю `Logs`. Вони обов'язково включають всі CRUD-операції (Create, Read, Update, Delete) та критичні дії користувачів.
+
+**Структура даних протоколу (6 обов'язкових колонок):**
+
+1. **Дата** (`Logs_DateCreate`) — дата і час операції (YYYY-MM-DD HH:MM:SS)
+2. **Тип** (`Logs_Type`) — тип операції (напр., INSERT, UPDATE, DELETE, VIEW)
+3. **Операція** (`Logs_Name`) — назва модуля/операції (напр., TypeEvent, Registry)
+4. **Повідомлення** (`Logs_Text`) — опис того, що сталося (напр., "Додано новий вид змагань", "Оновлено поле Name")
+5. **Статус** (`Logs_Error`) — результат операції (напр., ✓ для успіху, або текст помилки)
+6. **Користувач** (`FIO` з `vUserFSTU`) — ПІБ користувача, який виконав операцію
+
+**Вимоги до AJAX обробника протоколу:**
+
+```php
+public function handle_get_protocol(): void {
+    // Перевірка прав: тільки адміністратори можуть бачити логи
+    if ( ! $this->current_user_can_delete_module() ) {
+        wp_send_json_error( [ 'message' => __( 'Немає прав для перегляду протоколу.', 'fstu' ) ] );
+    }
+    
+    // SQL запит до таблиці Logs з параметром Logs_Name = 'ModuleName'
+    $sql = "SELECT l.Logs_DateCreate, l.Logs_Type, l.Logs_Name, l.Logs_Text, l.Logs_Error, u.FIO
+            FROM Logs l 
+            LEFT JOIN vUserFSTU u ON u.User_ID = l.User_ID
+            WHERE l.Logs_Name = %s
+            ORDER BY l.Logs_DateCreate DESC
+            LIMIT %d OFFSET %d";
+    
+    // Повертаємо через wp_send_json_success()
+    wp_send_json_success([
+        'items'       => $items,
+        'total'       => $total,
+        'page'        => $page,
+        'per_page'    => $per_page,
+        'total_pages' => $total_pages,
+    ]);
+}
+```
+
+**HTML-структура та CSS-класи протоколу:**
+
+```html
+<th class="fstu-th fstu-th--date">Дата</th>
+<th class="fstu-th fstu-th--type">Тип</th>
+<th class="fstu-th fstu-th--wide-name">
+    <div class="fstu-th-with-search">
+        <span>Операція</span>
+        <input type="text" id="fstu-protocol-filter-name" class="fstu-input--in-header" placeholder="🔍 Пошук...">
+    </div>
+</th>
+<th class="fstu-th fstu-th--message">Повідомлення</th>
+<th class="fstu-th fstu-th--status">Статус</th>
+<th class="fstu-th fstu-th--user">Користувач</th>
+```
+
+**CSS-класи для колонок:**
+- `.fstu-th--date` — `width: 140px;`
+- `.fstu-th--type` — `width: 80px; text-align: center;`
+- `.fstu-th--message` — `min-width: 200px;`
+- `.fstu-th--status` — `width: 80px; text-align: center;`
+- `.fstu-th--user` — `width: 120px;`
+
+**Вимоги до логування операцій:**
+
+Усі операції (додавання, редагування, видалення) МАЮТЬ автоматично записуватися в таблицю `Logs`:
+
+```php
+// Приклад логування додавання запису
+$wpdb->insert(
+    'Logs',
+    [
+        'User_ID'      => get_current_user_id(),
+        'Logs_DateCreate' => current_time( 'mysql' ),
+        'Logs_Type'    => 'INSERT',
+        'Logs_Name'    => 'TypeEvent',
+        'Logs_Text'    => 'Додано новий вид змагань: ' . $item['name'],
+        'Logs_Error'   => '✓',
+    ],
+    [ '%d', '%s', '%s', '%s', '%s', '%s' ]
+);
+```
+
+**Пагінація та фільтрація протоколу:**
+- Вибір кількості записів: **тільки внизу**, зліва від пагінації (`fstu-pagination--compact`)
+- Пошук: **у шапці таблиці**, у колонці «Операція» (за `Logs_Text` та `FIO`)
+- Пермісивний пошук: якщо не вказано фільтра, показуються всі логи модуля
+- Максимально **50 записів на сторінці**
+
 УВАГА: Залежності у CSS (Dependencies)
 
 При реєстрації стилів модуля через wp_enqueue_style НІКОЛИ не вказуй ['fstu-registry'] як залежність, якщо немає 100% гарантії, що головний шорткод реєстру присутній на цій же сторінці.
