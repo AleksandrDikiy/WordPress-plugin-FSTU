@@ -2,7 +2,7 @@
 /**
  * View: Головна сторінка плагіна в адмінці.
  *
- * Version:     1.3.0
+ * Version:     1.4.0
  * Date_update: 2026-04-06
  */
 if ( ! defined( 'ABSPATH' ) ) {
@@ -13,6 +13,7 @@ $version = isset( $version ) ? (string) $version : ( defined( 'FSTU_VERSION' ) ?
 $commission_page_url = isset( $commission_page_url ) ? (string) $commission_page_url : '';
 $typeguidance_page_url = isset( $typeguidance_page_url ) ? (string) $typeguidance_page_url : '';
 $member_regional_page_url = isset( $member_regional_page_url ) ? (string) $member_regional_page_url : '';
+$member_guidance_page_url = isset( $member_guidance_page_url ) ? (string) $member_guidance_page_url : '';
 ?>
 
 <div class="wrap">
@@ -93,6 +94,16 @@ $member_regional_page_url = isset( $member_regional_page_url ) ? (string) $membe
                                     Виводить список посад федерацій з пошуком, пагінацією, протоколом і модальною формою перегляду/редагування. Для ролі userregistrar доступні перегляд, додавання та редагування, для адміністратора — повне керування і перегляд протоколу.
                                     <?php if ( '' !== $member_regional_page_url ) : ?>
                                         <br><a href="<?php echo esc_url( $member_regional_page_url ); ?>">Відкрити сторінку довідника →</a>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_member_guidance]</code></th>
+                                <td>
+                                    <strong>Довідник посад у керівних органах ФСТУ</strong><br>
+                                    Виводить список посад з фільтром по типу керівного органу, пошуком у шапці таблиці, пагінацією, протоколом і shared-модалкою. Для ролі userfstu доступний лише перегляд, для userregistrar — create/update та delete only own, для адміністратора — повне керування.
+                                    <?php if ( '' !== $member_guidance_page_url ) : ?>
+                                        <br><a href="<?php echo esc_url( $member_guidance_page_url ); ?>">Відкрити сторінку довідника →</a>
                                     <?php endif; ?>
                                 </td>
                             </tr>

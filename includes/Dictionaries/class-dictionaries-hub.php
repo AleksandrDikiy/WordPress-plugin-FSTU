@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Клас-контролер для Хабу довідників (Dashboard).
- * * Version:     1.4.0
+ * * Version:     1.5.0
  * Date_update: 2026-04-06
  */
 class Dictionaries_Hub {
@@ -51,6 +51,7 @@ class Dictionaries_Hub {
     private function get_dictionaries_data(): array {
         $typeguidance_list_class = 'FSTU\\Dictionaries\\TypeGuidance\\TypeGuidance_List';
         $member_regional_list_class = 'FSTU\\Dictionaries\\MemberRegional\\Member_Regional_List';
+        $member_guidance_list_class = 'FSTU\\Dictionaries\\MemberGuidance\\Member_Guidance_List';
         $commission_url = class_exists( Commission_List::class )
             ? Commission_List::get_module_url( 'hub' )
           : '';
@@ -60,6 +61,9 @@ class Dictionaries_Hub {
         $member_regional_url = class_exists( $member_regional_list_class )
           ? $member_regional_list_class::get_module_url( 'hub' )
           : '';
+            $member_guidance_url = class_exists( $member_guidance_list_class )
+              ? $member_guidance_list_class::get_module_url( 'hub' )
+              : '';
 
         if ( '' === $commission_url ) {
           $commission_url = '#';
@@ -73,6 +77,10 @@ class Dictionaries_Hub {
               $member_regional_url = '#';
             }
 
+                if ( '' === $member_guidance_url ) {
+                  $member_guidance_url = '#';
+                }
+
         return [
             'structure' => [
                 'title' => 'Структура та Кадри ФСТУ',
@@ -82,7 +90,7 @@ class Dictionaries_Hub {
                     [ 'title' => 'Клуби', 'desc' => 'Довідник туристичних клубів', 'url' => '/adm/Club/' ],
                     [ 'title' => 'Комісії та колегії', 'desc' => 'Довідник комісій ФСТУ', 'url' => $commission_url ],
                               [ 'title' => 'Керівні органи ФСТУ', 'desc' => 'Довідник керівних органів', 'url' => $typeguidance_url ],
-                    [ 'title' => 'Посади у керівних органах', 'desc' => 'Довідник посад', 'url' => '/adm/MemberGuidance/' ],
+                          [ 'title' => 'Посади у керівних органах', 'desc' => 'Довідник посад', 'url' => $member_guidance_url ],
                                                   [ 'title' => 'Посади федерацій', 'desc' => 'Довідник регіональних посад', 'url' => $member_regional_url ],
                 ],
             ],

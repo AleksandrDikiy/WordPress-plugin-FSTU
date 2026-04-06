@@ -2,7 +2,7 @@
 /**
  * Реєстрація меню плагіна в адмін-панелі WordPress.
  *
- * Version:     1.3.0
+ * Version:     1.4.0
  * Date_update: 2026-04-06
  *
  * @package FSTU\Admin
@@ -61,8 +61,9 @@ class Admin_Menu {
     public function render_main_page(): void {
         $typeguidance_list_class = 'FSTU\\Dictionaries\\TypeGuidance\\TypeGuidance_List';
         $member_regional_list_class = 'FSTU\\Dictionaries\\MemberRegional\\Member_Regional_List';
+        $member_guidance_list_class = 'FSTU\\Dictionaries\\MemberGuidance\\Member_Guidance_List';
         $plugin_data = get_plugin_data( WP_PLUGIN_DIR . '/fstu_new/fstu.php' ); // Вкажіть правильну папку вашого плагіна
-        $version     = ! empty( $plugin_data['Version'] ) ? $plugin_data['Version'] : '1.4.0';
+        $version     = ! empty( $plugin_data['Version'] ) ? $plugin_data['Version'] : '1.8.0';
         $commission_page_url = class_exists( Commission_List::class )
           ? Commission_List::get_module_url( 'admin' )
           : '';
@@ -72,6 +73,9 @@ class Admin_Menu {
             $member_regional_page_url = class_exists( $member_regional_list_class )
               ? $member_regional_list_class::get_module_url( 'admin' )
               : '';
+                $member_guidance_page_url = class_exists( $member_guidance_list_class )
+                  ? $member_guidance_list_class::get_module_url( 'admin' )
+                  : '';
 
         include dirname( __DIR__, 2 ) . '/views/admin/main-page.php';
     }

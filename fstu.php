@@ -3,7 +3,7 @@
  * Plugin Name:  FSTU Portal
  * Plugin URI:   https://www.fstu.com.ua/
  * Description:  Офіційний плагін Федерації спортивного туризму України. Enterprise ERP/CRM система управління реєстрами, структурою та фінансами федерації.
- * Version:      1.7.0
+ * Version:      1.8.0
  * Author:       Oleksandr Dykyi
  * Author URI:   https://www.fstu.com.ua/
  * Text Domain:  fstu
@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // ─── Константи плагіна ────────────────────────────────────────────────────────
 
-define( 'FSTU_VERSION',      '1.7.0' );
+define( 'FSTU_VERSION',      '1.8.0' );
 define( 'FSTU_DB_VERSION',   '1.0.0' );
 define( 'FSTU_PLUGIN_FILE',  __FILE__ );
 define( 'FSTU_PLUGIN_DIR',   plugin_dir_path( __FILE__ ) );
@@ -77,6 +77,10 @@ require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/TypeGuidance/class-typegui
 // MemberRegional — Довідник посад федерацій ФСТУ (2026-04-06)
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/MemberRegional/class-member-regional-list.php';
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/MemberRegional/class-member-regional-ajax.php';
+
+// MemberGuidance — Довідник посад у керівних органах ФСТУ (2026-04-06)
+require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/MemberGuidance/class-member-guidance-list.php';
+require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/MemberGuidance/class-member-guidance-ajax.php';
 
 // Commission — Довідник комісій та колегій ФСТУ (2026-04-06)
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/Commission/class-commission-list.php';
@@ -134,6 +138,10 @@ function fstu_init(): void {
 	// ── Довідник посад федерацій ФСТУ ─────────────────────────────────────────
 	( new FSTU\Dictionaries\MemberRegional\Member_Regional_List() )->init();
 	( new FSTU\Dictionaries\MemberRegional\Member_Regional_Ajax() )->init();
+
+	// ── Довідник посад у керівних органах ФСТУ ────────────────────────────────
+	( new FSTU\Dictionaries\MemberGuidance\Member_Guidance_List() )->init();
+	( new FSTU\Dictionaries\MemberGuidance\Member_Guidance_Ajax() )->init();
 
 	// ── Довідник комісій та колегій ФСТУ ──────────────────────────────────────
 	( new FSTU\Dictionaries\Commission\Commission_List() )->init();

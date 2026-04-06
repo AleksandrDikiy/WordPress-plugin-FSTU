@@ -2,7 +2,7 @@
 /**
  * Клас централізованого керування capability-моделлю ФСТУ.
  *
- * Version:     1.2.0
+ * Version:     1.3.0
  * Date_update: 2026-04-06
  *
  * @package FSTU\Core
@@ -28,6 +28,11 @@ class Capabilities {
 	public const MANAGE_MEMBER_REGIONAL      = 'fstu_manage_member_regional';
 	public const DELETE_MEMBER_REGIONAL      = 'fstu_delete_member_regional';
 	public const VIEW_MEMBER_REGIONAL_PROTOCOL = 'fstu_view_member_regional_protocol';
+	public const VIEW_MEMBER_GUIDANCE          = 'fstu_view_member_guidance';
+	public const MANAGE_MEMBER_GUIDANCE        = 'fstu_manage_member_guidance';
+	public const DELETE_MEMBER_GUIDANCE        = 'fstu_delete_member_guidance';
+	public const DELETE_OWN_MEMBER_GUIDANCE    = 'fstu_delete_own_member_guidance';
+	public const VIEW_MEMBER_GUIDANCE_PROTOCOL = 'fstu_view_member_guidance_protocol';
 
 	/**
 	 * Ініціалізує capability-модель для поточного запиту.
@@ -61,6 +66,10 @@ class Capabilities {
 				self::MANAGE_MEMBER_REGIONAL      => true,
 				self::DELETE_MEMBER_REGIONAL      => true,
 				self::VIEW_MEMBER_REGIONAL_PROTOCOL => true,
+				self::VIEW_MEMBER_GUIDANCE          => true,
+				self::MANAGE_MEMBER_GUIDANCE        => true,
+				self::DELETE_MEMBER_GUIDANCE        => true,
+				self::VIEW_MEMBER_GUIDANCE_PROTOCOL => true,
 			],
 			'userregistrar' => [
 				self::ACCESS_ADMIN             => true,
@@ -68,9 +77,14 @@ class Capabilities {
 				self::VIEW_COMMISSION_PROTOCOL => true,
 				self::VIEW_MEMBER_REGIONAL     => true,
 				self::MANAGE_MEMBER_REGIONAL   => true,
+				self::VIEW_MEMBER_GUIDANCE       => true,
+				self::MANAGE_MEMBER_GUIDANCE     => true,
+				self::DELETE_OWN_MEMBER_GUIDANCE => true,
+				self::VIEW_MEMBER_GUIDANCE_PROTOCOL => true,
 			],
 			'userfstu' => [
 				self::VIEW_TYPEGUIDANCE => true,
+				self::VIEW_MEMBER_GUIDANCE => true,
 			],
 		];
 
@@ -133,6 +147,26 @@ class Capabilities {
 			'canDelete'    => self::current_user_can_delete_member_regional(),
 			'canProtocol'  => self::current_user_can_view_member_regional_protocol(),
 			'canAdminMeta' => self::current_user_can_delete_member_regional(),
+		];
+	}
+
+	/**
+	 * Повертає прапорці прав для модуля посад у керівних органах.
+	 *
+	 * @return array<string,bool>
+	 */
+	public static function get_member_guidance_permissions(): array {
+		$can_view       = self::current_user_can_view_member_guidance();
+		$can_delete_any = self::current_user_can_delete_member_guidance();
+		$can_delete_own = self::current_user_can_delete_own_member_guidance();
+
+		return [
+			'canView'      => $can_view,
+			'canManage'    => self::current_user_can_manage_member_guidance(),
+			'canDelete'    => $can_delete_any || $can_delete_own,
+			'canDeleteAny' => $can_delete_any,
+			'canDeleteOwn' => $can_delete_own,
+			'canProtocol'  => self::current_user_can_view_member_guidance_protocol(),
 		];
 	}
 
@@ -218,5 +252,40 @@ class Capabilities {
 	 */
 	public static function current_user_can_view_member_regional_protocol(): bool {
 		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_MEMBER_REGIONAL_PROTOCOL );
+	}
+
+	/**
+	 * Чи може користувач переглядати довідник посад у керівних органах.
+	 */
+	public static function current_user_can_view_member_guidance(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_MEMBER_GUIDANCE );
+	}
+
+	/**
+	 * Чи може користувач керувати довідником посад у керівних органах.
+	 */
+	public static function current_user_can_manage_member_guidance(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_MEMBER_GUIDANCE );
+	}
+
+	/**
+	 * Чи може користувач видаляти будь-які записи довідника посад у керівних органах.
+	 */
+	public static function current_user_can_delete_member_guidance(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::DELETE_MEMBER_GUIDANCE );
+	}
+
+	/**
+	 * Чи може користувач видаляти лише власні записи довідника посад у керівних органах.
+	 */
+	public static function current_user_can_delete_own_member_guidance(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::DELETE_OWN_MEMBER_GUIDANCE );
+	}
+
+	/**
+	 * Чи може користувач переглядати протокол довідника посад у керівних органах.
+	 */
+	public static function current_user_can_view_member_guidance_protocol(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_MEMBER_GUIDANCE_PROTOCOL );
 	}
 }
