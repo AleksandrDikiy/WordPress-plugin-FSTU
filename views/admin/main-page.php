@@ -1,12 +1,16 @@
 <?php
 /**
  * View: Головна сторінка плагіна в адмінці.
+ *
+ * Version:     1.1.1
+ * Date_update: 2026-04-06
  */
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
 $version = isset( $version ) ? (string) $version : ( defined( 'FSTU_VERSION' ) ? FSTU_VERSION : 'n/a' );
+$commission_page_url = isset( $commission_page_url ) ? (string) $commission_page_url : '';
 ?>
 
 <div class="wrap">
@@ -58,6 +62,16 @@ $version = isset( $version ) ? (string) $version : ( defined( 'FSTU_VERSION' ) ?
                                 <td>
                                     <strong>Довідник видів змагань ФСТУ</strong><br>
                                     Виводить таблицю видів змагань з пошуком, пагінацією та модальними вікнами перегляду/редагування. Дозволяє адміністраторам та реєстраторам додавати й редагувати записи, а адміністраторам — видаляти їх без inline-коду та з AJAX-захистом nonce.
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_commission]</code></th>
+                                <td>
+                                    <strong>Довідник комісій та колегій ФСТУ</strong><br>
+                                    Виводить список комісій і колегій з пошуком, пагінацією, протоколом, drag-and-drop сортуванням та модальними вікнами перегляду/редагування. Розміщується на окремій сторінці сайта через shortcode.
+                                    <?php if ( '' !== $commission_page_url ) : ?>
+                                        <br><a href="<?php echo esc_url( $commission_page_url ); ?>">Відкрити сторінку довідника →</a>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                             <tr>

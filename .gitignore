@@ -24,3 +24,6 @@ yarn-error.log
 .sass-cache/
 dist/
 build/
+# ---- плани та ТЗ для GitHub Copylot
+PLAN*.md
+TEXHNICAL*.md

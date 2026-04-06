@@ -2,13 +2,16 @@
 /**
  * Реєстрація меню плагіна в адмін-панелі WordPress.
  *
- * Version:     1.0.1
+ * Version:     1.1.1
  * Date_update: 2026-04-06
  *
  * @package FSTU\Admin
  */
 
 namespace FSTU\Admin;
+
+use FSTU\Core\Capabilities;
+use FSTU\Dictionaries\Commission\Commission_List;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -21,13 +24,15 @@ class Admin_Menu {
     }
 
     public function register_menus(): void {
+        $admin_capability = Capabilities::ACCESS_ADMIN;
+
         // Головне меню "ФСТУ"
         add_menu_page(
             'ФСТУ - Керування системою', // Title сторінки
             'ФСТУ',                      // Назва в меню
-            'manage_options',            // Права доступу (тільки адміни)
+            $admin_capability,           // Права доступу до розділів ФСТУ
             'fstu-main',                 // Slug (URL)
-            [ $this, 'render_main_page' ],// Метод виводу
+            [ $this, 'render_main_page' ], // Метод виводу
             'dashicons-groups',          // Іконка (люди)
             30                           // Позиція в меню
         );
@@ -37,7 +42,7 @@ class Admin_Menu {
             'fstu-main',
             'Головна інформація',
             'Головна',
-            'manage_options',
+            $admin_capability,
             'fstu-main',
             [ $this, 'render_main_page' ]
         );
@@ -56,9 +61,13 @@ class Admin_Menu {
     public function render_main_page(): void {
         $plugin_data = get_plugin_data( WP_PLUGIN_DIR . '/fstu_new/fstu.php' ); // Вкажіть правильну папку вашого плагіна
         $version     = ! empty( $plugin_data['Version'] ) ? $plugin_data['Version'] : '1.4.0';
+        $commission_page_url = class_exists( Commission_List::class )
+          ? Commission_List::get_module_url( 'admin' )
+          : '';
 
         include dirname( __DIR__, 2 ) . '/views/admin/main-page.php';
     }
+
 
     /**
      * Вивід та обробка сторінки "Налаштування".

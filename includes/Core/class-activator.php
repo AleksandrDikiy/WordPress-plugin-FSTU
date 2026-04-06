@@ -21,6 +21,8 @@ class Activator {
 	 * Встановлює початкові опції, перевіряє версію БД.
 	 */
 	public static function activate(): void {
+		Capabilities::register_role_capabilities();
+
 		$installed_version = get_option( 'fstu_db_version', '0' );
 
 		if ( version_compare( $installed_version, FSTU_DB_VERSION, '<' ) ) {

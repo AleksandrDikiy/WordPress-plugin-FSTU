@@ -1,13 +1,15 @@
 <?php
 namespace FSTU\Modules\Dictionaries;
 
+use FSTU\Dictionaries\Commission\Commission_List;
+
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
 /**
  * Клас-контролер для Хабу довідників (Dashboard).
- * * Version:     1.1.0
+ * * Version:     1.2.1
  * Date_update: 2026-04-06
  */
 class Dictionaries_Hub {
@@ -47,6 +49,14 @@ class Dictionaries_Hub {
      * Повний масив усіх 21+ довідників системи, розбитий по категоріях.
      */
     private function get_dictionaries_data(): array {
+        $commission_url = class_exists( Commission_List::class )
+            ? Commission_List::get_module_url( 'hub' )
+          : '';
+
+        if ( '' === $commission_url ) {
+          $commission_url = '#';
+        }
+
         return [
             'structure' => [
                 'title' => 'Структура та Кадри ФСТУ',
@@ -54,7 +64,7 @@ class Dictionaries_Hub {
                 'items' => [
                     [ 'title' => 'Осередки ФСТУ', 'desc' => 'Довідник регіональних осередків', 'url' => '/adm/Unit/' ],
                     [ 'title' => 'Клуби', 'desc' => 'Довідник туристичних клубів', 'url' => '/adm/Club/' ],
-                    [ 'title' => 'Комісії та колегії', 'desc' => 'Довідник комісій ФСТУ', 'url' => '/adm/SCommission/' ],
+                    [ 'title' => 'Комісії та колегії', 'desc' => 'Довідник комісій ФСТУ', 'url' => $commission_url ],
                     [ 'title' => 'Керівні органи ФСТУ', 'desc' => 'Довідник керівних органів', 'url' => '/adm/TypeGuidance/' ],
                     [ 'title' => 'Посади у керівних органах', 'desc' => 'Довідник посад', 'url' => '/adm/MemberGuidance/' ],
                     [ 'title' => 'Посади федерацій', 'desc' => 'Довідник регіональних посад', 'url' => '/adm/MemberRegional/' ],
