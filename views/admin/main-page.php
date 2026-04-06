@@ -64,7 +64,7 @@ $version = isset( $version ) ? (string) $version : ( defined( 'FSTU_VERSION' ) ?
                                 <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_dictionaries_hub]</code></th>
                                 <td>
                                     <strong>Довідники (Хаб)</strong><br>
-                                    сучасний дашборд з усіма 13-ма довідниками, розбитими по категоріях, з живим пошуком
+                                    сучасний дашборд з 21-м довідником, розбитими по категоріях, з живим пошуком
                                 </td>
                             </tr>
                             </tbody>

@@ -2,7 +2,7 @@
  * JavaScript модуля "Довідник осередків ФСТУ".
  * AJAX-запити, фільтри, модальні вікна, CRUD-операції.
  *
- * Version:     1.0.1
+ * Version:     1.1.0
  * Date_update: 2026-04-06
  *
  * @package FSTU
@@ -16,9 +16,24 @@ jQuery(document).ready(function($) {
 		return;
 	}
 
+	const $mainSection = $('#fstu-units-main');
+	const $protocolSection = $('#fstu-units-protocol');
+	const $protocolOpenBtn = $('#fstu-units-protocol-btn');
+	const $protocolBackBtn = $('#fstu-units-protocol-back-btn');
+	const $perPage = $('#fstu-units-per-page');
+	const $protocolPerPage = $('#fstu-units-protocol-per-page');
+	const $protocolFilterName = $('#fstu-units-protocol-filter-name');
+
 	const state = {
 		currentPage: 1,
-		perPage: parseInt($('#fstu-units-per-page').val(), 10) || 15,
+		perPage: parseInt($perPage.val(), 10) || 10,
+		totalPages: 1,
+		isLoading: false,
+	};
+
+	const protocolState = {
+		currentPage: 1,
+		perPage: parseInt($protocolPerPage.val(), 10) || 10,
 		totalPages: 1,
 		isLoading: false,
 	};
@@ -37,31 +52,35 @@ jQuery(document).ready(function($) {
 		$('#fstu-units-refresh-btn').on('click', function() {
 			loadUnits();
 		});
+		$protocolOpenBtn.on('click', handleOpenProtocol);
+		$protocolBackBtn.on('click', handleCloseProtocol);
 
 		$('#fstu-units-search').on('input', debounce(function() {
-			toggleSearchClear();
 			state.currentPage = 1;
 			loadUnits();
 		}, 300));
-
-		$('#fstu-units-search-clear').on('click', function() {
-			$('#fstu-units-search').val('');
-			toggleSearchClear();
-			state.currentPage = 1;
-			loadUnits();
-			$('#fstu-units-search').trigger('focus');
-		});
 
 		$('#fstu-units-filter-region, #fstu-units-filter-type').on('change', function() {
 			state.currentPage = 1;
 			loadUnits();
 		});
 
-		$('#fstu-units-per-page').on('change', function() {
-			state.perPage = parseInt($(this).val(), 10) || 15;
+		$perPage.on('change', function() {
+			state.perPage = parseInt($(this).val(), 10) || 10;
 			state.currentPage = 1;
 			loadUnits();
 		});
+
+		$protocolPerPage.on('change', function() {
+			protocolState.perPage = parseInt($(this).val(), 10) || 10;
+			protocolState.currentPage = 1;
+			loadProtocol();
+		});
+
+		$protocolFilterName.on('input', debounce(function() {
+			protocolState.currentPage = 1;
+			loadProtocol();
+		}, 300));
 
 		$('#fstu-units-prev-page').on('click', function() {
 			if (state.currentPage > 1) {
@@ -75,6 +94,48 @@ jQuery(document).ready(function($) {
 				state.currentPage += 1;
 				loadUnits();
 			}
+		});
+
+		$('#fstu-units-protocol-prev-page').on('click', function() {
+			if (protocolState.currentPage > 1) {
+				protocolState.currentPage -= 1;
+				loadProtocol();
+			}
+		});
+
+		$('#fstu-units-protocol-next-page').on('click', function() {
+			if (protocolState.currentPage < protocolState.totalPages) {
+				protocolState.currentPage += 1;
+				loadProtocol();
+			}
+		});
+
+		$(document).on('click', '.fstu-opts-btn', function(e) {
+			e.preventDefault();
+			e.stopPropagation();
+
+			const $parent = $(this).parent();
+			$('.fstu-opts').not($parent).removeClass('fstu-opts--open fstu-dropup');
+
+			const menuHeight = 220;
+			const windowHeight = $(window).height();
+			const rect = this.getBoundingClientRect();
+
+			if (rect.bottom + menuHeight > windowHeight && rect.top > menuHeight) {
+				$parent.addClass('fstu-dropup');
+			} else {
+				$parent.removeClass('fstu-dropup');
+			}
+
+			$parent.toggleClass('fstu-opts--open');
+		});
+
+		$(document).on('click', '.fstu-opts-list', function(e) {
+			e.stopPropagation();
+		});
+
+		$(document).on('click', function() {
+			$('.fstu-opts').removeClass('fstu-opts--open fstu-dropup');
 		});
 
 		$(document).on('click', '.fstu-btn-action--view', handleViewUnit);
@@ -129,6 +190,10 @@ jQuery(document).ready(function($) {
 					return;
 				}
 
+				state.totalPages = Math.max(parseInt(response.data.total_pages, 10) || 1, 1);
+				state.currentPage = parseInt(response.data.page, 10) || 1;
+				state.perPage = parseInt(response.data.per_page, 10) || state.perPage;
+				$perPage.val(String(state.perPage));
 				renderTable(response.data.units || []);
 				updatePagination(response.data);
 			},
@@ -162,7 +227,7 @@ jQuery(document).ready(function($) {
 
 			html += '<tr class="fstu-row">';
 			html += '<td class="fstu-td fstu-td--num">' + rowNumber + '</td>';
-			html += '<td class="fstu-td"><strong>' + escapeHtml(unit.Unit_Name || '') + '</strong></td>';
+			html += '<td class="fstu-td fstu-td--name"><strong>' + escapeHtml(unit.Unit_Name || '') + '</strong></td>';
 			html += '<td class="fstu-td">' + escapeHtml(unit.Unit_ShortName || '') + '</td>';
 			html += '<td class="fstu-td">' + escapeHtml(unit.OPF_NameShort || '') + '</td>';
 			html += '<td class="fstu-td">' + escapeHtml(unit.UnitType_Name || '') + '</td>';
@@ -172,17 +237,21 @@ jQuery(document).ready(function($) {
 
 			if (permissions.canView) {
 				html += '<td class="fstu-td fstu-td--actions">';
-				html += '<div class="fstu-actions-container">';
-				html += '<button type="button" class="fstu-btn-action fstu-btn-action--view" data-unit-id="' + absint(unit.Unit_ID) + '" title="Перегляд" aria-label="Перегляд">👁</button>';
+				html += '<div class="fstu-opts">';
+				html += '<button type="button" class="fstu-opts-btn" title="Дії" aria-label="Дії">▼</button>';
+				html += '<ul class="fstu-opts-list">';
+				html += '<li><a href="#" class="fstu-btn-action--view" data-unit-id="' + absint(unit.Unit_ID) + '">🔎 Перегляд</a></li>';
 
 				if (permissions.canManage) {
-					html += '<button type="button" class="fstu-btn-action fstu-btn-action--edit" data-unit-id="' + absint(unit.Unit_ID) + '" title="Редагувати" aria-label="Редагувати">✎</button>';
+					html += '<li><a href="#" class="fstu-btn-action--edit" data-unit-id="' + absint(unit.Unit_ID) + '">📝 Редагування</a></li>';
 				}
 
 				if (permissions.canDelete) {
-					html += '<button type="button" class="fstu-btn-action fstu-btn-action--delete" data-unit-id="' + absint(unit.Unit_ID) + '" title="Видалити" aria-label="Видалити">✕</button>';
+					html += '<li><hr class="fstu-opts-divider"></li>';
+					html += '<li><a href="#" class="fstu-btn-action--delete" data-unit-id="' + absint(unit.Unit_ID) + '">❌ Видалення</a></li>';
 				}
 
+				html += '</ul>';
 				html += '</div>';
 				html += '</td>';
 			}
@@ -231,6 +300,136 @@ jQuery(document).ready(function($) {
 		$pages.find('.fstu-btn--page').on('click', function() {
 			state.currentPage = parseInt($(this).data('page'), 10) || 1;
 			loadUnits();
+		});
+	}
+
+	function handleOpenProtocol(event) {
+		if (event) {
+			event.preventDefault();
+		}
+		$mainSection.addClass('fstu-units-hidden');
+		$protocolSection.removeClass('fstu-units-hidden');
+		$protocolOpenBtn.addClass('fstu-units-hidden');
+		$protocolBackBtn.removeClass('fstu-units-hidden');
+		protocolState.currentPage = 1;
+		loadProtocol();
+	}
+
+	function handleCloseProtocol(event) {
+		if (event) {
+			event.preventDefault();
+		}
+		$protocolSection.addClass('fstu-units-hidden');
+		$mainSection.removeClass('fstu-units-hidden');
+		$protocolBackBtn.addClass('fstu-units-hidden');
+		$protocolOpenBtn.removeClass('fstu-units-hidden');
+	}
+
+	function loadProtocol() {
+		if (protocolState.isLoading) {
+			return;
+		}
+
+		protocolState.isLoading = true;
+		setProtocolLoading();
+
+		$.ajax({
+			type: 'POST',
+			url: fstuUnitsL10n.ajaxUrl,
+			dataType: 'json',
+			data: {
+				action: 'fstu_get_units_protocol',
+				nonce: fstuUnitsL10n.nonce,
+				page: protocolState.currentPage,
+				per_page: protocolState.perPage,
+				filter_name: $protocolFilterName.val(),
+			},
+			success: function(response) {
+				if (!response || !response.success || !response.data) {
+					showProtocolError(fstuUnitsL10n.messages.protocolError || fstuUnitsL10n.messages.error);
+					return;
+				}
+
+				protocolState.totalPages = Math.max(parseInt(response.data.total_pages, 10) || 1, 1);
+				protocolState.currentPage = parseInt(response.data.page, 10) || 1;
+				protocolState.perPage = parseInt(response.data.per_page, 10) || protocolState.perPage;
+				$protocolPerPage.val(String(protocolState.perPage));
+				renderProtocolTable(response.data.items || []);
+				updateProtocolPagination(response.data);
+			},
+			error: function() {
+				showProtocolError(fstuUnitsL10n.messages.protocolError || fstuUnitsL10n.messages.error);
+			},
+			complete: function() {
+				protocolState.isLoading = false;
+			},
+		});
+	}
+
+	function renderProtocolTable(items) {
+		const $tbody = $('#fstu-units-protocol-tbody');
+
+		if (!items.length) {
+			$tbody.html(
+				'<tr class="fstu-row"><td colspan="6" class="fstu-no-results">' + escapeHtml(fstuUnitsL10n.messages.protocolEmpty || fstuUnitsL10n.messages.noResults) + '</td></tr>'
+			);
+			return;
+		}
+
+		let html = '';
+
+		items.forEach(function(item) {
+			html += '<tr class="fstu-row">';
+			html += '<td class="fstu-td fstu-td--date">' + escapeHtml(item.Logs_DateCreate || '') + '</td>';
+			html += '<td class="fstu-td fstu-td--type">' + escapeHtml(item.Logs_Type || '') + '</td>';
+			html += '<td class="fstu-td fstu-td--operation">' + escapeHtml(item.Logs_Name || '') + '</td>';
+			html += '<td class="fstu-td fstu-td--message">' + escapeHtml(item.Logs_Text || '') + '</td>';
+			html += '<td class="fstu-td fstu-td--status">' + escapeHtml(item.Logs_Error || '✓') + '</td>';
+			html += '<td class="fstu-td fstu-td--user">' + escapeHtml(item.FIO || '—') + '</td>';
+			html += '</tr>';
+		});
+
+		$tbody.html(html);
+	}
+
+	function updateProtocolPagination(data) {
+		protocolState.totalPages = Math.max(parseInt(data.total_pages, 10) || 1, 1);
+		protocolState.currentPage = parseInt(data.page, 10) || 1;
+
+		$('#fstu-units-protocol-pagination-info').text(
+			'Записів: ' + (parseInt(data.total, 10) || 0) + ' | Сторінка ' + protocolState.currentPage + ' з ' + protocolState.totalPages
+		);
+
+		$('#fstu-units-protocol-prev-page').prop('disabled', protocolState.currentPage <= 1);
+		$('#fstu-units-protocol-next-page').prop('disabled', protocolState.currentPage >= protocolState.totalPages);
+
+		const $pages = $('#fstu-units-protocol-pagination-pages');
+		let html = '';
+		const start = Math.max(1, protocolState.currentPage - 2);
+		const end = Math.min(protocolState.totalPages, protocolState.currentPage + 2);
+
+		if (start > 1) {
+			html += buildProtocolPageButton(1, false);
+			if (start > 2) {
+				html += '<span class="fstu-pagination__ellipsis">…</span>';
+			}
+		}
+
+		for (let page = start; page <= end; page += 1) {
+			html += buildProtocolPageButton(page, page === protocolState.currentPage);
+		}
+
+		if (end < protocolState.totalPages) {
+			if (end < protocolState.totalPages - 1) {
+				html += '<span class="fstu-pagination__ellipsis">…</span>';
+			}
+			html += buildProtocolPageButton(protocolState.totalPages, false);
+		}
+
+		$pages.html(html);
+		$pages.find('.fstu-btn--page').on('click', function() {
+			protocolState.currentPage = parseInt($(this).data('page'), 10) || 1;
+			loadProtocol();
 		});
 	}
 
@@ -546,16 +745,28 @@ jQuery(document).ready(function($) {
 		}
 	}
 
-	function toggleSearchClear() {
-		$('#fstu-units-search-clear').toggleClass('fstu-units-hidden', !$('#fstu-units-search').val());
-	}
-
 	function getTableColspan() {
 		return permissions.canView ? 9 : 8;
 	}
 
 	function buildPageButton(page, isActive) {
 		return '<button type="button" class="fstu-btn--page' + (isActive ? ' fstu-btn--page-active' : '') + '" data-page="' + page + '">' + page + '</button>';
+	}
+
+	function buildProtocolPageButton(page, isActive) {
+		return '<button type="button" class="fstu-btn--page' + (isActive ? ' fstu-btn--page-active' : '') + '" data-page="' + page + '">' + page + '</button>';
+	}
+
+	function setProtocolLoading() {
+		$('#fstu-units-protocol-tbody').html(
+			'<tr class="fstu-row"><td colspan="6" class="fstu-no-results">' + escapeHtml(fstuUnitsL10n.messages.loading) + '</td></tr>'
+		);
+	}
+
+	function showProtocolError(message) {
+		$('#fstu-units-protocol-tbody').html(
+			'<tr class="fstu-row"><td colspan="6" class="fstu-no-results fstu-no-results--error">' + escapeHtml(message) + '</td></tr>'
+		);
 	}
 
 	function getResponseMessage(response, fallback) {

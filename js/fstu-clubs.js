@@ -3,8 +3,8 @@
  * Список, пагінація, пошук, перегляд, додавання, редагування, видалення.
  * Жодного inline-коду у PHP!
  *
- * Version:     1.0.0
- * Date_update: 2026-04-05
+ * Version:     1.3.0
+ * Date_update: 2026-04-06
  *
  * @package FSTU
  * @requires jQuery
@@ -17,13 +17,28 @@ jQuery( document ).ready( function ( $ ) {
 
 	'use strict';
 
+	const $mainSection        = $( '#fstu-clubs-main' );
+	const $protocolSection    = $( '#fstu-clubs-protocol' );
+	const $protocolOpenBtn    = $( '#fstu-club-btn-protocol' );
+	const $protocolBackBtn    = $( '#fstu-club-btn-protocol-back' );
+	const $protocolPerPage    = $( '#fstu-clubs-protocol-per-page' );
+	const $protocolFilterName = $( '#fstu-clubs-protocol-filter-name' );
+
 	// ─── Стан модуля ──────────────────────────────────────────────────────────
 	const state = {
 		page:        1,
-		per_page:    50,
+		per_page:    10,
 		total:       0,
 		total_pages: 0,
 		search:      '',
+		loading:     false,
+	};
+
+	const protocolState = {
+		page:        1,
+		per_page:    parseInt( $protocolPerPage.val(), 10 ) || 10,
+		total:       0,
+		total_pages: 1,
 		loading:     false,
 	};
 
@@ -31,6 +46,8 @@ jQuery( document ).ready( function ( $ ) {
 	bindListEvents();
 	bindModalEvents();
 	bindFormEvents();
+	$( '#fstu-clubs-per-page' ).val( String( state.per_page ) );
+	$protocolPerPage.val( String( protocolState.per_page ) );
 	fetchList(); // початкове завантаження
 
 	// ══════════════════════════════════════════════════════════════════════════
@@ -43,19 +60,39 @@ jQuery( document ).ready( function ( $ ) {
 			fetchList();
 		} );
 
+		$( document ).on( 'click', '#fstu-club-btn-protocol', function () {
+			handleOpenProtocol();
+		} );
+
+		$( document ).on( 'click', '#fstu-club-btn-protocol-back', function () {
+			handleCloseProtocol();
+		} );
+
 		// Пошук із дебаунсом
 		$( document ).on( 'input', '#fstu-club-search', debounce( function () {
 			const val = $( this ).val().trim();
 			state.search = val;
 			state.page   = 1;
-			$( '#fstu-club-search-clear' ).toggleClass( 'fstu-hidden', val === '' );
 			fetchList();
 		}, 350 ) );
 
-		// Очистити пошук
-		$( document ).on( 'click', '#fstu-club-search-clear', function () {
-			$( '#fstu-club-search' ).val( '' ).trigger( 'input' );
+		// Вибір кількості записів
+		$( document ).on( 'change', '#fstu-clubs-per-page', function () {
+			state.per_page = parseInt( $( this ).val(), 10 ) || 10;
+			state.page = 1;
+			fetchList();
 		} );
+
+		$( document ).on( 'change', '#fstu-clubs-protocol-per-page', function () {
+			protocolState.per_page = parseInt( $( this ).val(), 10 ) || 10;
+			protocolState.page = 1;
+			loadProtocol();
+		} );
+
+		$( document ).on( 'input', '#fstu-clubs-protocol-filter-name', debounce( function () {
+			protocolState.page = 1;
+			loadProtocol();
+		}, 300 ) );
 
 		// Пагінація — статичні кнопки
 		$( document ).on( 'click', '#fstu-clubs-first', function () {
@@ -75,6 +112,56 @@ jQuery( document ).ready( function ( $ ) {
 		$( document ).on( 'click', '.fstu-clubs-page-btn', function () {
 			const p = parseInt( $( this ).data( 'page' ), 10 );
 			if ( p ) { goTo( p ); }
+		} );
+
+		$( document ).on( 'click', '#fstu-clubs-protocol-prev-page', function () {
+			if ( protocolState.page > 1 ) {
+				protocolState.page -= 1;
+				loadProtocol();
+			}
+		} );
+
+		$( document ).on( 'click', '#fstu-clubs-protocol-next-page', function () {
+			if ( protocolState.page < protocolState.total_pages ) {
+				protocolState.page += 1;
+				loadProtocol();
+			}
+		} );
+
+		$( document ).on( 'click', '.fstu-clubs-protocol-page-btn', function () {
+			const p = parseInt( $( this ).data( 'page' ), 10 );
+			if ( p ) {
+				protocolState.page = p;
+				loadProtocol();
+			}
+		} );
+
+		$( document ).on( 'click', '.fstu-clubs-opts-btn', function ( e ) {
+			e.preventDefault();
+			e.stopPropagation();
+
+			const $parent = $( this ).parent();
+			$( '.fstu-clubs-opts' ).not( $parent ).removeClass( 'fstu-clubs-opts--open fstu-clubs-dropup' );
+
+			const menuHeight = 180;
+			const windowHeight = $( window ).height();
+			const rect = this.getBoundingClientRect();
+
+			if ( rect.bottom + menuHeight > windowHeight && rect.top > menuHeight ) {
+				$parent.addClass( 'fstu-clubs-dropup' );
+			} else {
+				$parent.removeClass( 'fstu-clubs-dropup' );
+			}
+
+			$parent.toggleClass( 'fstu-clubs-opts--open' );
+		} );
+
+		$( document ).on( 'click', '.fstu-clubs-opts-list', function ( e ) {
+			e.stopPropagation();
+		} );
+
+		$( document ).on( 'click', function () {
+			$( '.fstu-clubs-opts' ).removeClass( 'fstu-clubs-opts--open fstu-clubs-dropup' );
 		} );
 	}
 
@@ -101,8 +188,11 @@ jQuery( document ).ready( function ( $ ) {
 			success: function ( r ) {
 				if ( r.success ) {
 					$( '#fstu-clubs-tbody' ).html( r.data.html );
-					state.total       = r.data.total;
-					state.total_pages = r.data.total_pages;
+					state.total       = parseInt( r.data.total, 10 ) || 0;
+					state.total_pages = Math.max( parseInt( r.data.total_pages, 10 ) || 1, 1 );
+					state.page        = parseInt( r.data.page, 10 ) || 1;
+					state.per_page    = parseInt( r.data.per_page, 10 ) || state.per_page;
+					$( '#fstu-clubs-per-page' ).val( String( state.per_page ) );
 					updatePagination( r.data );
 				} else {
 					showTableError( r.data.message );
@@ -128,11 +218,11 @@ jQuery( document ).ready( function ( $ ) {
 	}
 
 	function updatePagination( data ) {
-		const total = data.total;
-		const page  = data.page;
-		const tp    = data.total_pages;
-		const from  = ( ( page - 1 ) * state.per_page ) + 1;
-		const to    = Math.min( page * state.per_page, total );
+		const total = parseInt( data.total, 10 ) || 0;
+		const page  = parseInt( data.page, 10 ) || 1;
+		const tp    = Math.max( parseInt( data.total_pages, 10 ) || 1, 1 );
+		const from  = total > 0 ? ( ( page - 1 ) * state.per_page ) + 1 : 0;
+		const to    = total > 0 ? Math.min( page * state.per_page, total ) : 0;
 
 		$( '#fstu-clubs-pag-info' ).text(
 			total ? ( 'Показано ' + from + '–' + to + ' з ' + total + ' клубів' ) : ''
@@ -148,6 +238,115 @@ jQuery( document ).ready( function ( $ ) {
 	function showTableError( msg ) {
 		$( '#fstu-clubs-tbody' ).html(
 			'<tr><td colspan="4" class="fstu-no-results fstu-no-results--error">' + escHtml( msg ) + '</td></tr>'
+		);
+	}
+
+	function handleOpenProtocol() {
+		$mainSection.addClass( 'fstu-hidden' );
+		$protocolSection.removeClass( 'fstu-hidden' );
+		$protocolOpenBtn.addClass( 'fstu-hidden' );
+		$protocolBackBtn.removeClass( 'fstu-hidden' );
+		protocolState.page = 1;
+		loadProtocol();
+	}
+
+	function handleCloseProtocol() {
+		$protocolSection.addClass( 'fstu-hidden' );
+		$mainSection.removeClass( 'fstu-hidden' );
+		$protocolBackBtn.addClass( 'fstu-hidden' );
+		$protocolOpenBtn.removeClass( 'fstu-hidden' );
+	}
+
+	function loadProtocol() {
+		if ( protocolState.loading ) { return; }
+		protocolState.loading = true;
+		setProtocolLoading();
+
+		$.ajax( {
+			url:    fstuClubs.ajaxUrl,
+			method: 'POST',
+			data: {
+				action:      'fstu_clubs_get_protocol',
+				nonce:       fstuClubs.nonce,
+				page:        protocolState.page,
+				per_page:    protocolState.per_page,
+				filter_name: $protocolFilterName.val(),
+			},
+			success: function ( r ) {
+				if ( ! r || ! r.success || ! r.data ) {
+					showProtocolError( fstuClubs.strings.protocolError || fstuClubs.strings.errorGeneric );
+					return;
+				}
+
+				protocolState.total       = parseInt( r.data.total, 10 ) || 0;
+				protocolState.total_pages = Math.max( parseInt( r.data.total_pages, 10 ) || 1, 1 );
+				protocolState.page        = parseInt( r.data.page, 10 ) || 1;
+				protocolState.per_page    = parseInt( r.data.per_page, 10 ) || protocolState.per_page;
+				$protocolPerPage.val( String( protocolState.per_page ) );
+
+				renderProtocolTable( r.data.items || [] );
+				updateProtocolPagination( r.data );
+			},
+			error: function () {
+				showProtocolError( fstuClubs.strings.protocolError || fstuClubs.strings.errorGeneric );
+			},
+			complete: function () {
+				protocolState.loading = false;
+			},
+		} );
+	}
+
+	function renderProtocolTable( items ) {
+		const $tbody = $( '#fstu-clubs-protocol-tbody' );
+
+		if ( ! items.length ) {
+			$tbody.html(
+				'<tr class="fstu-row"><td colspan="6" class="fstu-no-results">' +
+				escHtml( fstuClubs.strings.protocolEmpty || fstuClubs.strings.noData ) +
+				'</td></tr>'
+			);
+			return;
+		}
+
+		let html = '';
+
+		items.forEach( function ( item ) {
+			html += '<tr class="fstu-row">';
+			html += '<td class="fstu-td fstu-td--date">' + escHtml( item.Logs_DateCreate || '' ) + '</td>';
+			html += '<td class="fstu-td fstu-td--type">' + escHtml( item.Logs_Type || '' ) + '</td>';
+			html += '<td class="fstu-td fstu-td--operation">' + escHtml( item.Logs_Name || '' ) + '</td>';
+			html += '<td class="fstu-td fstu-td--message">' + escHtml( item.Logs_Text || '' ) + '</td>';
+			html += '<td class="fstu-td fstu-td--status">' + escHtml( item.Logs_Error || '✓' ) + '</td>';
+			html += '<td class="fstu-td fstu-td--user">' + escHtml( item.FIO || '—' ) + '</td>';
+			html += '</tr>';
+		} );
+
+		$tbody.html( html );
+	}
+
+	function updateProtocolPagination( data ) {
+		const total = parseInt( data.total, 10 ) || 0;
+		const page  = parseInt( data.page, 10 ) || 1;
+		const tp    = Math.max( parseInt( data.total_pages, 10 ) || 1, 1 );
+
+		$( '#fstu-clubs-protocol-info' ).text(
+			'Записів: ' + total + ' | Сторінка ' + page + ' з ' + tp
+		);
+
+		$( '#fstu-clubs-protocol-prev-page' ).prop( 'disabled', page <= 1 );
+		$( '#fstu-clubs-protocol-next-page' ).prop( 'disabled', page >= tp );
+		$( '#fstu-clubs-protocol-pages' ).html( buildPagination( page, tp, 'fstu-clubs-protocol-page-btn' ) );
+	}
+
+	function setProtocolLoading() {
+		$( '#fstu-clubs-protocol-tbody' ).html(
+			'<tr class="fstu-row"><td colspan="6" class="fstu-no-results">Завантаження...</td></tr>'
+		);
+	}
+
+	function showProtocolError( msg ) {
+		$( '#fstu-clubs-protocol-tbody' ).html(
+			'<tr class="fstu-row"><td colspan="6" class="fstu-no-results fstu-no-results--error">' + escHtml( msg ) + '</td></tr>'
 		);
 	}
 
@@ -191,14 +390,23 @@ jQuery( document ).ready( function ( $ ) {
 			openEditForm( clubId );
 		} );
 
+		// ── Пункт «Перегляд» у dropdown-меню ─────────────────────────────────
+		$( document ).on( 'click', '.fstu-btn--view', function ( e ) {
+			e.preventDefault();
+			const clubId = parseInt( $( this ).data( 'club-id' ), 10 );
+			openViewModal( clubId );
+		} );
+
 		// ── Кнопки редагування у таблиці ──────────────────────────────────────
-		$( document ).on( 'click', '.fstu-btn--edit', function () {
+		$( document ).on( 'click', '.fstu-btn--edit', function ( e ) {
+			e.preventDefault();
 			const clubId = parseInt( $( this ).data( 'club-id' ), 10 );
 			openEditForm( clubId );
 		} );
 
 		// ── Кнопки видалення у таблиці ────────────────────────────────────────
-		$( document ).on( 'click', '.fstu-btn--delete', function () {
+		$( document ).on( 'click', '.fstu-btn--delete', function ( e ) {
+			e.preventDefault();
 			const clubId = parseInt( $( this ).data( 'club-id' ), 10 );
 			deleteClub( clubId, $( this ).closest( 'tr' ) );
 		} );

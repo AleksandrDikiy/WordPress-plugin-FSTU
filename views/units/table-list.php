@@ -2,7 +2,7 @@
 /**
  * Таблиця списку осередків.
  *
- * Version:     1.0.0
+ * Version:     1.1.0
  * Date_update: 2026-04-06
  *
  * @package FSTU\Dictionaries\Units
@@ -22,7 +22,19 @@ $colspan      = $show_actions ? 9 : 8;
 		<thead class="fstu-thead">
 			<tr>
 				<th class="fstu-th fstu-th--num">#</th>
-				<th class="fstu-th fstu-th--ofst"><?php esc_html_e( 'Найменування', 'fstu' ); ?></th>
+				<th class="fstu-th fstu-th--wide-name">
+					<div class="fstu-th-with-search">
+						<span><?php esc_html_e( 'Найменування', 'fstu' ); ?></span>
+						<input
+							type="text"
+							id="fstu-units-search"
+							class="fstu-input--in-header"
+							placeholder="<?php esc_attr_e( '🔍 Пошук...', 'fstu' ); ?>"
+							aria-label="<?php esc_attr_e( 'Пошук за найменуванням осередка', 'fstu' ); ?>"
+							autocomplete="off"
+						>
+					</div>
+				</th>
 				<th class="fstu-th"><?php esc_html_e( 'Короткo', 'fstu' ); ?></th>
 				<th class="fstu-th"><?php esc_html_e( 'ОПФ', 'fstu' ); ?></th>
 				<th class="fstu-th"><?php esc_html_e( 'Тип', 'fstu' ); ?></th>

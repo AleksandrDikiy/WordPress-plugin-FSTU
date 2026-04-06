@@ -9,8 +9,8 @@
  *   userregistrar      → + додавання, редагування
  *   administrator      → + видалення
  *
- * Version:     1.0.0
- * Date_update: 2026-04-05
+ * Version:     1.1.1
+ * Date_update: 2026-04-06
  *
  * @package FSTU\Clubs
  */
@@ -66,7 +66,7 @@ class Clubs_List {
 		// Права поточного користувача (обчислюємо один раз на сервері)
 		$user        = wp_get_current_user();
 		$roles       = (array) $user->roles;
-		$is_admin    = in_array( 'administrator', $roles, true );
+		$is_admin    = in_array( 'administrator', $roles, true ) || current_user_can( 'manage_options' );
 		$is_reg      = in_array( 'userregistrar',  $roles, true );
 		$is_logged   = is_user_logged_in();
 
@@ -84,6 +84,8 @@ class Clubs_List {
 					'addTitle'      => 'Додавання клубу',
 					'editTitle'     => 'Редагування клубу',
 					'noData'        => 'Клубів не знайдено.',
+					'protocolEmpty' => 'Записи протоколу відсутні.',
+					'protocolError' => 'Не вдалося завантажити протокол.',
 					'errorGeneric'  => 'Сталася помилка. Спробуйте ще раз.',
 					'saving'        => 'Збереження...',
 					'deleting'      => 'Видалення...',

@@ -2,7 +2,7 @@
  * JavaScript модуля "Довідник видів змагань ФСТУ".
  * AJAX-запити, фільтри, модальні вікна, CRUD-операції.
  *
- * Version:     1.4.0
+ * Version:     1.5.0
  * Date_update: 2026-04-06
  *
  * @package FSTU
@@ -106,6 +106,34 @@ jQuery(document).ready(function($) {
 			}
 		});
 
+		$(document).on('click', '.fstu-typeevent-opts-btn', function(event) {
+			event.preventDefault();
+			event.stopPropagation();
+
+			const $parent = $(this).parent();
+			$('.fstu-typeevent-opts').not($parent).removeClass('fstu-typeevent-opts--open fstu-typeevent-dropup');
+
+			const menuHeight = 180;
+			const windowHeight = $(window).height();
+			const rect = this.getBoundingClientRect();
+
+			if (rect.bottom + menuHeight > windowHeight && rect.top > menuHeight) {
+				$parent.addClass('fstu-typeevent-dropup');
+			} else {
+				$parent.removeClass('fstu-typeevent-dropup');
+			}
+
+			$parent.toggleClass('fstu-typeevent-opts--open');
+		});
+
+		$(document).on('click', '.fstu-typeevent-opts-list', function(event) {
+			event.stopPropagation();
+		});
+
+		$(document).on('click', function() {
+			$('.fstu-typeevent-opts').removeClass('fstu-typeevent-opts--open fstu-typeevent-dropup');
+		});
+
 		$(document).on('click', '.fstu-typeevent-btn-view', handleViewItem);
 		$(document).on('click', '.fstu-typeevent-btn-edit', handleEditItem);
 		$(document).on('click', '.fstu-typeevent-btn-delete', handleDeleteItem);
@@ -184,15 +212,18 @@ jQuery(document).ready(function($) {
 			html += '<td class="fstu-td">' + escapeHtml(item.TypeEvent_Name || '') + '</td>';
 
 			if (permissions.canView) {
-				html += '<td class="fstu-td fstu-td--actions"><div class="fstu-actions-container">';
-				html += '<button type="button" class="fstu-btn-action fstu-typeevent-btn-view" data-typeevent-id="' + absint(item.TypeEvent_ID) + '" title="Перегляд" aria-label="Перегляд">👁</button>';
+				html += '<td class="fstu-td fstu-td--actions"><div class="fstu-typeevent-opts">';
+				html += '<button type="button" class="fstu-typeevent-opts-btn" title="Дії" aria-label="Дії">▼</button>';
+				html += '<ul class="fstu-typeevent-opts-list">';
+				html += '<li><a href="#" class="fstu-typeevent-btn-view" data-typeevent-id="' + absint(item.TypeEvent_ID) + '">🔎 Перегляд</a></li>';
 				if (permissions.canManage) {
-					html += '<button type="button" class="fstu-btn-action fstu-typeevent-btn-edit" data-typeevent-id="' + absint(item.TypeEvent_ID) + '" title="Редагувати" aria-label="Редагувати">✎</button>';
+					html += '<li><a href="#" class="fstu-typeevent-btn-edit" data-typeevent-id="' + absint(item.TypeEvent_ID) + '">📝 Редагування</a></li>';
 				}
 				if (permissions.canDelete) {
-					html += '<button type="button" class="fstu-btn-action fstu-typeevent-btn-delete" data-typeevent-id="' + absint(item.TypeEvent_ID) + '" title="Видалити" aria-label="Видалити">✕</button>';
+					html += '<li><hr class="fstu-typeevent-opts-divider"></li>';
+					html += '<li><a href="#" class="fstu-typeevent-btn-delete" data-typeevent-id="' + absint(item.TypeEvent_ID) + '">❌ Видалення</a></li>';
 				}
-				html += '</div></td>';
+				html += '</ul></div></td>';
 			}
 
 			html += '</tr>';

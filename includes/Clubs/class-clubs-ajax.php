@@ -10,8 +10,8 @@
  *   fstu_clubs_save       — додати / оновити (userregistrar, administrator)
  *   fstu_clubs_delete     — видалити (тільки administrator)
  *
- * Version:     1.0.0
- * Date_update: 2026-04-05
+	 * Version:     1.2.0
+ * Date_update: 2026-04-06
  *
  * @package FSTU\Clubs
  */
@@ -25,6 +25,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Clubs_Ajax {
 
 	private const MAX_PER_PAGE = 200; // довідник невеликий — дозволяємо більше
+	private const PROTOCOL_PER_PAGE_ALLOWED = [ 10, 20, 50 ];
+	private const LOG_NAME = 'Clubs';
 	private const EDIT_ROLES   = [ 'administrator', 'userregistrar' ];
 	private const DELETE_ROLES = [ 'administrator' ];
 
@@ -39,6 +41,7 @@ class Clubs_Ajax {
 
 		// Збереження (додати / оновити) — потребує прав
 		add_action( 'wp_ajax_fstu_clubs_save', [ $this, 'handle_save' ] );
+		add_action( 'wp_ajax_fstu_clubs_get_protocol', [ $this, 'handle_get_protocol' ] );
 
 		// Видалення — тільки адмін
 		add_action( 'wp_ajax_fstu_clubs_delete', [ $this, 'handle_delete' ] );
@@ -55,7 +58,10 @@ class Clubs_Ajax {
 
 		$search   = sanitize_text_field( wp_unslash( $_POST['search'] ?? '' ) );
 		$page     = max( 1, absint( $_POST['page']     ?? 1 ) );
-		$per_page = min( absint( $_POST['per_page'] ?? 50 ), self::MAX_PER_PAGE );
+		$per_page = min( absint( $_POST['per_page'] ?? 10 ), self::MAX_PER_PAGE );
+		if ( $per_page < 1 ) {
+			$per_page = 10;
+		}
 
 		global $wpdb;
 
@@ -92,7 +98,7 @@ class Clubs_Ajax {
 			'total'       => $total,
 			'page'        => $page,
 			'per_page'    => $per_page,
-			'total_pages' => (int) ceil( $total / max( 1, $per_page ) ),
+			'total_pages' => max( 1, (int) ceil( $total / max( 1, $per_page ) ) ),
 		] );
 	}
 
@@ -165,13 +171,20 @@ class Clubs_Ajax {
 		$format = [ '%s', '%s', '%s' ];
 
 		if ( $club_id > 0 ) {
+			$existing_name = (string) $wpdb->get_var(
+				$wpdb->prepare( 'SELECT Club_Name FROM S_Club WHERE Club_ID = %d LIMIT 1', $club_id )
+			);
+
 			// UPDATE
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			$result = $wpdb->update( 'S_Club', $data, [ 'Club_ID' => $club_id ], $format, [ '%d' ] );
 
 			if ( false === $result ) {
+				$this->log_operation( 'UPDATE', sprintf( 'Помилка оновлення клубу: %s', $existing_name ?: $name ), 'Помилка оновлення' );
 				wp_send_json_error( [ 'message' => 'Помилка оновлення. Зверніться до адміністратора.' ] );
 			}
+
+			$this->log_operation( 'UPDATE', sprintf( 'Оновлено клуб: %s', $name ), '✓' );
 
 			wp_send_json_success( [
 				'message'  => 'Клуб успішно оновлено.',
@@ -184,8 +197,11 @@ class Clubs_Ajax {
 			$result = $wpdb->insert( 'S_Club', $data, $format );
 
 			if ( ! $result ) {
+				$this->log_operation( 'INSERT', sprintf( 'Помилка додавання клубу: %s', $name ), 'Помилка додавання' );
 				wp_send_json_error( [ 'message' => 'Помилка додавання. Зверніться до адміністратора.' ] );
 			}
+
+			$this->log_operation( 'INSERT', sprintf( 'Додано новий клуб: %s', $name ), '✓' );
 
 			wp_send_json_success( [
 				'message'  => 'Клуб успішно додано.',
@@ -193,6 +209,66 @@ class Clubs_Ajax {
 				'action'   => 'inserted',
 			] );
 		}
+	}
+
+	/**
+	 * Повертає протокол (журнал операцій) модуля клубів.
+	 * Колонки: Дата, Тип, Операція, Повідомлення, Статус, Користувач.
+	 */
+	public function handle_get_protocol(): void {
+		check_ajax_referer( Clubs_List::NONCE_ACTION, 'nonce' );
+
+		if ( ! $this->has_any_role( self::DELETE_ROLES ) ) {
+			wp_send_json_error( [ 'message' => 'Немає прав для перегляду протоколу.' ] );
+		}
+
+		$page        = max( 1, absint( $_POST['page'] ?? 1 ) );
+		$per_page    = absint( $_POST['per_page'] ?? 10 );
+		$filter_name = sanitize_text_field( wp_unslash( $_POST['filter_name'] ?? '' ) );
+
+		if ( ! in_array( $per_page, self::PROTOCOL_PER_PAGE_ALLOWED, true ) ) {
+			$per_page = 10;
+		}
+
+		global $wpdb;
+
+		$where  = ' WHERE l.Logs_Name = %s';
+		$params = [ self::LOG_NAME ];
+
+		if ( '' !== $filter_name ) {
+			$like = '%' . $wpdb->esc_like( $filter_name ) . '%';
+			$where .= ' AND (l.Logs_Text LIKE %s OR u.FIO LIKE %s)';
+			$params[] = $like;
+			$params[] = $like;
+		}
+
+		$count_sql = "SELECT COUNT(*)
+			FROM Logs l
+			LEFT JOIN vUserFSTU u ON u.User_ID = l.User_ID
+			{$where}";
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+		$total = (int) $wpdb->get_var( $wpdb->prepare( $count_sql, ...$params ) );
+
+		$offset      = ( $page - 1 ) * $per_page;
+		$list_params = array_merge( $params, [ $per_page, $offset ] );
+		$list_sql    = "SELECT l.Logs_DateCreate, l.Logs_Type, l.Logs_Name, l.Logs_Text, l.Logs_Error, u.FIO
+			FROM Logs l
+			LEFT JOIN vUserFSTU u ON u.User_ID = l.User_ID
+			{$where}
+			ORDER BY l.Logs_DateCreate DESC
+			LIMIT %d OFFSET %d";
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+		$items = $wpdb->get_results( $wpdb->prepare( $list_sql, ...$list_params ), ARRAY_A );
+
+		wp_send_json_success( [
+			'items'       => is_array( $items ) ? $items : [],
+			'total'       => $total,
+			'page'        => $page,
+			'per_page'    => $per_page,
+			'total_pages' => max( 1, (int) ceil( $total / max( 1, $per_page ) ) ),
+		] );
 	}
 
 	/**
@@ -214,6 +290,9 @@ class Clubs_Ajax {
 		}
 
 		global $wpdb;
+		$club_name = (string) $wpdb->get_var(
+			$wpdb->prepare( 'SELECT Club_Name FROM S_Club WHERE Club_ID = %d LIMIT 1', $club_id )
+		);
 
 		// Перевірка прив'язаних учасників
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
@@ -222,6 +301,7 @@ class Clubs_Ajax {
 		);
 
 		if ( $members > 0 ) {
+			$this->log_operation( 'DELETE', sprintf( 'Спроба видалення клубу з учасниками: %s', $club_name ?: ('ID ' . $club_id) ), 'Клуб має привʼязаних учасників' );
 			wp_send_json_error( [
 				'message' => sprintf(
 					'Неможливо видалити: клуб має %d учасників. Спочатку відкріпіть учасників.',
@@ -234,8 +314,11 @@ class Clubs_Ajax {
 		$result = $wpdb->delete( 'S_Club', [ 'Club_ID' => $club_id ], [ '%d' ] );
 
 		if ( false === $result ) {
+			$this->log_operation( 'DELETE', sprintf( 'Помилка видалення клубу: %s', $club_name ?: ('ID ' . $club_id) ), 'Помилка видалення' );
 			wp_send_json_error( [ 'message' => 'Помилка видалення. Зверніться до адміністратора.' ] );
 		}
+
+		$this->log_operation( 'DELETE', sprintf( 'Видалено клуб: %s', $club_name ?: ('ID ' . $club_id) ), '✓' );
 
 		wp_send_json_success( [
 			'message' => 'Клуб успішно видалено.',
@@ -253,6 +336,27 @@ class Clubs_Ajax {
 	private function has_any_role( array $roles ): bool {
 		$user = wp_get_current_user();
 		return $user->exists() && (bool) array_intersect( $roles, (array) $user->roles );
+	}
+
+	/**
+	 * Записує дію користувача у таблицю Logs.
+	 */
+	private function log_operation( string $type, string $text, string $status ): void {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$wpdb->insert(
+			'Logs',
+			[
+				'User_ID'         => get_current_user_id(),
+				'Logs_DateCreate' => current_time( 'mysql' ),
+				'Logs_Type'       => $type,
+				'Logs_Name'       => self::LOG_NAME,
+				'Logs_Text'       => $text,
+				'Logs_Error'      => $status,
+			],
+			[ '%d', '%s', '%s', '%s', '%s', '%s' ]
+		);
 	}
 
 	/**
@@ -296,23 +400,29 @@ class Clubs_Ajax {
 				      title="' . esc_attr( $www ) . '">🌐</a>'
 				: '';
 
-			// Кнопки дій
-			$actions = '';
+			// Dropdown-меню дій
+			$actions = sprintf(
+				'<li><a href="#" class="fstu-btn-action fstu-btn--view" data-club-id="%1$d">🔎 Перегляд</a></li>',
+				$club_id
+			);
+
 			if ( $can_edit ) {
-			    	$actions .= sprintf(
-					'<button type="button" class="fstu-btn-action fstu-btn--edit" data-club-id="%d" title="Редагувати">✏</button>',
+				$actions .= sprintf(
+					'<li><a href="#" class="fstu-btn-action fstu-btn--edit" data-club-id="%d">📝 Редагування</a></li>',
 					$club_id
 				);
 			}
+
 			if ( $can_delete ) {
+				$actions .= '<li><hr class="fstu-clubs-opts-divider"></li>';
 				$actions .= sprintf(
-					'<button type="button" class="fstu-btn-action fstu-btn--delete" data-club-id="%d" title="Видалити">✕</button>',
+					'<li><a href="#" class="fstu-btn-action fstu-btn--delete" data-club-id="%d">❌ Видалення</a></li>',
 					$club_id
 				);
 			}
 
 			$actions_td = ( $can_edit || $can_delete )
-				? '<td class="fstu-td fstu-td--actions">' . $actions . '</td>'
+				? '<td class="fstu-td fstu-td--actions"><div class="fstu-clubs-opts"><button type="button" class="fstu-clubs-opts-btn" title="Дії" aria-label="Дії">▼</button><ul class="fstu-clubs-opts-list">' . $actions . '</ul></div></td>'
 				: '';
 
 			$html .= "

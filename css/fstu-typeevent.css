@@ -315,7 +315,7 @@
 
 .fstu-th--num { width: 40px; text-align: center; }
 .fstu-th--code { width: 110px; }
-.fstu-th--actions { width: 88px; text-align: center; }
+.fstu-th--actions { width: 56px; text-align: center; }
 .fstu-th--wide-name { min-width: 220px; }
 .fstu-th--date { width: 140px; }
 .fstu-th--type { width: 80px; }
@@ -340,6 +340,8 @@
 .fstu-td--actions {
 	text-align: center;
 	padding: 2px;
+	width: 56px;
+	min-width: 56px;
 }
 
 .fstu-td--date {
@@ -370,10 +372,85 @@
 	font-size: 12px;
 }
 
-.fstu-actions-container {
-	display: inline-flex;
-	gap: 4px;
+.fstu-typeevent-opts {
+	position: relative;
+	display: inline-block;
+}
+
+.fstu-typeevent-opts-btn {
+	background-color: var(--fstu-typeevent-primary);
+	color: #ffffff;
+	border: none;
+	padding: 4px 9px;
+	border-radius: 4px;
+	cursor: pointer;
+	font-size: 13px;
+	line-height: 1;
+	box-shadow: none;
+	height: auto;
+	width: auto;
+}
+
+.fstu-typeevent-opts-btn:hover {
+	background-color: #a93226;
+}
+
+.fstu-typeevent-opts-list {
+	display: none;
+	position: absolute;
+	right: 0;
+	top: 100%;
+	min-width: 200px;
+	background: #ffffff;
+	border: 1px solid #ccc;
+	box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+	padding: 5px 0;
+	margin: 2px 0 0 0;
+	z-index: 99999;
+	list-style: none;
+}
+
+.fstu-typeevent-opts--open .fstu-typeevent-opts-list {
+	display: block;
+}
+
+.fstu-typeevent-opts.fstu-typeevent-dropup .fstu-typeevent-opts-list {
+	top: auto;
+	bottom: 100%;
+	margin-top: 0;
+	margin-bottom: 2px;
+	box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
+}
+
+.fstu-typeevent-opts-list li {
+	padding: 0;
+	margin: 0;
+	list-style: none;
+}
+
+.fstu-typeevent-opts-list li a {
+	padding: 8px 15px;
+	margin: 0;
+	display: block;
 	white-space: nowrap;
+	text-decoration: none;
+	color: #333;
+	text-align: left;
+	font-size: 13px;
+	border: none;
+	background: transparent;
+}
+
+.fstu-typeevent-opts-list li a:hover {
+	background-color: #f8f9fa;
+	color: var(--fstu-typeevent-primary);
+}
+
+.fstu-typeevent-opts-divider {
+	height: 1px;
+	background-color: #eee;
+	margin: 5px 0;
+	border: none;
 }
 
 .fstu-no-results {

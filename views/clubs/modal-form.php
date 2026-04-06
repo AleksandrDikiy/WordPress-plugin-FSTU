@@ -4,7 +4,7 @@
  * Використовується для обох операцій (заголовок та club_id змінюються через JS).
  * Містить: nonce (через wp_localize_script), honeypot поле.
  *
- * Version:     1.0.0
+ * Version:     1.0.1
  * Date_update: 2026-04-05
  *
  * @package FSTU\Clubs\Views
@@ -14,10 +14,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-// Показуємо форму тільки тим, хто має права
+// Показуємо форму тільки тим, хто має права.
 $user     = wp_get_current_user();
-$can_edit = current_user_can( 'administrator' )
-            || in_array( 'userregistrar', (array) $user->roles, true );
+$roles    = (array) $user->roles;
+$can_edit = current_user_can( 'manage_options' )
+	|| in_array( 'administrator', $roles, true )
+	|| in_array( 'userregistrar', $roles, true );
 
 if ( ! $can_edit ) {
 	return;

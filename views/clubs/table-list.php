@@ -1,10 +1,11 @@
 <?php
 /**
  * View: Таблиця клубів.
+ * Пошук вбудовано у шапку (колонка «Назва клубу»).
  * <tbody> заповнюється через AJAX.
  *
- * Version:     1.0.0
- * Date_update: 2026-04-05
+ * Version:     1.1.0
+ * Date_update: 2026-04-06
  *
  * @package FSTU\Clubs\Views
  *
@@ -28,11 +29,23 @@ if ( ! defined( 'ABSPATH' ) ) {
 		<thead class="fstu-thead">
 			<tr>
 				<th class="fstu-th fstu-th--num" scope="col">№</th>
-				<th class="fstu-th fstu-th--name" scope="col">Назва клубу</th>
-				<th class="fstu-th fstu-th--adr" scope="col">Поштова адреса</th>
+				<th class="fstu-th fstu-th--name" scope="col">
+					<div class="fstu-th-with-search">
+						<span><?php esc_html_e( 'Назва клубу', 'fstu' ); ?></span>
+						<input
+							type="search"
+							id="fstu-club-search"
+							class="fstu-input--in-header"
+							placeholder="<?php esc_attr_e( '🔍 Пошук...', 'fstu' ); ?>"
+							aria-label="<?php esc_attr_e( 'Пошук за назвою клубу', 'fstu' ); ?>"
+							autocomplete="off"
+						>
+					</div>
+				</th>
+				<th class="fstu-th fstu-th--adr" scope="col"><?php esc_html_e( 'Поштова адреса', 'fstu' ); ?></th>
 				<?php if ( $can_edit ) : ?>
 					<th class="fstu-th fstu-th--actions" scope="col">
-						<span class="fstu-sr-only">Дії</span>
+						<span class="fstu-sr-only"><?php esc_html_e( 'Дії', 'fstu' ); ?></span>
 					</th>
 				<?php endif; ?>
 			</tr>
@@ -40,22 +53,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 		<tbody class="fstu-tbody" id="fstu-clubs-tbody">
 			<tr>
 				<td colspan="<?php echo $can_edit ? '4' : '3'; ?>" class="fstu-no-results">
-					<span class="fstu-loader__spinner"></span> Завантаження...
+					<span class="fstu-loader__spinner"></span> <?php esc_html_e( 'Завантаження...', 'fstu' ); ?>
 				</td>
 			</tr>
 		</tbody>
 	</table>
 
-</div>
-
-<!-- Лічильник та пагінація -->
-<div class="fstu-pagination" id="fstu-clubs-pagination">
-	<div class="fstu-pagination__info" id="fstu-clubs-pag-info" aria-live="polite"></div>
-	<div class="fstu-pagination__controls">
-		<button type="button" class="fstu-btn fstu-btn--page" id="fstu-clubs-first" aria-label="Перша" disabled>«</button>
-		<button type="button" class="fstu-btn fstu-btn--page" id="fstu-clubs-prev"  aria-label="Попередня" disabled>‹</button>
-		<span class="fstu-pagination__pages" id="fstu-clubs-pages" role="group" aria-label="Сторінки"></span>
-		<button type="button" class="fstu-btn fstu-btn--page" id="fstu-clubs-next"  aria-label="Наступна">›</button>
-		<button type="button" class="fstu-btn fstu-btn--page" id="fstu-clubs-last"  aria-label="Остання">»</button>
-	</div>
 </div>

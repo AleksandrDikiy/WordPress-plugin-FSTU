@@ -3,7 +3,7 @@
  * AJAX-обробники модуля "Довідник осередків ФСТУ".
  * Всі запити до БД виконуються виключно через $wpdb->prepare().
  *
- * Version:     1.0.1
+ * Version:     1.1.0
  * Date_update: 2026-04-06
  *
  * @package FSTU\Dictionaries\Units
@@ -18,13 +18,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Units_Ajax {
 
 	/** Кількість записів на сторінці за замовчуванням. */
-	private const DEFAULT_PER_PAGE = 15;
+	private const DEFAULT_PER_PAGE = 10;
 
 	/** Максимально допустима кількість записів на сторінці (захист від DDoS). */
 	private const MAX_PER_PAGE = 100;
 
 	/** Максимальна довжина пошукового рядка. */
 	private const MAX_SEARCH_LENGTH = 100;
+
+	/** Доступні значення пагінації для протоколу. */
+	private const PROTOCOL_PER_PAGE_ALLOWED = [ 10, 20, 50 ];
+
+	/** Назва модуля для таблиці Logs. */
+	private const LOG_NAME = 'Units';
 
 	/**
 	 * Реєструє AJAX хуки WordPress.
@@ -50,6 +56,7 @@ class Units_Ajax {
 
 		// Видалення осередка (тільки адміни)
 		add_action( 'wp_ajax_fstu_delete_unit', [ $this, 'handle_delete_unit' ] );
+		add_action( 'wp_ajax_fstu_get_units_protocol', [ $this, 'handle_get_protocol' ] );
 	}
 
 	// ─── Публічні AJAX обробники ──────────────────────────────────────────────────
@@ -115,7 +122,9 @@ class Units_Ajax {
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
-		$total_count = (int) $wpdb->get_var( $wpdb->prepare( $count_query, $params ) );
+		$total_count = $params
+			? (int) $wpdb->get_var( $wpdb->prepare( $count_query, $params ) )
+			: (int) $wpdb->get_var( $count_query );
 
 		// Сортування та пагінація
 		$query .= " ORDER BY Unit_Name ASC LIMIT %d OFFSET %d";
@@ -255,8 +264,11 @@ class Units_Ajax {
 		);
 
 		if ( ! $inserted ) {
+			$this->log_operation( 'INSERT', sprintf( 'Помилка додавання осередка: %s', (string) $data['unit_name'] ), 'Помилка додавання' );
 			wp_send_json_error( [ 'message' => __( 'Помилка при додаванні осередка до бази даних.', 'fstu' ) ] );
 		}
+
+		$this->log_operation( 'INSERT', sprintf( 'Додано новий осередок: %s', (string) $data['unit_name'] ), '✓' );
 
 		wp_send_json_success(
 			[
@@ -292,6 +304,9 @@ class Units_Ajax {
 		$this->validate_unit_payload( $data );
 
 		global $wpdb;
+		$existing_name = (string) $wpdb->get_var(
+			$wpdb->prepare( 'SELECT Unit_Name FROM S_Unit WHERE Unit_ID = %d LIMIT 1', $unit_id )
+		);
 
 		// Оновлюємо запис
 		$updated = $wpdb->update(
@@ -319,8 +334,11 @@ class Units_Ajax {
 		);
 
 		if ( false === $updated ) {
+			$this->log_operation( 'UPDATE', sprintf( 'Помилка оновлення осередка: %s', $existing_name ?: (string) $data['unit_name'] ), 'Помилка оновлення' );
 			wp_send_json_error( [ 'message' => __( 'Помилка при редаганні осередка.', 'fstu' ) ] );
 		}
+
+		$this->log_operation( 'UPDATE', sprintf( 'Оновлено осередок: %s', (string) $data['unit_name'] ), '✓' );
 
 		wp_send_json_success(
 			[
@@ -347,6 +365,9 @@ class Units_Ajax {
 		}
 
 		global $wpdb;
+		$unit_name = (string) $wpdb->get_var(
+			$wpdb->prepare( 'SELECT Unit_Name FROM S_Unit WHERE Unit_ID = %d LIMIT 1', $unit_id )
+		);
 
 		// Не дозволяємо видаляти осередок, якщо він використовується в дочірніх записах.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
@@ -355,6 +376,7 @@ class Units_Ajax {
 		);
 
 		if ( $has_children > 0 ) {
+			$this->log_operation( 'DELETE', sprintf( 'Спроба видалення осередка з підлеглими записами: %s', $unit_name ?: ('ID ' . $unit_id) ), 'Осередок має підлеглі осередки' );
 			wp_send_json_error( [ 'message' => __( 'Осередок має підлеглі осередки та не може бути видалений.', 'fstu' ) ] );
 		}
 
@@ -364,6 +386,7 @@ class Units_Ajax {
 		);
 
 		if ( $linked_users > 0 ) {
+			$this->log_operation( 'DELETE', sprintf( 'Спроба видалення осередка, прив’язаного до користувачів: %s', $unit_name ?: ('ID ' . $unit_id) ), 'Осередок прив’язаний до користувачів' );
 			wp_send_json_error( [ 'message' => __( 'Осередок прив’язаний до користувачів і не може бути видалений.', 'fstu' ) ] );
 		}
 
@@ -371,12 +394,76 @@ class Units_Ajax {
 		$deleted = $wpdb->delete( 'S_Unit', [ 'Unit_ID' => $unit_id ], [ '%d' ] );
 
 		if ( ! $deleted ) {
+			$this->log_operation( 'DELETE', sprintf( 'Помилка видалення осередка: %s', $unit_name ?: ('ID ' . $unit_id) ), 'Помилка видалення' );
 			wp_send_json_error( [ 'message' => __( 'Помилка при видаленні осередка.', 'fstu' ) ] );
 		}
+
+		$this->log_operation( 'DELETE', sprintf( 'Видалено осередок: %s', $unit_name ?: ('ID ' . $unit_id) ), '✓' );
 
 		wp_send_json_success(
 			[
 				'message' => __( 'Осередок успішно видалений.', 'fstu' ),
+			]
+		);
+	}
+
+	/**
+	 * Повертає протокол (журнал операцій) модуля осередків.
+	 */
+	public function handle_get_protocol(): void {
+		check_ajax_referer( Units_List::NONCE_ACTION, 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( [ 'message' => __( 'Немає прав для перегляду протоколу.', 'fstu' ) ] );
+		}
+
+		$page        = max( 1, absint( $_POST['page'] ?? 1 ) );
+		$per_page    = absint( $_POST['per_page'] ?? 10 );
+		$filter_name = sanitize_text_field( wp_unslash( $_POST['filter_name'] ?? '' ) );
+
+		if ( ! in_array( $per_page, self::PROTOCOL_PER_PAGE_ALLOWED, true ) ) {
+			$per_page = 10;
+		}
+
+		global $wpdb;
+
+		$where  = ' WHERE l.Logs_Name = %s';
+		$params = [ self::LOG_NAME ];
+
+		if ( '' !== $filter_name ) {
+			$like = '%' . $wpdb->esc_like( $filter_name ) . '%';
+			$where .= ' AND (l.Logs_Text LIKE %s OR u.FIO LIKE %s)';
+			$params[] = $like;
+			$params[] = $like;
+		}
+
+		$count_sql = "SELECT COUNT(*)
+			FROM Logs l
+			LEFT JOIN vUserFSTU u ON u.User_ID = l.User_ID
+			{$where}";
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+		$total = (int) $wpdb->get_var( $wpdb->prepare( $count_sql, ...$params ) );
+
+		$offset      = ( $page - 1 ) * $per_page;
+		$list_params = array_merge( $params, [ $per_page, $offset ] );
+		$list_sql    = "SELECT l.Logs_DateCreate, l.Logs_Type, l.Logs_Name, l.Logs_Text, l.Logs_Error, u.FIO
+			FROM Logs l
+			LEFT JOIN vUserFSTU u ON u.User_ID = l.User_ID
+			{$where}
+			ORDER BY l.Logs_DateCreate DESC
+			LIMIT %d OFFSET %d";
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+		$items = $wpdb->get_results( $wpdb->prepare( $list_sql, ...$list_params ), ARRAY_A );
+
+		wp_send_json_success(
+			[
+				'items'       => is_array( $items ) ? $items : [],
+				'total'       => $total,
+				'page'        => $page,
+				'per_page'    => $per_page,
+				'total_pages' => max( 1, (int) ceil( $total / max( 1, $per_page ) ) ),
 			]
 		);
 	}
@@ -389,6 +476,27 @@ class Units_Ajax {
 		$roles = is_array( $user->roles ) ? $user->roles : [];
 
 		return current_user_can( 'manage_options' ) || in_array( 'administrator', $roles, true ) || in_array( 'userregistrar', $roles, true );
+	}
+
+	/**
+	 * Записує операцію користувача у таблицю Logs.
+	 */
+	private function log_operation( string $type, string $text, string $status ): void {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$wpdb->insert(
+			'Logs',
+			[
+				'User_ID'         => get_current_user_id(),
+				'Logs_DateCreate' => current_time( 'mysql' ),
+				'Logs_Type'       => $type,
+				'Logs_Name'       => self::LOG_NAME,
+				'Logs_Text'       => $text,
+				'Logs_Error'      => $status,
+			],
+			[ '%d', '%s', '%s', '%s', '%s', '%s' ]
+		);
 	}
 
 	/**

@@ -3,7 +3,7 @@
  * Компактний дизайн, всі класи з префіксом .fstu-
  * Жодних inline-стилів у PHP файлах!
  *
- * Version:     1.0.0
+ * Version:     1.1.0
  * Date_update: 2026-04-06
  *
  * @package FSTU
@@ -90,8 +90,9 @@
 	border-color: var(--fstu-units-border);
 }
 .fstu-btn--secondary:hover:not(:disabled) {
-	background: #f0f2f5;
-	border-color: #999;
+	background: var(--fstu-units-primary);
+	border-color: var(--fstu-units-primary);
+	color: #fff;
 }
 
 .fstu-btn--text {
@@ -262,7 +263,7 @@
 /* ─── Таблиця ────────────────────────────────────────────────────────────── */
 .fstu-table-wrap {
 	position: relative;
-	overflow-x: auto;
+	overflow-x: hidden;
 	margin: 0 0 12px;
 	border: 1px solid var(--fstu-units-border);
 	border-radius: var(--fstu-units-radius);
@@ -273,7 +274,7 @@
 	width: 100%;
 	border-collapse: collapse;
 	font-size: var(--fstu-units-font-size);
-	table-layout: auto;
+	table-layout: fixed;
 }
 
 /* Заголовок таблиці */
@@ -283,7 +284,7 @@
 	text-align: left;
 	font-weight: 600;
 	border: 1px solid #b7d7b7;
-	white-space: nowrap;
+	white-space: normal;
 	font-size: var(--fstu-units-font-size);
 	position: sticky;
 	top: 0;
@@ -293,7 +294,16 @@
 
 .fstu-th--num { width: 40px; text-align: center; }
 .fstu-th--ofst { min-width: 160px; }
-.fstu-th--actions { width: 80px; text-align: center; }
+.fstu-th--wide-name {
+	width: 42%;
+	min-width: 0;
+}
+.fstu-th--actions { width: 54px; min-width: 54px; text-align: center; }
+.fstu-th--date { width: 140px; }
+.fstu-th--type { width: 80px; text-align: center; }
+.fstu-th--message { min-width: 220px; }
+.fstu-th--status { width: 80px; text-align: center; }
+.fstu-th--user { width: 140px; }
 
 /* Рядки тіла таблиці */
 .fstu-tbody .fstu-row:nth-child(odd) { background: var(--fstu-units-bg-row-odd); }
@@ -316,10 +326,43 @@
 	width: 40px;
 }
 
+.fstu-td--name {
+	white-space: normal;
+	overflow: visible;
+	text-overflow: clip;
+	overflow-wrap: anywhere;
+	word-break: break-word;
+}
+
 .fstu-td--actions {
 	text-align: center;
 	padding: 2px;
-	width: 80px;
+	width: 54px;
+	min-width: 54px;
+	overflow: visible;
+}
+
+.fstu-td--date {
+	font-size: var(--fstu-units-font-size-sm);
+	color: var(--fstu-units-text-light);
+	white-space: nowrap;
+}
+
+.fstu-td--type,
+.fstu-td--status {
+	text-align: center;
+}
+
+.fstu-td--operation {
+	font-weight: 500;
+}
+
+.fstu-td--message {
+	min-width: 220px;
+}
+
+.fstu-td--user {
+	white-space: nowrap;
 }
 
 /* Контейнер для кнопок дій (один рядок, inline-flex) */
@@ -353,6 +396,69 @@
 	margin-top: 12px;
 }
 
+.fstu-pagination--compact {
+	padding: 10px 12px;
+	background: var(--fstu-units-secondary);
+	border: 1px solid var(--fstu-units-border);
+	border-radius: var(--fstu-units-radius);
+}
+
+.fstu-pagination__left {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.fstu-pagination__per-page-label {
+	font-size: 12px;
+	color: var(--fstu-units-text-light);
+	white-space: nowrap;
+}
+
+.fstu-select--compact {
+	height: 26px;
+	padding: 2px 6px;
+	font-size: 12px;
+}
+
+.fstu-th-with-search {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	white-space: nowrap;
+	min-width: 0;
+}
+
+.fstu-input--in-header {
+	flex: 1;
+	min-width: 80px;
+	max-width: 180px;
+	height: 24px;
+	padding: 2px 7px;
+	font-size: 12px;
+	font-weight: 400;
+	border: 1px solid #b7d7b7;
+	border-radius: var(--fstu-units-radius);
+	background: rgba(255,255,255,.85);
+	color: var(--fstu-units-text);
+	box-sizing: border-box;
+	outline: none;
+	transition: border-color .15s, box-shadow .15s;
+}
+
+.fstu-input--in-header:focus {
+	border-color: var(--fstu-units-primary);
+	box-shadow: 0 0 0 2px rgba(192,57,43,.15);
+	background: #fff;
+}
+
+.fstu-table--compact th,
+.fstu-table--compact td {
+	padding: 6px 8px;
+	font-size: 12px;
+	line-height: 1.35;
+}
+
 .fstu-pagination__info {
 	font-size: var(--fstu-units-font-size-sm);
 	color: var(--fstu-units-text-light);
@@ -377,8 +483,9 @@
 	transition: background .12s, border-color .12s;
 }
 .fstu-btn--page:hover:not(:disabled) {
-	background: var(--fstu-units-secondary);
-	border-color: #999;
+	background: var(--fstu-units-primary);
+	border-color: var(--fstu-units-primary);
+	color: #fff;
 }
 .fstu-btn--page-active,
 .fstu-btn--page-active:hover {
@@ -396,6 +503,88 @@
 	padding: 0 4px;
 	color: var(--fstu-units-text-light);
 	font-size: 12px;
+}
+
+/* ─── Dropdown меню дій ──────────────────────────────────────────────────── */
+.fstu-opts {
+	position: relative;
+	display: inline-block;
+}
+
+.fstu-opts-btn {
+	background-color: var(--fstu-units-primary);
+	color: #ffffff;
+	border: none;
+	padding: 4px 9px;
+	border-radius: var(--fstu-units-radius);
+	cursor: pointer;
+	font-size: 13px;
+	line-height: 1;
+	box-shadow: none;
+	height: auto;
+	width: auto;
+}
+
+.fstu-opts-btn:hover {
+	background-color: var(--fstu-units-primary-dark);
+}
+
+ul.fstu-opts-list {
+	display: none;
+	position: absolute;
+	right: 0;
+	top: 100%;
+	min-width: 200px;
+	background: #ffffff;
+	border: 1px solid #ccc;
+	box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+	padding: 5px 0;
+	margin: 2px 0 0 0;
+	z-index: 99999;
+	list-style: none;
+}
+
+.fstu-opts--open ul.fstu-opts-list {
+	display: block;
+}
+
+.fstu-opts.fstu-dropup ul.fstu-opts-list {
+	top: auto;
+	bottom: 100%;
+	margin-top: 0;
+	margin-bottom: 2px;
+	box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
+}
+
+ul.fstu-opts-list li {
+	padding: 0;
+	margin: 0;
+	list-style: none;
+}
+
+ul.fstu-opts-list li a {
+	padding: 8px 15px;
+	margin: 0;
+	display: block;
+	white-space: nowrap;
+	text-decoration: none;
+	color: #333;
+	text-align: left;
+	font-size: 13px;
+	border: none;
+	background: transparent;
+}
+
+ul.fstu-opts-list li a:hover {
+	background-color: #f8f9fa;
+	color: var(--fstu-units-primary);
+}
+
+hr.fstu-opts-divider {
+	height: 1px;
+	background-color: #eee;
+	margin: 5px 0;
+	border: none;
 }
 
 /* ─── Модальне вікно ──────────────────────────────────────────────────────── */
@@ -602,5 +791,12 @@ body.fstu-units-modal-open { overflow: hidden; }
 	.fstu-th--ofst { min-width: 120px; }
 
 	.fstu-actions-container { gap: 4px; white-space: nowrap; }
+}
+
+@media (min-width: 992px) {
+	.fstu-table-wrap {
+		overflow: visible;
+		overflow-x: visible;
+	}
 }
 
