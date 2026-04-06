@@ -2,8 +2,8 @@
 /**
  * Реєстрація меню плагіна в адмін-панелі WordPress.
  *
- * Version:     1.0.0
- * Date_update: 2026-04-05
+ * Version:     1.0.1
+ * Date_update: 2026-04-06
  *
  * @package FSTU\Admin
  */
@@ -55,7 +55,7 @@ class Admin_Menu {
 
     public function render_main_page(): void {
         $plugin_data = get_plugin_data( WP_PLUGIN_DIR . '/fstu_new/fstu.php' ); // Вкажіть правильну папку вашого плагіна
-        $version     = ! empty( $plugin_data['Version'] ) ? $plugin_data['Version'] : '1.2.1';
+        $version     = ! empty( $plugin_data['Version'] ) ? $plugin_data['Version'] : '1.3.1';
 
         include dirname( __DIR__, 2 ) . '/views/admin/main-page.php';
     }

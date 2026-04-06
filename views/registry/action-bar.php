@@ -2,18 +2,26 @@
 /**
  * View: Панель дій (кнопки) реєстру членів ФСТУ.
  *
- * Version:     1.0.0
- * Date_update: 2026-04-03
+ * Version:     1.0.1
+ * Date_update: 2026-04-06
  *
  * @package FSTU\Registry\Views
  *
- * @var bool $is_admin     Чи є поточний користувач адміністратором.
- * @var bool $is_logged_in Чи авторизований поточний користувач.
+ * @var bool   $is_admin         Чи є поточний користувач адміністратором.
+ * @var bool   $is_logged_in     Чи авторизований поточний користувач.
+ * @var string $link_instruction Посилання на інструкцію.
+ * @var string $link_postanova   Посилання на постанову.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
-	exit;
+    exit;
 }
+
+// Захист від помилок "Undefined variable"
+$is_admin         = $is_admin ?? false;
+$is_logged_in     = $is_logged_in ?? false;
+$link_instruction = $link_instruction ?? 'https://www.fstu.com.ua/instrukciya/'; // Вставте реальне посилання
+$link_postanova   = $link_postanova ?? 'https://www.fstu.com.ua/postanova/';   // Вставте реальне посилання
 ?>
 
 <div class="fstu-action-bar">

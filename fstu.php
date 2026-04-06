@@ -3,7 +3,7 @@
  * Plugin Name:  FSTU Portal
  * Plugin URI:   https://www.fstu.com.ua/
  * Description:  Офіційний плагін Федерації спортивного туризму України. Enterprise ERP/CRM система управління реєстрами, структурою та фінансами федерації.
- * Version:      1.2.1
+ * Version:      1.3.1
  * Author:       Oleksandr Dykyi
  * Author URI:   https://www.fstu.com.ua/
  * Text Domain:  fstu
@@ -11,7 +11,7 @@
  * Requires PHP: 8.0
  * Requires at least: 6.0
  *
- * Date_update: 2026-04-05
+ * Date_update: 2026-04-06
  *
  * @package FSTU
  */
@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // ─── Константи плагіна ────────────────────────────────────────────────────────
 
-define( 'FSTU_VERSION',      '1.2.1' );
+define( 'FSTU_VERSION',      '1.3.1' );
 define( 'FSTU_DB_VERSION',   '1.0.0' );
 define( 'FSTU_PLUGIN_FILE',  __FILE__ );
 define( 'FSTU_PLUGIN_DIR',   plugin_dir_path( __FILE__ ) );
@@ -61,6 +61,10 @@ require_once FSTU_PLUGIN_DIR . 'includes/Registry/class-registry-modals-ajax.php
 require_once FSTU_PLUGIN_DIR . 'includes/Clubs/class-clubs-list.php';
 require_once FSTU_PLUGIN_DIR . 'includes/Clubs/class-clubs-ajax.php';
 
+// Units — Довідник осередків ФСТУ (2026-04-06)
+require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/Units/class-units-list.php';
+require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/Units/class-units-ajax.php';
+
 // Admin
 if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Admin/class-admin-menu.php' ) ) {
 	require_once FSTU_PLUGIN_DIR . 'includes/Admin/class-admin-menu.php';
@@ -93,6 +97,10 @@ function fstu_init(): void {
 	// ── Довідник клубів ФСТУ ─────────────────────────────────────────────────
 	( new FSTU\Clubs\Clubs_List() )->init();
 	( new FSTU\Clubs\Clubs_Ajax() )->init();
+
+	// ── Довідник осередків ФСТУ ───────────────────────────────────────────────
+	( new FSTU\Dictionaries\Units\Units_List() )->init();
+	( new FSTU\Dictionaries\Units\Units_Ajax() )->init();
 
 	// ── Адмінка ───────────────────────────────────────────────────────────────
 	if ( class_exists( 'FSTU\\Admin\\Admin_Menu' ) ) {

@@ -1,0 +1,606 @@
+/**
+ * CSS модуля "Довідник осередків ФСТУ".
+ * Компактний дизайн, всі класи з префіксом .fstu-
+ * Жодних inline-стилів у PHP файлах!
+ *
+ * Version:     1.0.0
+ * Date_update: 2026-04-06
+ *
+ * @package FSTU
+ */
+
+/* ─── Змінні ─────────────────────────────────────────────────────────────── */
+:root {
+	--fstu-units-primary:      #c0392b;
+	--fstu-units-primary-dark: #a93226;
+	--fstu-units-secondary:    #f8f9fa;
+	--fstu-units-text:         #2c3e50;
+	--fstu-units-text-light:   #7f8c8d;
+	--fstu-units-border:       #dde0e3;
+	--fstu-units-bg-header:    #dcead6;
+	--fstu-units-bg-row-odd:   #ffffff;
+	--fstu-units-bg-row-even:  #f9faf6;
+	--fstu-units-bg-row-hover: #eaf4ff;
+	--fstu-units-radius:       4px;
+	--fstu-units-font-size:    13px;
+	--fstu-units-font-size-sm: 11px;
+}
+
+/* ─── Утиліти ────────────────────────────────────────────────────────────── */
+.fstu-units-hidden { display: none !important; }
+
+/* ─── Обгортка модуля ────────────────────────────────────────────────────── */
+.fstu-units-wrap {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+	font-size: var(--fstu-units-font-size);
+	color: var(--fstu-units-text);
+	max-width: 100%;
+}
+
+.fstu-units-title {
+	font-size: 24px;
+	font-weight: 700;
+	margin: 0 0 12px;
+	color: var(--fstu-units-text);
+}
+
+/* ─── Панель дій ─────────────────────────────────────────────────────────── */
+.fstu-action-bar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin: 0 0 12px;
+	background: var(--fstu-units-secondary);
+	padding: 10px 12px;
+	border: 1px solid var(--fstu-units-border);
+	border-radius: var(--fstu-units-radius);
+}
+
+/* ─── Кнопки ─────────────────────────────────────────────────────────────── */
+.fstu-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	padding: 6px 12px;
+	font-size: var(--fstu-units-font-size);
+	font-weight: 500;
+	border: 1px solid transparent;
+	border-radius: var(--fstu-units-radius);
+	cursor: pointer;
+	text-decoration: none;
+	white-space: nowrap;
+	transition: background .15s, border-color .15s, color .15s;
+	background: transparent;
+}
+
+.fstu-btn--primary {
+	background: var(--fstu-units-primary);
+	color: #fff;
+	border-color: var(--fstu-units-primary);
+}
+.fstu-btn--primary:hover:not(:disabled) {
+	background: var(--fstu-units-primary-dark);
+	border-color: var(--fstu-units-primary-dark);
+}
+
+.fstu-btn--secondary {
+	background: #fff;
+	color: var(--fstu-units-text);
+	border-color: var(--fstu-units-border);
+}
+.fstu-btn--secondary:hover:not(:disabled) {
+	background: #f0f2f5;
+	border-color: #999;
+}
+
+.fstu-btn--text {
+	background: transparent;
+	color: var(--fstu-units-text-light);
+	border: none;
+	padding: 4px 8px;
+}
+.fstu-btn--text:hover {
+	color: var(--fstu-units-text);
+}
+
+.fstu-btn:disabled {
+	opacity: .5;
+	cursor: not-allowed;
+}
+
+.fstu-btn__icon {
+	font-style: normal;
+	font-size: 14px;
+}
+
+/* ─── Кнопки дій в таблиці (маленькі квадратики 28x28) ────────────────────── */
+.fstu-btn-action {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	font-size: 12px;
+	border: 1px solid var(--fstu-units-border);
+	border-radius: var(--fstu-units-radius);
+	background: #fff;
+	color: var(--fstu-units-text);
+	cursor: pointer;
+	transition: background .15s, color .15s;
+	white-space: nowrap;
+}
+
+.fstu-btn-action:hover {
+	background: var(--fstu-units-primary);
+	color: #fff;
+	border-color: var(--fstu-units-primary);
+}
+
+.fstu-btn-action--edit { }
+.fstu-btn-action--delete { }
+.fstu-btn-action--view { }
+
+/* ─── Панель фільтрів ────────────────────────────────────────────────────── */
+.fstu-filter-bar {
+	margin: 0 0 12px;
+	background: var(--fstu-units-secondary);
+	padding: 10px;
+	border: 1px solid var(--fstu-units-border);
+	border-radius: var(--fstu-units-radius);
+}
+
+.fstu-filter-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 8px;
+}
+.fstu-filter-row:last-child { margin-bottom: 0; }
+
+.fstu-filter-item {
+	display: flex;
+	align-items: center;
+}
+.fstu-filter-item--wide { flex: 1 1 200px; }
+.fstu-filter-item--medium { flex: 0 0 auto; min-width: 120px; }
+.fstu-filter-item--perpage { flex: 0 0 60px; }
+
+.fstu-filter-row--search .fstu-filter-item--wide {
+	position: relative;
+	flex: 1 1 auto;
+}
+
+/* Select */
+.fstu-select {
+	width: 100%;
+	padding: 5px 8px;
+	font-size: var(--fstu-units-font-size);
+	border: 1px solid var(--fstu-units-border);
+	border-radius: var(--fstu-units-radius);
+	background: #fff;
+	color: var(--fstu-units-text);
+	cursor: pointer;
+	height: 32px;
+	box-sizing: border-box;
+}
+.fstu-select:focus {
+	outline: none;
+	border-color: var(--fstu-units-primary);
+	box-shadow: 0 0 0 2px rgba(192,57,43,.15);
+}
+
+/* Input */
+.fstu-input {
+	width: 100%;
+	padding: 5px 8px;
+	font-size: var(--fstu-units-font-size);
+	border: 1px solid var(--fstu-units-border);
+	border-radius: var(--fstu-units-radius);
+	color: var(--fstu-units-text);
+	height: 32px;
+	box-sizing: border-box;
+}
+.fstu-input:focus {
+	outline: none;
+	border-color: var(--fstu-units-primary);
+	box-shadow: 0 0 0 2px rgba(192,57,43,.15);
+}
+
+/* ─── Пошук (flex рядок) ──────────────────────────────────────────────────── */
+.fstu-search-wrap {
+	display: flex;
+	align-items: center;
+	position: relative;
+	width: 100%;
+	border: 1px solid var(--fstu-units-border);
+	border-radius: var(--fstu-units-radius);
+	background: #fff;
+	height: 32px;
+}
+
+.fstu-search-icon {
+	position: absolute;
+	left: 8px;
+	font-size: 12px;
+	color: var(--fstu-units-text-light);
+	pointer-events: none;
+	z-index: 2;
+}
+
+.fstu-search-input {
+	width: 100%;
+	border: none;
+	outline: none;
+	padding: 4px 30px 4px 30px;
+	font-size: var(--fstu-units-font-size);
+	color: var(--fstu-units-text);
+	background: transparent;
+	height: 100%;
+	box-sizing: border-box;
+}
+.fstu-search-input::placeholder {
+	color: var(--fstu-units-text-light);
+}
+
+.fstu-search-clear {
+	background: none;
+	border: none;
+	cursor: pointer;
+	padding: 0 8px;
+	color: var(--fstu-units-text-light);
+	font-size: 14px;
+	flex-shrink: 0;
+	transition: color .15s;
+}
+.fstu-search-clear:hover {
+	color: var(--fstu-units-text);
+}
+
+/* ─── Таблиця ────────────────────────────────────────────────────────────── */
+.fstu-table-wrap {
+	position: relative;
+	overflow-x: auto;
+	margin: 0 0 12px;
+	border: 1px solid var(--fstu-units-border);
+	border-radius: var(--fstu-units-radius);
+	background: #fff;
+}
+
+.fstu-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: var(--fstu-units-font-size);
+	table-layout: auto;
+}
+
+/* Заголовок таблиці */
+.fstu-thead .fstu-th {
+	background: var(--fstu-units-bg-header);
+	padding: 8px 6px;
+	text-align: left;
+	font-weight: 600;
+	border: 1px solid #b7d7b7;
+	white-space: nowrap;
+	font-size: var(--fstu-units-font-size);
+	position: sticky;
+	top: 0;
+	z-index: 2;
+	color: var(--fstu-units-text);
+}
+
+.fstu-th--num { width: 40px; text-align: center; }
+.fstu-th--ofst { min-width: 160px; }
+.fstu-th--actions { width: 80px; text-align: center; }
+
+/* Рядки тіла таблиці */
+.fstu-tbody .fstu-row:nth-child(odd) { background: var(--fstu-units-bg-row-odd); }
+.fstu-tbody .fstu-row:nth-child(even) { background: var(--fstu-units-bg-row-even); }
+.fstu-tbody .fstu-row:hover { background: var(--fstu-units-bg-row-hover); }
+
+.fstu-td {
+	padding: 6px 6px;
+	border: 1px solid #e8e8e8;
+	vertical-align: middle;
+	font-size: var(--fstu-units-font-size);
+	line-height: 1.4;
+	color: var(--fstu-units-text);
+}
+
+.fstu-td--num {
+	text-align: center;
+	color: var(--fstu-units-text-light);
+	font-size: var(--fstu-units-font-size-sm);
+	width: 40px;
+}
+
+.fstu-td--actions {
+	text-align: center;
+	padding: 2px;
+	width: 80px;
+}
+
+/* Контейнер для кнопок дій (один рядок, inline-flex) */
+.fstu-actions-container {
+	display: inline-flex;
+	gap: 4px;
+	white-space: nowrap;
+}
+
+/* Немає записів */
+.fstu-no-results {
+	text-align: center;
+	padding: 30px;
+	color: var(--fstu-units-text-light);
+	font-style: italic;
+	background: var(--fstu-units-secondary);
+}
+
+.fstu-no-results--error {
+	color: #721c24;
+	background: #f8d7da;
+}
+
+/* ─── Пагінація ───────────────────────────────────────────────────────────── */
+.fstu-pagination {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	margin-top: 12px;
+}
+
+.fstu-pagination__info {
+	font-size: var(--fstu-units-font-size-sm);
+	color: var(--fstu-units-text-light);
+}
+
+.fstu-pagination__controls {
+	display: flex;
+	align-items: center;
+	gap: 3px;
+}
+
+.fstu-btn--page {
+	min-width: 28px;
+	height: 28px;
+	padding: 0 6px;
+	font-size: 12px;
+	background: #fff;
+	border: 1px solid var(--fstu-units-border);
+	border-radius: var(--fstu-units-radius);
+	color: var(--fstu-units-text);
+	cursor: pointer;
+	transition: background .12s, border-color .12s;
+}
+.fstu-btn--page:hover:not(:disabled) {
+	background: var(--fstu-units-secondary);
+	border-color: #999;
+}
+.fstu-btn--page-active,
+.fstu-btn--page-active:hover {
+	background: var(--fstu-units-primary);
+	border-color: var(--fstu-units-primary);
+	color: #fff;
+	font-weight: 600;
+}
+.fstu-btn--page:disabled {
+	opacity: .4;
+	cursor: not-allowed;
+}
+
+.fstu-pagination__ellipsis {
+	padding: 0 4px;
+	color: var(--fstu-units-text-light);
+	font-size: 12px;
+}
+
+/* ─── Модальне вікно ──────────────────────────────────────────────────────── */
+body.fstu-units-modal-open { overflow: hidden; }
+
+.fstu-modal-overlay {
+	position: fixed;
+	inset: 0;
+	background: rgba(0,0,0,.55);
+	z-index: 99999;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 16px;
+}
+
+.fstu-modal-overlay.fstu-units-hidden {
+	display: none;
+}
+
+.fstu-modal {
+	background: #fff;
+	border-radius: 6px;
+	box-shadow: 0 8px 32px rgba(0,0,0,.22);
+	width: 100%;
+	max-width: 720px;
+	max-height: calc(100vh - 32px);
+	display: flex;
+	flex-direction: column;
+}
+
+.fstu-modal__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 14px 16px;
+	border-bottom: 1px solid var(--fstu-units-border);
+	flex-shrink: 0;
+}
+
+.fstu-modal__title {
+	font-size: 16px;
+	font-weight: 700;
+	margin: 0;
+	color: var(--fstu-units-text);
+}
+
+.fstu-modal-close-btn {
+	background: none;
+	border: none;
+	cursor: pointer;
+	font-size: 18px;
+	line-height: 1;
+	color: var(--fstu-units-text-light);
+	padding: 0 4px;
+	transition: color .15s;
+}
+.fstu-modal-close-btn:hover {
+	color: #e74c3c;
+}
+
+.fstu-modal__body {
+	padding: 16px;
+	overflow-y: auto;
+	flex: 1;
+}
+
+/* ─── Форма ───────────────────────────────────────────────────────────────── */
+.fstu-app-form {
+	margin-top: 0;
+}
+
+.fstu-form-row {
+	display: flex;
+	gap: 10px;
+	margin-bottom: 12px;
+}
+.fstu-form-row--2col .fstu-form-group { flex: 1; }
+.fstu-form-row--3col .fstu-form-group { flex: 1; }
+
+.fstu-form-group {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.fstu-label {
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--fstu-units-text);
+}
+
+.fstu-label--required::after {
+	content: ' *';
+	color: #e74c3c;
+}
+
+/* Honeypot */
+.fstu-honeypot {
+	position: absolute;
+	left: -5000px;
+	opacity: 0 !important;
+	display: none !important;
+}
+
+/* Повідомлення форми */
+.fstu-form-message {
+	padding: 10px 12px;
+	border-radius: var(--fstu-units-radius);
+	font-size: 13px;
+	margin-bottom: 12px;
+}
+.fstu-message--success {
+	background: #d4edda;
+	border: 1px solid #c3e6cb;
+	color: #155724;
+}
+.fstu-message--error {
+	background: #f8d7da;
+	border: 1px solid #f5c6cb;
+	color: #721c24;
+}
+
+.fstu-form-actions {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-top: 14px;
+	border-top: 1px solid var(--fstu-units-border);
+	padding-top: 14px;
+}
+
+.fstu-loader-inline {
+	padding: 24px;
+	text-align: center;
+	color: var(--fstu-units-text-light);
+	font-size: 13px;
+}
+
+.fstu-alert {
+	padding: 10px 14px;
+	margin-bottom: 12px;
+	border-radius: var(--fstu-units-radius);
+	font-size: 13px;
+	background: #f8d7da;
+	border: 1px solid #f5c6cb;
+	color: #721c24;
+}
+
+.fstu-info-table,
+.fstu-info-table tr,
+.fstu-info-table th,
+.fstu-info-table td,
+.fstu-info-table tbody {
+	width: 100%;
+	border-collapse: collapse;
+	border: none;
+	background: transparent;
+	box-shadow: none;
+}
+
+.fstu-info-table th,
+.fstu-info-table td {
+	padding: 6px 0;
+	vertical-align: top;
+	text-align: left;
+}
+
+.fstu-info-table th {
+	width: 180px;
+	color: var(--fstu-units-text-light);
+	font-weight: 500;
+}
+
+.fstu-info-table td {
+	color: var(--fstu-units-text);
+	font-weight: 600;
+}
+
+.fstu-info-table a {
+	color: var(--fstu-units-primary);
+	text-decoration: none;
+}
+
+.fstu-info-table a:hover {
+	text-decoration: underline;
+}
+
+/* ─── Адаптивність ───────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+	.fstu-filter-row { flex-direction: column; align-items: stretch; }
+	.fstu-filter-item--medium { width: 100%; }
+	.fstu-select { width: 100%; }
+
+	.fstu-pagination { flex-direction: column; align-items: flex-start; }
+
+	.fstu-modal { max-width: 100%; margin: 0; border-radius: 6px 6px 0 0; height: 95vh; }
+	.fstu-modal-overlay { align-items: flex-end; padding: 0; }
+
+	.fstu-form-row { flex-direction: column; gap: 6px; }
+
+	.fstu-table-wrap { overflow-x: auto; }
+
+	.fstu-th--ofst { min-width: 120px; }
+
+	.fstu-actions-container { gap: 4px; white-space: nowrap; }
+}
+

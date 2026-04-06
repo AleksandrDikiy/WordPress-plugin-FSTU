@@ -1,5 +1,21 @@
 <?php
+/**
+ * View: Фільтри реєстру.
+ *
+ * @var array  $units
+ * @var array  $tourism_types
+ * @var array  $clubs
+ * @var array  $years
+ * @var string $current_year
+ */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
+
+// Захист від порожніх масивів, якщо контролер їх не передав
+$units         = $units ?? [];
+$tourism_types = $tourism_types ?? [];
+$clubs         = $clubs ?? [];
+$years         = $years ?? [];
+$current_year  = $current_year ?? gmdate( 'Y' );
 ?>
 <div class="fstu-filter-bar" role="search" aria-label="Фільтри реєстру">
     <div class="fstu-filter-row fstu-filter-row--main" style="align-items: center; flex-wrap: wrap; gap: 10px;">
