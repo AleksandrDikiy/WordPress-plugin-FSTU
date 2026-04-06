@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Клас-контролер для Хабу довідників (Dashboard).
- * * Version:     1.3.0
+ * * Version:     1.4.0
  * Date_update: 2026-04-06
  */
 class Dictionaries_Hub {
@@ -50,11 +50,15 @@ class Dictionaries_Hub {
      */
     private function get_dictionaries_data(): array {
         $typeguidance_list_class = 'FSTU\\Dictionaries\\TypeGuidance\\TypeGuidance_List';
+        $member_regional_list_class = 'FSTU\\Dictionaries\\MemberRegional\\Member_Regional_List';
         $commission_url = class_exists( Commission_List::class )
             ? Commission_List::get_module_url( 'hub' )
           : '';
         $typeguidance_url = class_exists( $typeguidance_list_class )
           ? $typeguidance_list_class::get_module_url( 'hub' )
+          : '';
+        $member_regional_url = class_exists( $member_regional_list_class )
+          ? $member_regional_list_class::get_module_url( 'hub' )
           : '';
 
         if ( '' === $commission_url ) {
@@ -64,6 +68,10 @@ class Dictionaries_Hub {
         if ( '' === $typeguidance_url ) {
           $typeguidance_url = '#';
         }
+
+            if ( '' === $member_regional_url ) {
+              $member_regional_url = '#';
+            }
 
         return [
             'structure' => [
@@ -75,7 +83,7 @@ class Dictionaries_Hub {
                     [ 'title' => 'Комісії та колегії', 'desc' => 'Довідник комісій ФСТУ', 'url' => $commission_url ],
                               [ 'title' => 'Керівні органи ФСТУ', 'desc' => 'Довідник керівних органів', 'url' => $typeguidance_url ],
                     [ 'title' => 'Посади у керівних органах', 'desc' => 'Довідник посад', 'url' => '/adm/MemberGuidance/' ],
-                    [ 'title' => 'Посади федерацій', 'desc' => 'Довідник регіональних посад', 'url' => '/adm/MemberRegional/' ],
+                                                  [ 'title' => 'Посади федерацій', 'desc' => 'Довідник регіональних посад', 'url' => $member_regional_url ],
                 ],
             ],
             'geography' => [

@@ -2,7 +2,7 @@
 /**
  * View: Головна сторінка плагіна в адмінці.
  *
- * Version:     1.2.0
+ * Version:     1.3.0
  * Date_update: 2026-04-06
  */
 if ( ! defined( 'ABSPATH' ) ) {
@@ -12,6 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 $version = isset( $version ) ? (string) $version : ( defined( 'FSTU_VERSION' ) ? FSTU_VERSION : 'n/a' );
 $commission_page_url = isset( $commission_page_url ) ? (string) $commission_page_url : '';
 $typeguidance_page_url = isset( $typeguidance_page_url ) ? (string) $typeguidance_page_url : '';
+$member_regional_page_url = isset( $member_regional_page_url ) ? (string) $member_regional_page_url : '';
 ?>
 
 <div class="wrap">
@@ -82,6 +83,16 @@ $typeguidance_page_url = isset( $typeguidance_page_url ) ? (string) $typeguidanc
                                     Виводить таблицю керівних органів з пошуком, пагінацією, протоколом і модальною формою створення/редагування. Для ролі userfstu доступний лише перегляд списку, для адміністратора — повне керування.
                                     <?php if ( '' !== $typeguidance_page_url ) : ?>
                                         <br><a href="<?php echo esc_url( $typeguidance_page_url ); ?>">Відкрити сторінку довідника →</a>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_member_regional]</code></th>
+                                <td>
+                                    <strong>Довідник посад федерацій</strong><br>
+                                    Виводить список посад федерацій з пошуком, пагінацією, протоколом і модальною формою перегляду/редагування. Для ролі userregistrar доступні перегляд, додавання та редагування, для адміністратора — повне керування і перегляд протоколу.
+                                    <?php if ( '' !== $member_regional_page_url ) : ?>
+                                        <br><a href="<?php echo esc_url( $member_regional_page_url ); ?>">Відкрити сторінку довідника →</a>
                                     <?php endif; ?>
                                 </td>
                             </tr>

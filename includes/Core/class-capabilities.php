@@ -2,7 +2,7 @@
 /**
  * Клас централізованого керування capability-моделлю ФСТУ.
  *
- * Version:     1.1.0
+ * Version:     1.2.0
  * Date_update: 2026-04-06
  *
  * @package FSTU\Core
@@ -24,6 +24,10 @@ class Capabilities {
 	public const MANAGE_TYPEGUIDANCE      = 'fstu_manage_typeguidance';
 	public const DELETE_TYPEGUIDANCE      = 'fstu_delete_typeguidance';
 	public const VIEW_TYPEGUIDANCE_PROTOCOL = 'fstu_view_typeguidance_protocol';
+	public const VIEW_MEMBER_REGIONAL        = 'fstu_view_member_regional';
+	public const MANAGE_MEMBER_REGIONAL      = 'fstu_manage_member_regional';
+	public const DELETE_MEMBER_REGIONAL      = 'fstu_delete_member_regional';
+	public const VIEW_MEMBER_REGIONAL_PROTOCOL = 'fstu_view_member_regional_protocol';
 
 	/**
 	 * Ініціалізує capability-модель для поточного запиту.
@@ -53,11 +57,17 @@ class Capabilities {
 				self::MANAGE_TYPEGUIDANCE      => true,
 				self::DELETE_TYPEGUIDANCE      => true,
 				self::VIEW_TYPEGUIDANCE_PROTOCOL => true,
+				self::VIEW_MEMBER_REGIONAL        => true,
+				self::MANAGE_MEMBER_REGIONAL      => true,
+				self::DELETE_MEMBER_REGIONAL      => true,
+				self::VIEW_MEMBER_REGIONAL_PROTOCOL => true,
 			],
 			'userregistrar' => [
 				self::ACCESS_ADMIN             => true,
 				self::MANAGE_COMMISSION        => true,
 				self::VIEW_COMMISSION_PROTOCOL => true,
+				self::VIEW_MEMBER_REGIONAL     => true,
+				self::MANAGE_MEMBER_REGIONAL   => true,
 			],
 			'userfstu' => [
 				self::VIEW_TYPEGUIDANCE => true,
@@ -106,6 +116,23 @@ class Capabilities {
 			'canManage'   => self::current_user_can_manage_typeguidance(),
 			'canDelete'   => self::current_user_can_delete_typeguidance(),
 			'canProtocol' => self::current_user_can_view_typeguidance_protocol(),
+		];
+	}
+
+	/**
+	 * Повертає прапорці прав для модуля посад федерацій.
+	 *
+	 * @return array<string,bool>
+	 */
+	public static function get_member_regional_permissions(): array {
+		$can_view = self::current_user_can_view_member_regional();
+
+		return [
+			'canView'      => $can_view,
+			'canManage'    => self::current_user_can_manage_member_regional(),
+			'canDelete'    => self::current_user_can_delete_member_regional(),
+			'canProtocol'  => self::current_user_can_view_member_regional_protocol(),
+			'canAdminMeta' => self::current_user_can_delete_member_regional(),
 		];
 	}
 
@@ -163,5 +190,33 @@ class Capabilities {
 	 */
 	public static function current_user_can_view_typeguidance_protocol(): bool {
 		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_TYPEGUIDANCE_PROTOCOL );
+	}
+
+	/**
+	 * Чи може користувач переглядати довідник посад федерацій.
+	 */
+	public static function current_user_can_view_member_regional(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_MEMBER_REGIONAL );
+	}
+
+	/**
+	 * Чи може користувач керувати довідником посад федерацій.
+	 */
+	public static function current_user_can_manage_member_regional(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_MEMBER_REGIONAL );
+	}
+
+	/**
+	 * Чи може користувач видаляти записи довідника посад федерацій.
+	 */
+	public static function current_user_can_delete_member_regional(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::DELETE_MEMBER_REGIONAL );
+	}
+
+	/**
+	 * Чи може користувач переглядати протокол довідника посад федерацій.
+	 */
+	public static function current_user_can_view_member_regional_protocol(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_MEMBER_REGIONAL_PROTOCOL );
 	}
 }
