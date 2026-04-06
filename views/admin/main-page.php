@@ -2,7 +2,7 @@
 /**
  * View: Головна сторінка плагіна в адмінці.
  *
- * Version:     1.1.1
+ * Version:     1.2.0
  * Date_update: 2026-04-06
  */
 if ( ! defined( 'ABSPATH' ) ) {
@@ -11,6 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 $version = isset( $version ) ? (string) $version : ( defined( 'FSTU_VERSION' ) ? FSTU_VERSION : 'n/a' );
 $commission_page_url = isset( $commission_page_url ) ? (string) $commission_page_url : '';
+$typeguidance_page_url = isset( $typeguidance_page_url ) ? (string) $typeguidance_page_url : '';
 ?>
 
 <div class="wrap">
@@ -71,6 +72,16 @@ $commission_page_url = isset( $commission_page_url ) ? (string) $commission_page
                                     Виводить список комісій і колегій з пошуком, пагінацією, протоколом, drag-and-drop сортуванням та модальними вікнами перегляду/редагування. Розміщується на окремій сторінці сайта через shortcode.
                                     <?php if ( '' !== $commission_page_url ) : ?>
                                         <br><a href="<?php echo esc_url( $commission_page_url ); ?>">Відкрити сторінку довідника →</a>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_typeguidance]</code></th>
+                                <td>
+                                    <strong>Довідник керівних органів ФСТУ</strong><br>
+                                    Виводить таблицю керівних органів з пошуком, пагінацією, протоколом і модальною формою створення/редагування. Для ролі userfstu доступний лише перегляд списку, для адміністратора — повне керування.
+                                    <?php if ( '' !== $typeguidance_page_url ) : ?>
+                                        <br><a href="<?php echo esc_url( $typeguidance_page_url ); ?>">Відкрити сторінку довідника →</a>
                                     <?php endif; ?>
                                 </td>
                             </tr>

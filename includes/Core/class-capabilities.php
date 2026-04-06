@@ -2,7 +2,7 @@
 /**
  * Клас централізованого керування capability-моделлю ФСТУ.
  *
- * Version:     1.0.0
+ * Version:     1.1.0
  * Date_update: 2026-04-06
  *
  * @package FSTU\Core
@@ -20,6 +20,10 @@ class Capabilities {
 	public const MANAGE_COMMISSION        = 'fstu_manage_commission';
 	public const DELETE_COMMISSION        = 'fstu_delete_commission';
 	public const VIEW_COMMISSION_PROTOCOL = 'fstu_view_commission_protocol';
+	public const VIEW_TYPEGUIDANCE        = 'fstu_view_typeguidance';
+	public const MANAGE_TYPEGUIDANCE      = 'fstu_manage_typeguidance';
+	public const DELETE_TYPEGUIDANCE      = 'fstu_delete_typeguidance';
+	public const VIEW_TYPEGUIDANCE_PROTOCOL = 'fstu_view_typeguidance_protocol';
 
 	/**
 	 * Ініціалізує capability-модель для поточного запиту.
@@ -45,11 +49,18 @@ class Capabilities {
 				self::MANAGE_COMMISSION        => true,
 				self::DELETE_COMMISSION        => true,
 				self::VIEW_COMMISSION_PROTOCOL => true,
+				self::VIEW_TYPEGUIDANCE        => true,
+				self::MANAGE_TYPEGUIDANCE      => true,
+				self::DELETE_TYPEGUIDANCE      => true,
+				self::VIEW_TYPEGUIDANCE_PROTOCOL => true,
 			],
 			'userregistrar' => [
 				self::ACCESS_ADMIN             => true,
 				self::MANAGE_COMMISSION        => true,
 				self::VIEW_COMMISSION_PROTOCOL => true,
+			],
+			'userfstu' => [
+				self::VIEW_TYPEGUIDANCE => true,
 			],
 		];
 
@@ -83,6 +94,22 @@ class Capabilities {
 	}
 
 	/**
+	 * Повертає прапорці прав для модуля керівних органів.
+	 *
+	 * @return array<string,bool>
+	 */
+	public static function get_typeguidance_permissions(): array {
+		$can_view = self::current_user_can_view_typeguidance();
+
+		return [
+			'canView'     => $can_view,
+			'canManage'   => self::current_user_can_manage_typeguidance(),
+			'canDelete'   => self::current_user_can_delete_typeguidance(),
+			'canProtocol' => self::current_user_can_view_typeguidance_protocol(),
+		];
+	}
+
+	/**
 	 * Чи має користувач доступ до адмін-розділів ФСТУ.
 	 */
 	public static function current_user_can_access_admin(): bool {
@@ -108,5 +135,33 @@ class Capabilities {
 	 */
 	public static function current_user_can_view_commission_protocol(): bool {
 		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_COMMISSION_PROTOCOL );
+	}
+
+	/**
+	 * Чи може користувач переглядати довідник керівних органів.
+	 */
+	public static function current_user_can_view_typeguidance(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_TYPEGUIDANCE );
+	}
+
+	/**
+	 * Чи може користувач керувати довідником керівних органів.
+	 */
+	public static function current_user_can_manage_typeguidance(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_TYPEGUIDANCE );
+	}
+
+	/**
+	 * Чи може користувач видаляти записи довідника керівних органів.
+	 */
+	public static function current_user_can_delete_typeguidance(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::DELETE_TYPEGUIDANCE );
+	}
+
+	/**
+	 * Чи може користувач переглядати протокол довідника керівних органів.
+	 */
+	public static function current_user_can_view_typeguidance_protocol(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_TYPEGUIDANCE_PROTOCOL );
 	}
 }

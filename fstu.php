@@ -3,7 +3,7 @@
  * Plugin Name:  FSTU Portal
  * Plugin URI:   https://www.fstu.com.ua/
  * Description:  Офіційний плагін Федерації спортивного туризму України. Enterprise ERP/CRM система управління реєстрами, структурою та фінансами федерації.
- * Version:      1.5.0
+ * Version:      1.6.0
  * Author:       Oleksandr Dykyi
  * Author URI:   https://www.fstu.com.ua/
  * Text Domain:  fstu
@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // ─── Константи плагіна ────────────────────────────────────────────────────────
 
-define( 'FSTU_VERSION',      '1.5.0' );
+define( 'FSTU_VERSION',      '1.6.0' );
 define( 'FSTU_DB_VERSION',   '1.0.0' );
 define( 'FSTU_PLUGIN_FILE',  __FILE__ );
 define( 'FSTU_PLUGIN_DIR',   plugin_dir_path( __FILE__ ) );
@@ -69,6 +69,10 @@ require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/Units/class-units-ajax.php
 // TypeEvent — Довідник видів змагань ФСТУ (2026-04-06)
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/TypeEvent/class-typeevent-list.php';
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/TypeEvent/class-typeevent-ajax.php';
+
+// TypeGuidance — Довідник керівних органів ФСТУ (2026-04-06)
+require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/TypeGuidance/class-typeguidance-list.php';
+require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/TypeGuidance/class-typeguidance-ajax.php';
 
 // Commission — Довідник комісій та колегій ФСТУ (2026-04-06)
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/Commission/class-commission-list.php';
@@ -118,6 +122,10 @@ function fstu_init(): void {
 	// ── Довідник видів змагань ФСТУ ───────────────────────────────────────────
 	( new FSTU\Dictionaries\TypeEvent\TypeEvent_List() )->init();
 	( new FSTU\Dictionaries\TypeEvent\TypeEvent_Ajax() )->init();
+
+	// ── Довідник керівних органів ФСТУ ────────────────────────────────────────
+	( new FSTU\Dictionaries\TypeGuidance\TypeGuidance_List() )->init();
+	( new FSTU\Dictionaries\TypeGuidance\TypeGuidance_Ajax() )->init();
 
 	// ── Довідник комісій та колегій ФСТУ ──────────────────────────────────────
 	( new FSTU\Dictionaries\Commission\Commission_List() )->init();

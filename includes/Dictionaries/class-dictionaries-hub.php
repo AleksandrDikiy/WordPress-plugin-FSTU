@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Клас-контролер для Хабу довідників (Dashboard).
- * * Version:     1.2.1
+ * * Version:     1.3.0
  * Date_update: 2026-04-06
  */
 class Dictionaries_Hub {
@@ -49,12 +49,20 @@ class Dictionaries_Hub {
      * Повний масив усіх 21+ довідників системи, розбитий по категоріях.
      */
     private function get_dictionaries_data(): array {
+        $typeguidance_list_class = 'FSTU\\Dictionaries\\TypeGuidance\\TypeGuidance_List';
         $commission_url = class_exists( Commission_List::class )
             ? Commission_List::get_module_url( 'hub' )
+          : '';
+        $typeguidance_url = class_exists( $typeguidance_list_class )
+          ? $typeguidance_list_class::get_module_url( 'hub' )
           : '';
 
         if ( '' === $commission_url ) {
           $commission_url = '#';
+        }
+
+        if ( '' === $typeguidance_url ) {
+          $typeguidance_url = '#';
         }
 
         return [
@@ -65,7 +73,7 @@ class Dictionaries_Hub {
                     [ 'title' => 'Осередки ФСТУ', 'desc' => 'Довідник регіональних осередків', 'url' => '/adm/Unit/' ],
                     [ 'title' => 'Клуби', 'desc' => 'Довідник туристичних клубів', 'url' => '/adm/Club/' ],
                     [ 'title' => 'Комісії та колегії', 'desc' => 'Довідник комісій ФСТУ', 'url' => $commission_url ],
-                    [ 'title' => 'Керівні органи ФСТУ', 'desc' => 'Довідник керівних органів', 'url' => '/adm/TypeGuidance/' ],
+                              [ 'title' => 'Керівні органи ФСТУ', 'desc' => 'Довідник керівних органів', 'url' => $typeguidance_url ],
                     [ 'title' => 'Посади у керівних органах', 'desc' => 'Довідник посад', 'url' => '/adm/MemberGuidance/' ],
                     [ 'title' => 'Посади федерацій', 'desc' => 'Довідник регіональних посад', 'url' => '/adm/MemberRegional/' ],
                 ],
