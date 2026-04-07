@@ -8,7 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 <div class="fstu-action-bar">
 
-    <div id="fstu-actions-directory" style="display: flex; gap: 10px;">
+    <div id="fstu-actions-directory" class="fstu-action-bar__group">
         <button type="button" class="fstu-btn" id="fstu-btn-refresh">
             <span aria-hidden="true">↻</span> Оновити
         </button>
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
         </button>
     </div>
 
-    <div id="fstu-actions-protocol" class="fstu-hidden" style="display: flex; gap: 10px;">
+    <div id="fstu-actions-protocol" class="fstu-action-bar__group fstu-hidden">
         <button type="button" class="fstu-btn" id="fstu-btn-back">
             <span aria-hidden="true">🔙</span> ДОВІДНИК
         </button>

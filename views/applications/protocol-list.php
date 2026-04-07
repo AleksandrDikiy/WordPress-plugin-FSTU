@@ -15,6 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
             <th class="fstu-th fstu-th--wide-name">
                 <div class="fstu-th-with-search">
                     <span>Операція</span>
+                    <label for="fstu-protocol-filter-name" class="screen-reader-text">Пошук у протоколі</label>
                     <input type="text" id="fstu-protocol-filter-name" class="fstu-input--in-header" placeholder="🔍 Пошук по логах..." autocomplete="off">
                 </div>
             </th>
@@ -25,7 +26,7 @@ if ( ! defined( 'ABSPATH' ) ) {
         </thead>
         <tbody id="fstu-protocol-tbody">
         <tr>
-            <td colspan="6" style="text-align:center; padding: 20px; color: #7f8c8d;">
+            <td colspan="6" class="fstu-table-state fstu-table-state--loading">
                 Завантаження протоколу...
             </td>
         </tr>

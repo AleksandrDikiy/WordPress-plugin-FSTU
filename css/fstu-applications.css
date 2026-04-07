@@ -1,8 +1,8 @@
 /**
  * CSS модуля "Заявки в ФСТУ".
  * Суворе дотримання корпоративних UI/UX стандартів ФСТУ.
- * Version:     1.1.0
- * Date_update: 2026-04-06
+ * Version:     1.5.0
+ * Date_update: 2026-04-07
  */
 
 .fstu-applications-wrap {
@@ -38,9 +38,24 @@
     color: #7f8c8d;
 }
 
+.fstu-hidden-field {
+    position: absolute !important;
+    left: -9999px !important;
+    width: 1px !important;
+    height: 1px !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
 /* ─── Верхня панель кнопок ─── */
 .fstu-action-bar {
     margin-bottom: 15px;
+}
+
+.fstu-action-bar__group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
 .fstu-btn {
@@ -125,6 +140,19 @@
     vertical-align: middle;
 }
 
+.fstu-table-state {
+    text-align: center;
+    padding: 20px !important;
+}
+
+.fstu-table-state--loading {
+    color: #7f8c8d;
+}
+
+.fstu-table-state--error {
+    color: #b91c1c;
+}
+
 .fstu-table tr:nth-child(even) td {
     background-color: #f8faf6;
 }
@@ -191,6 +219,13 @@
 .fstu-pagination__controls .fstu-btn {
     height: 28px !important;
     padding: 0 10px !important;
+}
+
+.fstu-btn--current,
+.fstu-btn--current:hover {
+    background-color: #b94a48 !important;
+    color: #fff !important;
+    border-color: #9f3a38 !important;
 }
 
 .fstu-pagination__info {
@@ -275,6 +310,329 @@
 
 .fstu-applications-dropdown__item--danger:hover {
     color: #b91c1c;
+}
+
+.fstu-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(17, 24, 39, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    z-index: 9999;
+}
+
+.fstu-modal {
+    width: 100%;
+    max-width: 680px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 20px 45px rgba(15, 23, 42, 0.2);
+    overflow: hidden;
+}
+
+.fstu-modal--compact {
+    max-width: 620px;
+}
+
+.fstu-modal--view {
+    max-width: 1040px;
+    max-height: calc(100vh - 32px);
+    display: flex;
+    flex-direction: column;
+}
+
+.fstu-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 18px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.fstu-modal__title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.fstu-modal__close {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    background: #f8f9fa;
+    color: #374151;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.fstu-modal__close:hover {
+    background: #c65b41;
+    border-color: #c65b41;
+    color: #fff;
+}
+
+.fstu-modal__body {
+    padding: 18px;
+}
+
+.fstu-modal--view .fstu-modal__body {
+    overflow-y: auto;
+    max-height: calc(100vh - 120px);
+    padding: 20px;
+}
+
+.fstu-app-form {
+    display: grid;
+    gap: 14px;
+}
+
+.fstu-form-group {
+    display: grid;
+    gap: 6px;
+}
+
+.fstu-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.fstu-hint {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.fstu-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding-top: 6px;
+}
+
+.fstu-form-actions--start {
+    justify-content: flex-start;
+}
+
+.fstu-form-message {
+    margin-bottom: 0;
+    padding: 10px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    border: 1px solid transparent;
+}
+
+.fstu-message--error {
+    background: #fee2e2;
+    color: #991b1b;
+    border-color: #fecaca;
+}
+
+.fstu-message--success {
+    background: #dcfce7;
+    color: #166534;
+    border-color: #bbf7d0;
+}
+
+.fstu-message--info {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border-color: #bfdbfe;
+}
+
+.fstu-app-card {
+    display: grid;
+    gap: 14px;
+}
+
+.fstu-app-card-tabs {
+    position: sticky;
+    top: -20px;
+    z-index: 2;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 0 0 14px;
+    margin-bottom: 2px;
+    background: linear-gradient(180deg, #ffffff 0%, #ffffff 88%, rgba(255, 255, 255, 0) 100%);
+}
+
+.fstu-app-card-tabs__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 36px;
+    padding: 0 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: #f8f9fa;
+    color: #374151;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.fstu-app-card-tabs__button:hover,
+.fstu-app-card-tabs__button:focus-visible {
+    background: #b94a48;
+    border-color: #9f3a38;
+    color: #ffffff;
+    outline: none;
+}
+
+.fstu-app-card-tabs__button.is-active {
+    background: #dcead6;
+    border-color: #b9cbb0;
+    color: #243224;
+    box-shadow: inset 0 -2px 0 #92b185;
+}
+
+.fstu-app-card__tab-panels {
+    display: block;
+}
+
+.fstu-app-card__panel {
+    display: none;
+}
+
+.fstu-app-card__panel.is-active {
+    display: block;
+}
+
+.fstu-app-card__section {
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 18px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.fstu-app-card__section--payment {
+    background: #f8faf6;
+    border-color: #d8e2d1;
+}
+
+.fstu-app-card__title {
+    margin: 0 0 12px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.fstu-app-card__grid {
+    display: grid;
+    gap: 10px;
+}
+
+.fstu-app-card__row {
+    display: grid;
+    grid-template-columns: minmax(180px, 260px) minmax(0, 1fr);
+    gap: 14px;
+    align-items: start;
+    padding: 8px 0;
+    border-bottom: 1px solid #eef2f7;
+}
+
+.fstu-app-card__row:last-child {
+    border-bottom: 0;
+}
+
+.fstu-app-card__label {
+    font-weight: 600;
+    color: #374151;
+}
+
+.fstu-app-card__value {
+    color: #1f2937;
+    word-break: break-word;
+    line-height: 1.55;
+}
+
+.fstu-app-card__link {
+    color: #9f3a38;
+    text-decoration: underline;
+}
+
+.fstu-app-card__link:hover {
+    color: #b94a48;
+}
+
+.fstu-app-card__link--disabled,
+.fstu-app-card__link--disabled:hover {
+    color: #6b7280;
+    text-decoration: none;
+    cursor: default;
+}
+
+@media (max-width: 700px) {
+    .fstu-modal--view {
+        max-height: calc(100vh - 20px);
+    }
+
+    .fstu-modal--view .fstu-modal__body {
+        max-height: calc(100vh - 108px);
+        padding: 16px;
+    }
+
+    .fstu-app-card-tabs {
+        top: -16px;
+    }
+
+    .fstu-app-card-tabs__button {
+        flex: 1 1 calc(50% - 8px);
+    }
+
+    .fstu-app-card__row {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+}
+
+.fstu-btn--primary {
+    background: #c65b41 !important;
+    border-color: #c65b41 !important;
+    color: #fff !important;
+}
+
+.fstu-btn--primary:hover {
+    background: #b14e36 !important;
+    border-color: #b14e36 !important;
+    color: #fff !important;
+}
+
+.fstu-btn--disabled,
+.fstu-btn--disabled:hover {
+    opacity: .6;
+    cursor: not-allowed !important;
+    pointer-events: auto;
+    background: #f3f4f6 !important;
+    border-color: #d1d5db !important;
+    color: #6b7280 !important;
+}
+
+.fstu-btn.is-loading,
+.fstu-btn.is-loading:hover {
+    opacity: .7;
+    cursor: wait !important;
+}
+
+.fstu-input {
+    width: 100%;
+    height: 38px;
+    padding: 7px 10px;
+    font-size: 13px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    background: #fff;
+    box-sizing: border-box;
 }
 
 @media (max-width: 900px) {

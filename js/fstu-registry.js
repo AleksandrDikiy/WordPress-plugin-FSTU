@@ -3,8 +3,8 @@
  * Обробка: фільтри, пагінація, модальні вікна, форма заявки.
  * Жодних inline-скриптів у PHP!
  *
- * Version:     1.2.1
- * Date_update: 2026-04-04
+ * Version:     1.3.0
+ * Date_update: 2026-04-07
  *
  * @package FSTU
  * @requires jQuery
@@ -1305,6 +1305,49 @@ jQuery( document ).ready( function ( $ ) {
 		}
 	}
 
+	function getAjaxErrorMessage( xhr, fallbackMessage ) {
+		const fallback = fallbackMessage || 'Сталася помилка. Спробуйте ще раз.';
+
+		if ( xhr && xhr.responseJSON ) {
+			if ( xhr.responseJSON.data && xhr.responseJSON.data.message ) {
+				return xhr.responseJSON.data.message;
+			}
+
+			if ( xhr.responseJSON.message ) {
+				return xhr.responseJSON.message;
+			}
+		}
+
+		if ( xhr && typeof xhr.responseText === 'string' && xhr.responseText.trim().charAt( 0 ) === '{' ) {
+			try {
+				const parsed = JSON.parse( xhr.responseText );
+				if ( parsed && parsed.data && parsed.data.message ) {
+					return parsed.data.message;
+				}
+			} catch ( e ) {
+				// Ігноруємо parse error і переходимо до безпечних fallback-повідомлень.
+			}
+		}
+
+		if ( ! xhr ) {
+			return fallback;
+		}
+
+		if ( xhr.status === 0 ) {
+			return 'Не вдалося з’єднатися із сервером. Перевірте інтернет-з’єднання та повторіть спробу.';
+		}
+
+		if ( xhr.status === 403 ) {
+			return 'Доступ до відправки форми заборонено або завершилася сесія перевірки. Оновіть сторінку і спробуйте ще раз.';
+		}
+
+		if ( xhr.status >= 500 ) {
+			return 'На сервері сталася внутрішня помилка під час обробки заявки.';
+		}
+
+		return fallback;
+	}
+
 	function submitApplication( $form ) {
 		const $submitBtn  = $( '#fstu-app-submit' );
 		const $btnText    = $submitBtn.find( '.fstu-btn__text' );
@@ -1369,11 +1412,16 @@ jQuery( document ).ready( function ( $ ) {
 					checkSubmitButtonState();
 				}
 			},
-			error: function () {
+			error: function ( xhr ) {
 				$message
-					.text( fstuRegistry.strings.errorGeneric )
+					.text( getAjaxErrorMessage( xhr, fstuRegistry.strings.errorGeneric ) )
 					.addClass( 'fstu-message--error' )
 					.removeClass( 'fstu-hidden' );
+
+				if ( typeof turnstile !== 'undefined' ) {
+					turnstile.reset();
+				}
+				state.turnstileToken = '';
 				checkSubmitButtonState();
 			},
 			complete: function () {

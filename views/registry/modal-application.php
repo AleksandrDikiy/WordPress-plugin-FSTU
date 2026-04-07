@@ -2,8 +2,8 @@
 /**
  * View: Модальне вікно "Заявка вступу до ФСТУ" (ПОВНА ВЕРСІЯ).
  *
- * Version:     1.1.1
- * Date_update: 2026-04-03
+ * Version:     1.2.0
+ * Date_update: 2026-04-07
  *
  * @package FSTU\Registry\Views
  */
@@ -40,9 +40,9 @@ $referee_categories = $wpdb->get_results( "
         </div>
 
         <div class="fstu-modal__body">
-            <div class="fstu-app-step" id="fstu-app-step-terms">
-                <label class="fstu-terms-label" for="fstu-terms-agree-top" style="align-items: flex-start;">
-                    <input type="checkbox" id="fstu-terms-agree-top" class="fstu-checkbox" style="margin-top: 4px;">
+            <div class="fstu-app-step fstu-app-step--compact" id="fstu-app-step-terms">
+                <label class="fstu-terms-label fstu-terms-label--top" for="fstu-terms-agree-top">
+                    <input type="checkbox" id="fstu-terms-agree-top" class="fstu-checkbox">
                     <span>
 						Прошу прийняти мене до Федерації спортивного туризму України.<br>
 						Зі <a href="https://www.fstu.com.ua/statut/" target="_blank" rel="noopener noreferrer">Статутом Федерації спортивного туризму України</a> ознайомлений(-а), визнаю і зобов'язуюся виконувати.
@@ -125,8 +125,8 @@ $referee_categories = $wpdb->get_results( "
                         </select>
                     </div>
                     <div class="fstu-form-group">
-                        <label class="fstu-label fstu-label--required">Участь у клубі</label>
-                        <select name="club_id" class="fstu-select" required>
+                        <label class="fstu-label">Участь у клубі</label>
+                        <select name="club_id" class="fstu-select">
                             <option value="0">не є учасником клубу</option>
                             <?php foreach ( $clubs as $club ) : ?>
                                 <option value="<?php echo absint( $club['Club_ID'] ); ?>"><?php echo esc_html( $club['Club_Name'] ); ?></option>
@@ -155,19 +155,19 @@ $referee_categories = $wpdb->get_results( "
                     </div>
                 </div>
 
-                <div class="fstu-form-group" style="margin-bottom:8px;">
+                <div class="fstu-form-group fstu-form-group--compact-gap">
                     <label class="fstu-label">Громадські туристські звання</label>
-                    <textarea name="public_titles" class="fstu-input" style="height:50px; resize:vertical;"></textarea>
+                    <textarea name="public_titles" class="fstu-input fstu-textarea fstu-textarea--compact"></textarea>
                 </div>
 
-                <div class="fstu-form-group" style="margin-bottom:8px;">
+                <div class="fstu-form-group fstu-form-group--compact-gap">
                     <label class="fstu-label fstu-label--required">Реєстрація в ОФСТ</label>
                     <select id="fstu-app-unit" name="unit_id" class="fstu-select" required disabled>
                         <option value="">— оберіть область —</option>
                     </select>
                 </div>
 
-                <div class="fstu-form-group" style="margin-bottom:8px;">
+                <div class="fstu-form-group fstu-form-group--compact-gap">
                     <label class="fstu-label fstu-label--required">e-mail (login)</label>
                     <input type="email" id="fstu-app-email" name="email" class="fstu-input" required>
                     <small id="fstu-email-hint" class="fstu-hint fstu-hidden">Перевірка...</small>
@@ -184,25 +184,27 @@ $referee_categories = $wpdb->get_results( "
                     </div>
                 </div>
 
-                <div class="fstu-form-group fstu-form-group--turnstile">
-                    <div class="cf-turnstile" data-sitekey="<?php echo esc_attr( defined( 'FSTU_TURNSTILE_SITE_KEY' ) ? FSTU_TURNSTILE_SITE_KEY : '' ); ?>" data-callback="fstuOnTurnstileSuccess" data-expired-callback="fstuOnTurnstileExpired"></div>
-                </div>
-
-                <div class="fstu-form-group" style="margin: 15px 0;">
-                    <label class="fstu-terms-label" for="fstu-terms-agree-bottom">
-                        <input type="checkbox" id="fstu-terms-agree-bottom" class="fstu-checkbox">
-                        <span>Я згоден(-а) з <a href="https://www.fstu.com.ua/zgoda/" target="_blank" rel="noopener noreferrer">умовами</a>.</span>
-                    </label>
-                </div>
-
                 <div class="fstu-form-message fstu-hidden" id="fstu-app-message" role="alert"></div>
 
-                <div class="fstu-form-actions">
-                    <button type="submit" class="fstu-btn fstu-btn--primary fstu-btn--submit" id="fstu-app-submit" disabled>
-                        <span class="fstu-btn__text">Надіслати заявку</span>
-                        <span class="fstu-btn__loader fstu-hidden"></span>
-                    </button>
-                    <button type="button" class="fstu-btn fstu-btn--text" id="fstu-app-cancel">Скасувати</button>
+                <div class="fstu-app-bottom-bar">
+                    <div class="fstu-app-bottom-bar__agree">
+                        <label class="fstu-terms-label fstu-terms-label--bottom" for="fstu-terms-agree-bottom">
+                            <input type="checkbox" id="fstu-terms-agree-bottom" class="fstu-checkbox">
+                            <span>Я згоден(-а) з <a href="https://www.fstu.com.ua/zgoda/" target="_blank" rel="noopener noreferrer">умовами</a>.</span>
+                        </label>
+                    </div>
+                    <div class="fstu-app-bottom-bar__right">
+                        <div class="fstu-form-group fstu-form-group--turnstile">
+                            <div class="cf-turnstile" data-sitekey="<?php echo esc_attr( defined( 'FSTU_TURNSTILE_SITE_KEY' ) ? FSTU_TURNSTILE_SITE_KEY : '' ); ?>" data-callback="fstuOnTurnstileSuccess" data-expired-callback="fstuOnTurnstileExpired"></div>
+                        </div>
+                        <div class="fstu-form-actions fstu-form-actions--compact">
+                            <button type="submit" class="fstu-btn fstu-btn--primary fstu-btn--submit" id="fstu-app-submit" disabled>
+                                <span class="fstu-btn__text">Надіслати заявку</span>
+                                <span class="fstu-btn__loader fstu-hidden"></span>
+                            </button>
+                            <button type="button" class="fstu-btn fstu-btn--text" id="fstu-app-cancel">Скасувати</button>
+                        </div>
+                    </div>
                 </div>
             </form>
         </div>

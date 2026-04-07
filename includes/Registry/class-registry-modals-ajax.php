@@ -2,8 +2,8 @@
 /**
  * AJAX-обробники для модальних вікон (Картка, Клуб, Протокол, Звіт) модуля "Реєстр".
  *
- * Version:     1.2.0
- * Date_update: 2026-04-06
+ * Version:     1.3.0
+ * Date_update: 2026-04-07
  *
  * @package FSTU\Registry
  */
@@ -61,7 +61,7 @@ class Registry_Modals_Ajax {
         $is_admin        = in_array( 'administrator', $user_roles, true );
         $is_registrar    = in_array( 'userregistrar', $user_roles, true );
         $is_fstu_member  = in_array( 'userfstu', $user_roles, true );
-        // Нові ролі для вітрильників
+        // Спеціалізовані ролі для вітрильного домену
         $is_sail_admin   = in_array( 'sailingadmin', $user_roles, true );
         $is_sail_fin     = in_array( 'sailingfinancier', $user_roles, true );
 
@@ -76,19 +76,12 @@ class Registry_Modals_Ajax {
         $can_see_service  = $is_admin;
 
         global $wpdb;
-        // Перевіряємо, чи є у користувача вітрильний туризм (TourismType_ID = 1)
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-        $has_sailing = (bool) $wpdb->get_var( $wpdb->prepare(
-            "SELECT 1 FROM UserTourismType WHERE User_ID = %d AND TourismType_ID = 1 LIMIT 1",
-            $user_id
-        ) );
+        $has_sailing_data = $this->user_has_sailing_domain_data( $user_id );
 
-        // Доступ до вітрильних вкладок (тільки якщо є права посади І у людини є вітрильний туризм)
-        $can_see_sailing  = ( $is_admin || $is_sail_admin || $is_sail_fin ) && $has_sailing;
-
-        $data['permissions'] = [
-            'can_see_sailing' => $can_see_sailing
-        ];
+        // Доступ до вітрильних вкладок:
+        // 1) якщо це справді вітрильний користувач (за видом туризму або наявними вітрильними даними),
+        // 2) і переглядач має звичайний доступ до картки або спеціалізовану вітрильну роль.
+        $can_see_sailing = $has_sailing_data && ( $is_admin || $is_registrar || $is_self || $is_fstu_member || $is_sail_admin || $is_sail_fin );
         // ── Форматування загальних даних ──
         $birth_date_raw = get_user_meta( $user_id, 'BirthDate', true );
         $birth_date_formatted = '—';
@@ -385,7 +378,6 @@ class Registry_Modals_Ajax {
             $data['vessels']   = [];
             $data['certs']     = [];
         }
-        // ДОДАЙТЕ ОСЬ ЦЕЙ БЛОК:
         $data['permissions'] = [
             'can_see_sailing' => $can_see_sailing
         ];
@@ -412,6 +404,58 @@ class Registry_Modals_Ajax {
         $data['ofst'] = $ofst_data;
         //
         wp_send_json_success( $data );
+    }
+
+    /**
+	 * Визначає, чи належить користувач до вітрильного домену.
+	 *
+	 * Не покладаємося лише на TourismType_ID = 1, бо в legacy/production
+	 * ідентифікатори довідника могли змінюватися. Використовуємо назву виду
+	 * туризму та fallback по фактичних вітрильних даних користувача.
+	 */
+    private function user_has_sailing_domain_data( int $user_id ): bool {
+        global $wpdb;
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+        $has_sailing_tourism = (bool) $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT 1
+                 FROM UserTourismType utt
+                 INNER JOIN S_TourismType st ON st.TourismType_ID = utt.TourismType_ID
+                 WHERE utt.User_ID = %d
+                   AND (
+                       LOWER(st.TourismType_Name) LIKE %s
+                       OR LOWER(st.TourismType_Name) LIKE %s
+                   )
+                 LIMIT 1",
+                $user_id,
+                '%' . $wpdb->esc_like( 'вітр' ) . '%',
+                '%' . $wpdb->esc_like( 'яхт' ) . '%'
+            )
+        );
+
+        if ( $has_sailing_tourism ) {
+            return true;
+        }
+
+        // Фактичні вітрильні дані — fallback, якщо вид туризму в довіднику змінено або запис відсутній.
+        $fallback_queries = [
+            'SELECT 1 FROM vUserDuesSail WHERE User_ID = %d LIMIT 1',
+            'SELECT 1 FROM ApplicationShipTicket WHERE User_ID = %d LIMIT 1',
+            'SELECT 1 FROM vSteering WHERE User_ID = %d LIMIT 1',
+            'SELECT 1 FROM vSkipper WHERE User_ID = %d LIMIT 1',
+        ];
+
+        foreach ( $fallback_queries as $sql ) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+            $exists = $wpdb->get_var( $wpdb->prepare( $sql, $user_id ) );
+
+            if ( ! empty( $exists ) ) {
+                return true;
+            }
+        }
+
+        return false;
     }
     /**
 	 * Отримує інформацію про клуб.

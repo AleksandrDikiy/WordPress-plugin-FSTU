@@ -3,8 +3,8 @@
  * AJAX-обробники модуля "Реєстр членів ФСТУ".
  * Всі запити до БД виконуються виключно через $wpdb->prepare().
  *
- * Version:     1.0.0
- * Date_update: 2026-04-03
+ * Version:     1.2.0
+ * Date_update: 2026-04-07
  *
  * @package FSTU\Registry
  */
@@ -12,7 +12,7 @@
 namespace FSTU\Registry;
 
 if ( ! defined( 'ABSPATH' ) ) {
-    exit;
+	exit;
 }
 
 class Registry_Ajax {
@@ -26,9 +26,6 @@ class Registry_Ajax {
 	/**
 	 * Реєструє AJAX хуки WordPress.
 	 */
-    /**
-     * Реєструє AJAX хуки WordPress.
-     */
     public function init(): void {
         // Отримання списку членів (авторизовані та гості)
         add_action( 'wp_ajax_fstu_get_registry',        [ $this, 'handle_get_registry' ] );
@@ -163,8 +160,9 @@ class Registry_Ajax {
 
 		// 3. Cloudflare Turnstile валідація
 		$turnstile_token = sanitize_text_field( wp_unslash( $_POST['cf_turnstile_response'] ?? '' ) );
-		if ( ! $this->verify_turnstile( $turnstile_token ) ) {
-			wp_send_json_error( [ 'message' => 'Верифікація не пройдена. Спробуйте ще раз.' ] );
+		$turnstile_check = $this->verify_turnstile( $turnstile_token );
+		if ( is_wp_error( $turnstile_check ) ) {
+			wp_send_json_error( $this->build_application_error_payload_from_wp_error( $turnstile_check ) );
 		}
 
 		// 4. Санітизація та валідація полів форми
@@ -178,17 +176,79 @@ class Registry_Ajax {
 			] );
 		}
 
-		// 5. Збереження: створення або оновлення WordPress-користувача
-		$result = $this->save_application( $data );
+		// 5. Збереження: створення WordPress-користувача та пов'язаних записів
+		try {
+			$result = $this->save_application( $data );
 
-		if ( is_wp_error( $result ) ) {
-			// Не виводимо внутрішню помилку назовні!
-			wp_send_json_error( [ 'message' => 'Помилка збереження. Зверніться до адміністратора.' ] );
+			if ( is_wp_error( $result ) ) {
+				wp_send_json_error( $this->build_application_error_payload_from_wp_error( $result ) );
+			}
+		} catch ( \Throwable $throwable ) {
+			wp_send_json_error( $this->build_application_error_payload_from_throwable( $throwable ) );
 		}
 
 		wp_send_json_success( [
 			'message' => 'Заявку успішно подано! Очікуйте підтвердження від регіонального адміністратора.',
 		] );
+	}
+
+	/**
+	 * Формує безпечний payload помилки для публічної форми заявки з WP_Error.
+	 *
+	 * @return array{message:string,code:string}
+	 */
+	private function build_application_error_payload_from_wp_error( \WP_Error $error ): array {
+		$code           = (string) $error->get_error_code();
+		$error_messages = $error->get_error_messages();
+		$error_message  = isset( $error_messages[0] ) ? sanitize_text_field( wp_strip_all_tags( (string) $error_messages[0] ) ) : '';
+
+		$message = match ( $code ) {
+			'invalid_email'              => 'Вказано некоректну email-адресу.',
+			'existing_user_email'        => 'Користувач з таким email уже зареєстрований.',
+			'existing_user_login'        => 'Не вдалося створити логін для нового користувача. Спробуйте інший email.',
+			'empty_user_login'           => 'Не вдалося сформувати логін користувача за вказаним email.',
+			'empty_user_email'           => 'Email є обов’язковим полем.',
+			'empty_user_pass'            => 'Пароль є обов’язковим полем.',
+			'invalid_role'               => 'На сайті не налаштовано роль заявника. Зверніться до адміністратора.',
+			'application_insert_failed'  => 'Не вдалося створити обліковий запис заявника. Спробуйте ще раз.',
+			'ofst_insert_failed'         => 'Не вдалося зберегти реєстрацію в ОФСТ.',
+			'city_insert_failed'         => 'Не вдалося зберегти місто проживання.',
+			'tourism_insert_failed'      => 'Не вдалося зберегти основний вид туризму.',
+			'turnstile_missing'          => 'Підтвердіть, що ви не робот, і повторіть спробу.',
+			'turnstile_not_configured'   => 'Форма тимчасово недоступна: не налаштовано перевірку безпеки.',
+			'turnstile_request_failed'   => 'Не вдалося перевірити Cloudflare Turnstile. Спробуйте ще раз трохи пізніше.',
+			'turnstile_http_error'       => 'Сервіс перевірки безпеки тимчасово недоступний. Спробуйте ще раз.',
+			'turnstile_invalid_response' => 'Отримано некоректну відповідь від сервісу перевірки безпеки.',
+			'turnstile_failed'           => '' !== $error_message ? $error_message : 'Верифікація Cloudflare Turnstile не пройдена. Спробуйте ще раз.',
+			default                      => '' !== $error_message ? $error_message : 'Сталася помилка під час подачі заявки.',
+		};
+
+		return [
+			'message' => $message,
+			'code'    => '' !== $code ? $code : 'application_submit_failed',
+		];
+	}
+
+	/**
+	 * Формує безпечний payload помилки для непередбачених винятків.
+	 *
+	 * @return array{message:string,code:string}
+	 */
+	private function build_application_error_payload_from_throwable( \Throwable $throwable ): array {
+		$code = sanitize_key( trim( $throwable->getMessage() ) );
+
+		$message = match ( $code ) {
+			'application_insert_failed' => 'Не вдалося створити обліковий запис заявника. Спробуйте ще раз.',
+			'ofst_insert_failed'        => 'Не вдалося зберегти реєстрацію в ОФСТ.',
+			'city_insert_failed'        => 'Не вдалося зберегти місто проживання.',
+			'tourism_insert_failed'     => 'Не вдалося зберегти основний вид туризму.',
+			default                     => 'Внутрішня помилка сервера під час обробки заявки.',
+		};
+
+		return [
+			'message' => $message,
+			'code'    => '' !== $code ? $code : 'application_submit_exception',
+		];
 	}
 
 	// ─── Приватні методи: санітизація ────────────────────────────────────────
@@ -236,8 +296,8 @@ class Registry_Ajax {
             'unit_id'           => absint( $post['unit_id'] ?? 0 ),
             'tourism_type_id'   => absint( $post['tourism_type_id'] ?? 0 ),
             'club_id'           => absint( $post['club_id'] ?? 0 ),
-            'rank_id'           => absint( $post['rank_id'] ?? 0 ),
-            'judge_category_id' => absint( $post['judge_category_id'] ?? 0 ),
+			'sports_category_id' => absint( $post['sports_category_id'] ?? $post['rank_id'] ?? 0 ),
+			'referee_category_id' => absint( $post['referee_category_id'] ?? $post['judge_category_id'] ?? 0 ),
             'public_titles'     => sanitize_textarea_field( wp_unslash( $post['public_titles'] ?? '' ) ),
         ];
     }
@@ -719,16 +779,15 @@ class Registry_Ajax {
 	 * Верифікує токен Cloudflare Turnstile через сервер Cloudflare.
 	 *
 	 * @param string $token Токен з форми.
-	 * @return bool True якщо верифікація пройшла.
+	 * @return bool|\WP_Error True якщо верифікація пройшла, або safe-помилка.
 	 */
-	private function verify_turnstile( string $token ): bool {
-		// Якщо ключ не налаштований — пропускаємо (dev-режим)
+	private function verify_turnstile( string $token ): bool|\WP_Error {
 		if ( ! defined( 'FSTU_TURNSTILE_SECRET_KEY' ) || empty( FSTU_TURNSTILE_SECRET_KEY ) ) {
-			return true;
+			return new \WP_Error( 'turnstile_not_configured', 'Форма тимчасово недоступна: відсутній секретний ключ Turnstile.' );
 		}
 
 		if ( empty( $token ) ) {
-			return false;
+			return new \WP_Error( 'turnstile_missing', 'Підтвердіть, що ви не робот.' );
 		}
 
 		$response = wp_remote_post(
@@ -744,12 +803,47 @@ class Registry_Ajax {
 		);
 
 		if ( is_wp_error( $response ) ) {
-			return false;
+			return new \WP_Error( 'turnstile_request_failed', 'Не вдалося підключитися до сервісу Cloudflare Turnstile.' );
+		}
+
+		$status_code = (int) wp_remote_retrieve_response_code( $response );
+		if ( $status_code >= 400 ) {
+			return new \WP_Error( 'turnstile_http_error', 'Сервіс Cloudflare Turnstile повернув помилку.' );
 		}
 
 		$body = json_decode( wp_remote_retrieve_body( $response ), true );
 
-		return ! empty( $body['success'] );
+		if ( ! is_array( $body ) ) {
+			return new \WP_Error( 'turnstile_invalid_response', 'Отримано некоректну відповідь від Cloudflare Turnstile.' );
+		}
+
+		if ( empty( $body['success'] ) ) {
+			$error_codes = is_array( $body['error-codes'] ?? null ) ? $body['error-codes'] : [];
+			$message     = in_array( 'timeout-or-duplicate', $error_codes, true )
+				? 'Термін дії перевірки безпеки завершився. Пройдіть її повторно.'
+				: 'Верифікація Cloudflare Turnstile не пройдена.';
+
+			return new \WP_Error( 'turnstile_failed', $message );
+		}
+
+		return true;
+	}
+
+	/**
+	 * Генерує унікальний login для заявки на основі email.
+	 */
+	private function generate_unique_application_login( string $email ): string {
+		$login_base = sanitize_user( strstr( $email, '@', true ) ?: '' );
+		$login_base = '' !== $login_base ? $login_base : 'fstu_applicant';
+		$login      = $login_base;
+		$suffix     = 1;
+
+		while ( username_exists( $login ) ) {
+			$login = $login_base . '_' . $suffix;
+			++$suffix;
+		}
+
+		return $login;
 	}
 
     /**
@@ -770,16 +864,25 @@ class Registry_Ajax {
         // Використовуємо пароль з форми
         $password = $data['password'];
 
-        // Логін = email до @
-        $login_base = sanitize_user( strstr( $data['email'], '@', true ) );
-        $login      = wp_unique_username( $login_base );
+		// Логін = email до @ з безпечним fallback і перевіркою унікальності.
+		$login          = $this->generate_unique_application_login( $data['email'] );
+		$applicant_role = get_role( 'applicants' ) instanceof \WP_Role ? 'applicants' : get_option( 'default_role', 'subscriber' );
 
-        $user_id = wp_insert_user( [
-            'user_login' => $login,
-            'user_pass'  => $password,
-            'user_email' => $data['email'],
-            'role'       => 'applicants', // кастомна роль "заявник"
-        ] );
+		$display_name = trim( implode( ' ', array_filter( [
+			$data['last_name'],
+			$data['first_name'],
+			$data['patronymic'],
+		] ) ) );
+
+		$user_id = wp_insert_user( [
+			'user_login'   => $login,
+			'user_pass'    => $password,
+			'user_email'   => $data['email'],
+	  'role'         => $applicant_role,
+			'display_name' => '' !== $display_name ? $display_name : $login,
+			'first_name'   => $data['first_name'],
+			'last_name'    => $data['last_name'],
+		] );
 
         if ( is_wp_error( $user_id ) ) {
             return $user_id;
@@ -792,13 +895,21 @@ class Registry_Ajax {
         update_user_meta( $user_id, 'BirthDate',  $data['birth_date'] );
         update_user_meta( $user_id, 'Sex',        $data['sex'] );
         update_user_meta( $user_id, 'Phone',      $data['phone'] );
+		update_user_meta( $user_id, 'PhoneMobile', $data['phone'] );
 
         if ( ! empty( $data['phone_alt'] ) ) {
             update_user_meta( $user_id, 'Phone_alt', $data['phone_alt'] );
+			update_user_meta( $user_id, 'Phone2', $data['phone_alt'] );
         }
         if ( ! empty( $data['public_titles'] ) ) {
             update_user_meta( $user_id, 'Public_titles', $data['public_titles'] );
+			update_user_meta( $user_id, 'PublicTourism', $data['public_titles'] );
         }
+
+		$user = get_userdata( $user_id );
+		if ( $user instanceof \WP_User && get_role( 'bbp_blocked' ) instanceof \WP_Role ) {
+			$user->add_role( 'bbp_blocked' );
+		}
 
         // Прив'язка клубу
         if ( $data['club_id'] > 0 ) {
@@ -806,10 +917,27 @@ class Registry_Ajax {
             $wpdb->insert( 'UserClub', [ 'User_ID' => $user_id, 'Club_ID' => $data['club_id'], 'UserClub_Date' => current_time('mysql') ], [ '%d', '%d', '%s' ] );
         }
 
+		if ( $data['tourism_type_id'] > 0 ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$tourism_inserted = $wpdb->insert(
+				'UserTourismType',
+				[
+					'User_ID'                    => $user_id,
+					'TourismType_ID'             => $data['tourism_type_id'],
+					'UserTourismType_DateCreate' => current_time( 'mysql' ),
+				],
+				[ '%d', '%d', '%s' ]
+			);
+
+			if ( false === $tourism_inserted ) {
+				return new \WP_Error( 'tourism_insert_failed', 'Не вдалося зберегти основний вид туризму.' );
+			}
+		}
+
         // Реєстрація в ОФСТ
         if ( $data['unit_id'] > 0 && $data['region_id'] > 0 ) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-            $wpdb->insert(
+			$ofst_inserted = $wpdb->insert(
                 'UserRegistationOFST',
                 [
                     'User_ID'                        => $user_id,
@@ -819,12 +947,16 @@ class Registry_Ajax {
                 ],
                 [ '%d', '%d', '%d', '%s' ]
             );
+
+			if ( false === $ofst_inserted ) {
+				return new \WP_Error( 'ofst_insert_failed', 'Не вдалося зберегти реєстрацію в ОФСТ.' );
+			}
         }
 
         // Прив'язка міста
         if ( $data['city_id'] > 0 ) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-            $wpdb->insert(
+			$city_inserted = $wpdb->insert(
                 'UserCity',
                 [
                     'User_ID'               => $user_id,
@@ -833,6 +965,10 @@ class Registry_Ajax {
                 ],
                 [ '%d', '%d', '%s' ]
             );
+
+			if ( false === $city_inserted ) {
+				return new \WP_Error( 'city_insert_failed', 'Не вдалося зберегти місто проживання.' );
+			}
         }
 
         // Надсилаємо стандартний email від WP

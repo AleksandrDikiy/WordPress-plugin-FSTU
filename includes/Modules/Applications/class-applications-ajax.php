@@ -10,13 +10,19 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Клас обробки AJAX запитів модуля "Заявки в ФСТУ".
  * Фаза 4: CRUD операції, Транзакції та Логування.
  *
- * Version:     1.3.1
- * Date_update: 2026-04-06
+ * Version:     1.7.0
+ * Date_update: 2026-04-07
  */
 class Applications_Ajax {
 
     private const LOG_NAME = 'Applications';
     private const MAX_PER_PAGE = 50;
+    private const DEBUG_FLAG = 'FSTU_DEBUG_APPLICATIONS';
+
+    private ?Applications_Repository $repository = null;
+    private ?Applications_Protocol_Service $protocol_service = null;
+    private ?Applications_Mailer $mailer = null;
+    private ?Applications_Service $service = null;
 
     public function init(): void {
         add_action( 'wp_ajax_fstu_applications_get_list',    [ $this, 'handle_get_list' ] );
@@ -30,22 +36,58 @@ class Applications_Ajax {
     }
 
     /**
-     * [КРИТИЧНО] Приватний метод логування згідно AGENTS.md
+     * Повертає repository модуля.
      */
-    private function log_action( string $type, string $text, string $status ): void {
-        global $wpdb;
-        $wpdb->insert(
-            'Logs',
-            [
-                'User_ID'         => get_current_user_id(),
-                'Logs_DateCreate' => current_time( 'mysql' ),
-                'Logs_Type'       => $type,
-                'Logs_Name'       => self::LOG_NAME,
-                'Logs_Text'       => $text,
-                'Logs_Error'      => $status,
-            ],
-            [ '%d', '%s', '%s', '%s', '%s', '%s' ]
-        );
+    private function get_repository(): Applications_Repository {
+        if ( null === $this->repository ) {
+            $this->repository = new Applications_Repository();
+        }
+
+        return $this->repository;
+    }
+
+    /**
+     * Повертає сервіс протоколу модуля.
+     */
+    private function get_protocol_service(): Applications_Protocol_Service {
+        if ( null === $this->protocol_service ) {
+            $this->protocol_service = new Applications_Protocol_Service();
+        }
+
+        return $this->protocol_service;
+    }
+
+    /**
+     * Повертає mailer модуля.
+     */
+    private function get_mailer(): Applications_Mailer {
+        if ( null === $this->mailer ) {
+            $this->mailer = new Applications_Mailer();
+        }
+
+        return $this->mailer;
+    }
+
+    /**
+     * Повертає бізнес-сервіс модуля.
+     */
+    private function get_service(): Applications_Service {
+        if ( null === $this->service ) {
+            $this->service = new Applications_Service(
+                $this->get_repository(),
+                $this->get_protocol_service(),
+                $this->get_mailer()
+            );
+        }
+
+        return $this->service;
+    }
+
+    /**
+     * Чи ввімкнено debug-режим модуля заявок.
+     */
+    private function is_debug_enabled(): bool {
+        return defined( self::DEBUG_FLAG ) && constant( self::DEBUG_FLAG );
     }
 
     /**
@@ -71,6 +113,84 @@ class Applications_Ajax {
     }
 
     /**
+     * Повертає true, якщо спрацювало honeypot-поле.
+     */
+    private function is_honeypot_triggered(): bool {
+        $honeypot = sanitize_text_field( wp_unslash( $_POST['fstu_website'] ?? '' ) );
+
+        return '' !== trim( $honeypot );
+    }
+
+    /**
+     * Формує safe error payload для AJAX-відповіді.
+     *
+     * @return array{message: string, code: string}
+     */
+    private function build_error_payload( string $message, string $code ): array {
+        return [
+            'message' => $message,
+            'code'    => $code,
+        ];
+    }
+
+    /**
+     * Повертає повідомлення для accept-flow.
+     */
+    private function get_accept_error_message( string $marker ): string {
+        return match ( $marker ) {
+            'candidate_not_found'             => 'Кандидата не знайдено.',
+            'candidate_region_not_found'      => 'Для кандидата не визначено область.',
+            'ticket_number_not_generated'     => 'Не вдалося сформувати номер квитка.',
+            'candidate_already_accepted'      => 'Кандидат уже прийнятий до ФСТУ та має квиток.',
+            'candidate_role_already_accepted' => 'Кандидат уже має роль члена ФСТУ. Перевірте картку вручну.',
+            'candidate_card_already_exists'   => 'Для кандидата вже існує членський квиток. Перевірте картку вручну.',
+            'member_card_insert_failed'       => 'Не вдалося створити членський квиток кандидата.',
+            'applications_log_insert_failed'  => 'Сталася помилка збереження протоколу. Операцію скасовано.',
+            default                           => 'Сталася помилка при обробці заявки.',
+        };
+    }
+
+    /**
+     * Повертає повідомлення для reject-flow.
+     */
+    private function get_reject_error_message( string $marker ): string {
+        return match ( $marker ) {
+            'candidate_not_found'             => 'Кандидата не знайдено.',
+            'candidate_already_accepted'      => 'Кандидат уже прийнятий до ФСТУ та не може бути відхилений у модулі заявок.',
+            'candidate_role_already_accepted' => 'Кандидат уже має роль члена ФСТУ. Перевірте його стан вручну.',
+            'candidate_card_already_exists'   => 'Для кандидата вже існує членський квиток. Операцію відхилення заблоковано.',
+            'reject_role_update_failed'       => 'Не вдалося завершити відхилення заявки. Спробуйте ще раз.',
+            'applications_log_insert_failed'  => 'Сталася помилка збереження протоколу. Операцію скасовано.',
+            default                           => 'Сталася помилка при відхиленні заявки.',
+        };
+    }
+
+    /**
+     * Повертає повідомлення для change_ofst-flow.
+     */
+    private function get_change_ofst_error_message( string $marker ): string {
+        return match ( $marker ) {
+            'candidate_not_found'             => 'Кандидата не знайдено.',
+            'candidate_already_accepted'      => 'Кандидат уже прийнятий до ФСТУ. Зміну ОФСТ виконуйте у відповідному реєстрі.',
+            'candidate_role_already_accepted' => 'Кандидат уже має роль члена ФСТУ. Перевірте його стан вручну.',
+            'candidate_card_already_exists'   => 'Для кандидата вже існує членський квиток. Зміну ОФСТ у модулі заявок заблоковано.',
+            'unit_not_found'                  => 'Обраний осередок не знайдено.',
+            'unit_region_not_found'           => 'Для обраного осередку не визначено область.',
+            'current_ofst_not_found'          => 'Не вдалося визначити поточний запис ОФСТ кандидата.',
+            'current_ofst_record_invalid'     => 'Поточний запис ОФСТ має некоректний стан.',
+            'ofst_history_insert_failed'      => 'Не вдалося зберегти історію змін ОФСТ. Операцію скасовано.',
+            'ofst_history_duplicate'          => 'Не вдалося зберегти історію змін ОФСТ: виявлено конфлікт дати/часу історичного запису. Спробуйте повторити дію ще раз.',
+            'ofst_history_required_field_missing' => 'Не вдалося зберегти історію змін ОФСТ: у таблиці відсутні або не заповнені обов’язкові службові поля.',
+            'ofst_history_constraint_failed'  => 'Не вдалося зберегти історію змін ОФСТ через обмеження цілісності даних (осередок/область/користувач).',
+            'ofst_history_invalid_datetime'   => 'Не вдалося зберегти історію змін ОФСТ через некоректну дату службового запису.',
+            'ofst_update_failed'              => 'Не вдалося оновити поточний запис ОФСТ через службову помилку збереження.',
+            'ofst_state_conflict'             => 'Запис ОФСТ було змінено паралельно. Оновіть список і повторіть спробу.',
+            'applications_log_insert_failed'  => 'Сталася помилка збереження протоколу. Операцію скасовано.',
+            default                           => 'Помилка оновлення ОФСТ.',
+        };
+    }
+
+    /**
      * Отримання списку заявок для таблиці.
      */
     public function handle_get_list(): void {
@@ -86,97 +206,35 @@ class Applications_Ajax {
         $region_id = absint( $_POST['region_id'] ?? 0 );
         $unit_id   = absint( $_POST['unit_id'] ?? 0 );
         $offset    = ( $page - 1 ) * $per_page;
+        $started_at = microtime( true );
 
-        global $wpdb;
+        $result = $this->get_repository()->get_applications_list( $search, $region_id, $unit_id, $per_page, $offset );
+        $rows   = is_array( $result['rows'] ?? null ) ? $result['rows'] : [];
+        $total  = (int) ( $result['total'] ?? 0 );
 
-        $where_clauses = [];
-        $params        = [];
+        $response = [
+            'html'        => $this->render_list_rows( $rows, $offset ),
+            'total'       => $total,
+            'page'        => $page,
+            'per_page'    => $per_page,
+            'total_pages' => (int) ceil( $total / max( 1, $per_page ) ),
+        ];
 
-        if ( '' !== $search ) {
-            $like            = '%' . $wpdb->esc_like( $search ) . '%';
-            $where_clauses[] = "(CONCAT_WS(' ', NULLIF(m_ln.meta_value, ''), NULLIF(m_fn.meta_value, ''), NULLIF(m_pt.meta_value, '')) LIKE %s OR u.display_name LIKE %s OR u.user_email LIKE %s)";
-            $params[]        = $like;
-            $params[]        = $like;
-            $params[]        = $like;
+        if ( $this->is_debug_enabled() ) {
+            $response['debug'] = [
+                'execution_ms' => round( ( microtime( true ) - $started_at ) * 1000, 2 ),
+                'rows_count'    => count( $rows ),
+                'filters'       => [
+                    'search'    => $search,
+                    'region_id' => $region_id,
+                    'unit_id'   => $unit_id,
+                    'page'      => $page,
+                    'per_page'  => $per_page,
+                ],
+            ];
         }
 
-        if ( $region_id > 0 ) {
-            $where_clauses[] = 'ur.Region_ID = %d';
-            $params[]        = $region_id;
-        }
-
-        if ( $unit_id > 0 ) {
-            $where_clauses[] = 'ur.Unit_ID = %d';
-            $params[]        = $unit_id;
-        }
-
-        $where_sql = ! empty( $where_clauses )
-            ? 'WHERE ' . implode( ' AND ', $where_clauses )
-            : '';
-
-        $base_sql = "
-            FROM vUserBlocked vb
-            INNER JOIN {$wpdb->users} u ON u.ID = vb.User_ID
-            LEFT JOIN {$wpdb->usermeta} m_ln ON (m_ln.user_id = u.ID AND m_ln.meta_key = 'last_name')
-            LEFT JOIN {$wpdb->usermeta} m_fn ON (m_fn.user_id = u.ID AND m_fn.meta_key = 'first_name')
-            LEFT JOIN {$wpdb->usermeta} m_pt ON (m_pt.user_id = u.ID AND m_pt.meta_key = 'Patronymic')
-            LEFT JOIN (
-                SELECT u1.*
-                FROM UserRegistationOFST u1
-                INNER JOIN (
-                    SELECT User_ID, MAX(UserRegistationOFST_DateCreate) AS max_date
-                    FROM UserRegistationOFST
-                    GROUP BY User_ID
-                ) u2 ON u1.User_ID = u2.User_ID AND u1.UserRegistationOFST_DateCreate = u2.max_date
-            ) ur ON ur.User_ID = u.ID
-            LEFT JOIN S_Unit su ON su.Unit_ID = ur.Unit_ID
-            LEFT JOIN S_Region sr ON sr.Region_ID = ur.Region_ID
-            {$where_sql}
-        ";
-
-        $count_sql = "SELECT COUNT(DISTINCT u.ID) {$base_sql}";
-        if ( ! empty( $params ) ) {
-            // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-            $total = (int) $wpdb->get_var( $wpdb->prepare( $count_sql, ...$params ) );
-        } else {
-            // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery
-            $total = (int) $wpdb->get_var( $count_sql );
-        }
-
-        $select_sql = "
-            SELECT DISTINCT
-                u.ID AS user_id,
-                u.user_registered,
-                u.user_email,
-                u.display_name,
-                u.user_login,
-                TRIM(CONCAT_WS(' ', NULLIF(m_ln.meta_value, ''), NULLIF(m_fn.meta_value, ''), NULLIF(m_pt.meta_value, ''))) AS fio,
-                IFNULL(su.Unit_ShortName, '') AS unit_short_name,
-                IFNULL(sr.Region_Name, '') AS region_name
-            {$base_sql}
-            ORDER BY u.user_registered DESC, u.ID DESC
-            LIMIT %d OFFSET %d
-        ";
-
-        $data_params = array_merge( $params, [ $per_page, $offset ] );
-        $prepared_sql = ! empty( $params )
-            // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-            ? $wpdb->prepare( $select_sql, ...$data_params )
-            // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-            : $wpdb->prepare( $select_sql, $per_page, $offset );
-
-        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery
-        $rows = $wpdb->get_results( $prepared_sql, ARRAY_A ) ?: [];
-
-        wp_send_json_success(
-            [
-                'html'        => $this->render_list_rows( $rows, $offset ),
-                'total'       => $total,
-                'page'        => $page,
-                'per_page'    => $per_page,
-                'total_pages' => (int) ceil( $total / max( 1, $per_page ) ),
-            ]
-        );
+        wp_send_json_success( $response );
     }
 
     /**
@@ -187,8 +245,8 @@ class Applications_Ajax {
             return '<tr><td colspan="8" class="fstu-applications-empty">Заявок не знайдено.</td></tr>';
         }
 
-        $html     = '';
-        $is_admin = $this->current_user_is_administrator();
+        $html              = '';
+        $can_manage_actions = $this->current_user_can_manage_applications();
 
         foreach ( $rows as $index => $row ) {
             $user_id      = (int) ( $row['user_id'] ?? 0 );
@@ -199,12 +257,13 @@ class Applications_Ajax {
             $fio          = '' !== $fio ? $fio : $user_login;
             $fio          = '' !== $fio ? $fio : 'Без ПІБ';
             $email        = (string) ( $row['user_email'] ?? '' );
+            $unit_id      = (int) ( $row['unit_id'] ?? 0 );
             $unit_name    = (string) ( $row['unit_short_name'] ?? '' );
             $region_name  = (string) ( $row['region_name'] ?? '' );
             $date_raw     = (string) ( $row['user_registered'] ?? '' );
             $date         = '' !== $date_raw ? wp_date( 'd.m.Y H:i', strtotime( $date_raw ) ) : '—';
             $row_number   = $offset + $index + 1;
-            $actions      = $this->render_actions_dropdown( $user_id, $is_admin );
+            $actions      = $this->render_actions_dropdown( $user_id, $unit_id, $fio, $unit_name, $can_manage_actions );
 
             $html .= sprintf(
                 '<tr class="fstu-row"><td class="fstu-td fstu-td--num">%1$d</td><td class="fstu-td">%2$s</td><td class="fstu-td">%3$s</td><td class="fstu-td">%4$s</td><td class="fstu-td">%5$s</td><td class="fstu-td">%6$s</td><td class="fstu-td fstu-th--center">—</td><td class="fstu-td fstu-td--actions">%7$s</td></tr>',
@@ -224,61 +283,47 @@ class Applications_Ajax {
     /**
      * Формує dropdown дій для рядка заявки.
      */
-    private function render_actions_dropdown( int $user_id, bool $is_admin ): string {
+    private function render_actions_dropdown( int $user_id, int $unit_id, string $candidate_name, string $unit_name, bool $can_manage_actions ): string {
         if ( $user_id <= 0 ) {
             return '—';
         }
 
+        $candidate_name_attr = esc_attr( $candidate_name );
+        $unit_name_attr      = esc_attr( $unit_name );
+
         $items = [
             sprintf(
-                '<button type="button" class="fstu-applications-dropdown__item fstu-action-view" data-id="%1$d">%2$s</button>',
+                '<button type="button" class="fstu-applications-dropdown__item fstu-action-view" data-id="%1$d" data-candidate-name="%3$s">%2$s</button>',
                 $user_id,
-                esc_html__( 'Перегляд', 'fstu' )
+                esc_html__( 'Перегляд', 'fstu' ),
+                $candidate_name_attr
             ),
             sprintf(
-                '<button type="button" class="fstu-applications-dropdown__item fstu-action-accept" data-id="%1$d">%2$s</button>',
+                '<button type="button" class="fstu-applications-dropdown__item fstu-action-change-ofst" data-id="%1$d" data-unit-id="%2$d" data-candidate-name="%4$s" data-unit-name="%5$s">%3$s</button>',
                 $user_id,
-                esc_html__( 'Прийняти', 'fstu' )
+                $unit_id,
+                esc_html__( 'Змінити ОФСТ', 'fstu' ),
+                $candidate_name_attr,
+                $unit_name_attr
+            ),
+            sprintf(
+                '<button type="button" class="fstu-applications-dropdown__item fstu-action-accept" data-id="%1$d" data-candidate-name="%3$s">%2$s</button>',
+                $user_id,
+                esc_html__( 'Прийняти', 'fstu' ),
+                $candidate_name_attr
             ),
         ];
 
-        if ( $is_admin ) {
+        if ( $can_manage_actions ) {
             $items[] = sprintf(
-                '<button type="button" class="fstu-applications-dropdown__item fstu-applications-dropdown__item--danger fstu-action-reject" data-id="%1$d">%2$s</button>',
+                '<button type="button" class="fstu-applications-dropdown__item fstu-applications-dropdown__item--danger fstu-action-reject" data-id="%1$d" data-candidate-name="%3$s">%2$s</button>',
                 $user_id,
-                esc_html__( 'Відхилити', 'fstu' )
+                esc_html__( 'Відхилити', 'fstu' ),
+                $candidate_name_attr
             );
         }
 
         return '<div class="fstu-applications-dropdown"><button type="button" class="fstu-applications-dropdown__toggle" aria-expanded="false" title="' . esc_attr__( 'Меню дій', 'fstu' ) . '">▼</button><div class="fstu-applications-dropdown__menu">' . implode( '', $items ) . '</div></div>';
-    }
-
-    /**
-     * Повертає безпечний fallback для імені користувача в протоколі.
-     */
-    private function get_protocol_user_label( array $row ): string {
-        $fio = trim( (string) ( $row['FIO'] ?? '' ) );
-        if ( '' !== $fio ) {
-            return $fio;
-        }
-
-        $user_id = absint( $row['User_ID'] ?? 0 );
-        if ( $user_id > 0 ) {
-            $user = get_userdata( $user_id );
-            if ( $user instanceof \WP_User ) {
-                if ( ! empty( $user->display_name ) ) {
-                    return (string) $user->display_name;
-                }
-
-                if ( ! empty( $user->user_login ) ) {
-                    return (string) $user->user_login;
-                }
-            }
-
-            return 'ID:' . $user_id;
-        }
-
-        return 'Система';
     }
 
     /**
@@ -288,7 +333,7 @@ class Applications_Ajax {
         check_ajax_referer( Applications_List::NONCE_ACTION, 'nonce' );
 
         if ( ! $this->current_user_can_manage_applications() ) {
-            wp_send_json_error( [ 'message' => 'Недостатньо прав.' ] );
+            wp_send_json_error( $this->build_error_payload( 'Недостатньо прав.', 'forbidden' ) );
         }
 
         wp_send_json_error( [ 'message' => 'Функціонал голосування ще не реалізовано.' ] );
@@ -318,19 +363,27 @@ class Applications_Ajax {
         }
 
         $user_id = absint( wp_unslash( $_POST['id'] ?? 0 ) );
+        $started_at = microtime( true );
 
-        global $wpdb;
-        $data = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM vUserBlocked WHERE User_ID = %d", $user_id ), ARRAY_A );
+        $result = $this->get_repository()->get_candidate_by_id( $user_id, $this->is_debug_enabled() );
+        $data   = is_array( $result['data'] ?? null ) ? $result['data'] : null;
 
-        if ( ! $data ) {
+        if ( ! is_array( $data ) ) {
             wp_send_json_error( [ 'message' => 'Кандидата не знайдено.' ] );
         }
 
-        // Додаємо мета-дані, які не входять у View
-        $data['adr']   = get_user_meta( $user_id, 'Adr', true );
-        $data['phone'] = get_user_meta( $user_id, 'PhoneMobile', true );
+        $response = $data;
 
-        wp_send_json_success( $data );
+        if ( $this->is_debug_enabled() ) {
+            $response['debug'] = array_merge(
+                is_array( $result['debug'] ?? null ) ? $result['debug'] : [],
+                [
+                    'ajax_execution_ms' => round( ( microtime( true ) - $started_at ) * 1000, 2 ),
+                ]
+            );
+        }
+
+        wp_send_json_success( $response );
     }
 
     /**
@@ -343,56 +396,23 @@ class Applications_Ajax {
             wp_send_json_error( [ 'message' => 'Недостатньо прав.' ] );
         }
 
-        $user_id = absint( wp_unslash( $_POST['id'] ?? 0 ) );
-        global $wpdb;
-
-        // [Покращення 1] Початок транзакції
-        $wpdb->query( 'START TRANSACTION' );
-
         try {
-            $user_obj = get_userdata( $user_id );
-            if ( ! $user_obj ) throw new \Exception( 'Користувача не існує.' );
+            $user_id = absint( wp_unslash( $_POST['id'] ?? 0 ) );
 
-            // 1. Зміна ролі
-            $user_obj->set_role( 'userfstu' );
+            if ( $user_id <= 0 ) {
+                wp_send_json_error( $this->build_error_payload( 'Не вдалося визначити кандидата для прийняття.', 'invalid_candidate_id' ) );
+            }
 
-            // 2. Генерація номера картки (на основі регіону)
-            $region_id = (int) $wpdb->get_var( $wpdb->prepare( "SELECT Region_ID FROM vUserRegistationOFST WHERE User_ID = %d", $user_id ) );
-            $next_num  = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COALESCE(MAX(UserMemberCard_Number), 0) + 1 FROM UserMemberCard WHERE Region_ID = %d", $region_id ) );
+            $result  = $this->get_service()->accept_candidate( $user_id );
 
-            // 3. Створення запису про картку
-            $inserted = $wpdb->insert( 'UserMemberCard', [
-                'UserMemberCard_DateCreate' => current_time( 'mysql' ),
-                'UserCreate'                => get_current_user_id(),
-                'User_ID'                   => $user_id,
-                'TypeCard_ID'               => 1,
-                'StatusCard_ID'             => 1,
-                'Region_ID'                 => $region_id,
-                'UserMemberCard_Number'     => $next_num,
-                'UserMemberCard_LastName'   => get_user_meta( $user_id, 'last_name', true ),
-                'UserMemberCard_FirstName'  => get_user_meta( $user_id, 'first_name', true )
-            ] );
+            $message = ! empty( $result['email_sent'] )
+                ? 'Користувача успішно прийнято!'
+                : 'Користувача успішно прийнято. Лист не було відправлено.';
 
-            if ( ! $inserted ) throw new \Exception( 'Помилка створення картки.' );
-
-            $wpdb->query( 'COMMIT' );
-
-            // [Покращення 2 & 4] Відправка Email
-            $from_email = $wpdb->get_var(
-                $wpdb->prepare( 'SELECT ParamValue FROM Settings WHERE ParamName = %s', 'EmailFSTU' )
-            );
-            $from_email = is_email( $from_email ) ? $from_email : get_option( 'admin_email' );
-            $subject    = "Вас прийнято до членів ФСТУ";
-            $message    = "Вітаємо! Вашу заявку схвалено. Ваш номер квитка: " . $next_num;
-            wp_mail( $user_obj->user_email, $subject, $message, [ 'From: ' . $from_email ] );
-
-            $this->log_action( 'UPDATE', "Користувача ID:{$user_id} прийнято в члени ФСТУ. Картка №{$next_num}", '✓' );
-            wp_send_json_success( [ 'message' => 'Користувача успішно прийнято!' ] );
-
-        } catch ( \Exception $e ) {
-            $wpdb->query( 'ROLLBACK' );
-            $this->log_action( 'UPDATE', "Помилка прийняття ID:{$user_id}: " . $e->getMessage(), 'error' );
-            wp_send_json_error( [ 'message' => 'Сталася помилка при обробці заявки.' ] );
+            wp_send_json_success( [ 'message' => $message, 'code' => 'accepted' ] );
+        } catch ( \Throwable $throwable ) {
+            $marker = trim( $throwable->getMessage() );
+            wp_send_json_error( $this->build_error_payload( $this->get_accept_error_message( $marker ), '' !== $marker ? $marker : 'accept_failed' ) );
         }
     }
 
@@ -401,19 +421,40 @@ class Applications_Ajax {
      */
     public function handle_reject(): void {
         check_ajax_referer( Applications_List::NONCE_ACTION, 'nonce' );
-        if ( ! $this->current_user_is_administrator() ) {
-            wp_send_json_error( [ 'message' => 'Тільки адміністратор може відхиляти заявку.' ] );
+        if ( ! $this->current_user_can_manage_applications() ) {
+            wp_send_json_error( $this->build_error_payload( 'Недостатньо прав для відхилення заявки.', 'forbidden' ) );
         }
 
-        $user_id = absint( wp_unslash( $_POST['id'] ?? 0 ) );
-        $user_obj = get_userdata( $user_id );
-
-        if ( $user_obj ) {
-            $user_obj->set_role( 'rejected_applicant' ); // М'яке видалення
-            $this->log_action( 'DELETE', "Заявку ID:{$user_id} відхилено (Soft Delete)", '✓' );
-            wp_send_json_success( [ 'message' => 'Заявку відхилено.' ] );
+        if ( $this->is_honeypot_triggered() ) {
+            wp_send_json_error( $this->build_error_payload( 'Запит відхилено з міркувань безпеки.', 'spam_detected' ) );
         }
-        wp_send_json_error( [ 'message' => 'Користувача не знайдено.' ] );
+
+        try {
+            $user_id = absint( wp_unslash( $_POST['id'] ?? 0 ) );
+
+            if ( $user_id <= 0 ) {
+                wp_send_json_error( $this->build_error_payload( 'Не вдалося визначити кандидата для відхилення.', 'invalid_candidate_id' ) );
+            }
+
+            $result = $this->get_service()->reject_candidate( $user_id );
+            $status = (string) ( $result['status'] ?? '' );
+
+            if ( 'already_rejected' === $status ) {
+                wp_send_json_success( [
+                    'message' => 'Заявка вже була відхилена раніше.',
+                    'code'    => 'candidate_already_rejected',
+                ] );
+            }
+
+            wp_send_json_success( [
+                'message' => 'Заявку відхилено.',
+                'code'    => 'rejected',
+            ] );
+        } catch ( \Throwable $throwable ) {
+            $marker = trim( $throwable->getMessage() );
+
+            wp_send_json_error( $this->build_error_payload( $this->get_reject_error_message( $marker ), '' !== $marker ? $marker : 'reject_failed' ) );
+        }
     }
 
     /**
@@ -423,81 +464,39 @@ class Applications_Ajax {
         check_ajax_referer( Applications_List::NONCE_ACTION, 'nonce' );
 
         if ( ! $this->current_user_can_manage_applications() ) {
-            wp_send_json_error( [ 'message' => 'Недостатньо прав.' ] );
+            wp_send_json_error( $this->build_error_payload( 'Недостатньо прав.', 'forbidden' ) );
         }
 
-        $user_id = absint( wp_unslash( $_POST['user_id'] ?? 0 ) );
-        $unit_id = absint( wp_unslash( $_POST['unit_id'] ?? 0 ) );
-
-        if ( $user_id <= 0 || $unit_id <= 0 ) {
-            wp_send_json_error( [ 'message' => 'Невірні параметри оновлення.' ] );
+        if ( $this->is_honeypot_triggered() ) {
+            wp_send_json_error( $this->build_error_payload( 'Запит відхилено з міркувань безпеки.', 'spam_detected' ) );
         }
 
-        global $wpdb;
-        $unit_row = $wpdb->get_row(
-            $wpdb->prepare(
-                "SELECT Unit_ID, Region_ID, Unit_ShortName FROM S_Unit WHERE Unit_ID = %d LIMIT 1",
-                $unit_id
-            ),
-            ARRAY_A
-        );
+        try {
+            $user_id = absint( wp_unslash( $_POST['user_id'] ?? 0 ) );
+            $unit_id = absint( wp_unslash( $_POST['unit_id'] ?? 0 ) );
 
-        if ( ! is_array( $unit_row ) ) {
-            wp_send_json_error( [ 'message' => 'Обраний осередок не знайдено.' ] );
+            if ( $user_id <= 0 || $unit_id <= 0 ) {
+                wp_send_json_error( $this->build_error_payload( 'Невірні параметри оновлення.', 'invalid_payload' ) );
+            }
+
+            $result = $this->get_service()->change_candidate_ofst( $user_id, $unit_id );
+
+            if ( 'no_changes' === (string) ( $result['status'] ?? '' ) ) {
+                wp_send_json_success( [ 'message' => 'Змін не виявлено.', 'code' => 'ofst_no_changes' ] );
+            }
+
+            wp_send_json_success( [
+                'message'   => 'Осередок оновлено, а історію змін збережено.',
+                'code'      => 'updated',
+                'region_id' => (int) ( $result['region_id'] ?? 0 ),
+                'unit_id'   => (int) ( $result['unit_id'] ?? 0 ),
+                'unit_name' => (string) ( $result['unit_name'] ?? '' ),
+            ] );
+        } catch ( \Throwable $throwable ) {
+            $marker = trim( $throwable->getMessage() );
+
+            wp_send_json_error( $this->build_error_payload( $this->get_change_ofst_error_message( $marker ), '' !== $marker ? $marker : 'change_ofst_failed' ) );
         }
-
-        $region_id = (int) ( $unit_row['Region_ID'] ?? 0 );
-        if ( $region_id <= 0 ) {
-            $this->log_action( 'UPDATE', "Помилка зміни ОФСТ для користувача ID:{$user_id}: не знайдено Region_ID для Unit:{$unit_id}", 'invalid_region' );
-            wp_send_json_error( [ 'message' => 'Для обраного осередку не визначено область.' ] );
-        }
-
-        $current_row = $wpdb->get_row(
-            $wpdb->prepare(
-                "SELECT Unit_ID, Region_ID FROM UserRegistationOFST WHERE User_ID = %d LIMIT 1",
-                $user_id
-            ),
-            ARRAY_A
-        );
-
-        if ( ! is_array( $current_row ) ) {
-            $this->log_action( 'UPDATE', "Помилка зміни ОФСТ для користувача ID:{$user_id}: запис UserRegistationOFST не знайдено", 'not_found' );
-            wp_send_json_error( [ 'message' => 'Запис прив’язки користувача до осередку не знайдено.' ] );
-        }
-
-        $current_unit_id   = (int) ( $current_row['Unit_ID'] ?? 0 );
-        $current_region_id = (int) ( $current_row['Region_ID'] ?? 0 );
-
-        if ( $current_unit_id === $unit_id && $current_region_id === $region_id ) {
-            $this->log_action( 'UPDATE', "Спроба зміни ОФСТ для користувача ID:{$user_id}: змін не виявлено", 'no_changes' );
-            wp_send_json_success( [ 'message' => 'Змін не виявлено.' ] );
-        }
-
-        $updated = $wpdb->update(
-            'UserRegistationOFST',
-            [ 'Unit_ID' => $unit_id, 'Region_ID' => $region_id ],
-            [ 'User_ID' => $user_id ],
-            [ '%d', '%d' ],
-            [ '%d' ]
-        );
-
-        if ( false === $updated ) {
-            $this->log_action( 'UPDATE', "Помилка зміни ОФСТ для користувача ID:{$user_id} на Unit:{$unit_id}", 'error' );
-            wp_send_json_error( [ 'message' => 'Помилка оновлення.' ] );
-        }
-
-        if ( 0 === (int) $updated ) {
-            $this->log_action( 'UPDATE', "Спроба зміни ОФСТ для користувача ID:{$user_id}: змін не виявлено", 'no_changes' );
-            wp_send_json_success( [ 'message' => 'Змін не виявлено.' ] );
-        }
-
-        if ( ! empty( $unit_row['Unit_ShortName'] ) ) {
-            $this->log_action( 'UPDATE', "Змінено ОФСТ для користувача ID:{$user_id} на осередок {$unit_row['Unit_ShortName']} (Unit:{$unit_id})", '✓' );
-        } else {
-            $this->log_action( 'UPDATE', "Змінено ОФСТ для користувача ID:{$user_id} на Unit:{$unit_id}", '✓' );
-        }
-
-            wp_send_json_success( [ 'message' => 'Осередки оновлено.' ] );
     }
 
     /**
@@ -511,91 +510,37 @@ class Applications_Ajax {
             wp_send_json_error( [ 'message' => 'Немає прав для перегляду протоколу.' ] );
         }
 
-        global $wpdb;
-
         $search   = sanitize_text_field( wp_unslash( $_POST['search'] ?? '' ) );
         $page     = max( 1, absint( $_POST['page'] ?? 1 ) );
         $per_page = max( 1, min( self::MAX_PER_PAGE, absint( $_POST['per_page'] ?? 10 ) ?: 10 ) );
         $offset   = ( $page - 1 ) * $per_page;
+        $started_at = microtime( true );
+        $protocol = $this->get_repository()->get_protocol( $search, $per_page, $offset, self::LOG_NAME );
+        $rows     = is_array( $protocol['rows'] ?? null ) ? $protocol['rows'] : [];
+        $total    = (int) ( $protocol['total'] ?? 0 );
+        $html     = $this->get_protocol_service()->build_protocol_rows( $rows );
 
-        // Базова умова: шукаємо тільки логи поточного модуля
-        $where_clauses = [ "l.Logs_Name = %s" ];
-        $params        = [ self::LOG_NAME ];
-
-        // Пермісивний пошук по тексту операції АБО ПІБ користувача
-        if ( '' !== $search ) {
-            $where_clauses[] = "(l.Logs_Text LIKE %s OR u.FIO LIKE %s)";
-            $like_search     = '%' . $wpdb->esc_like( $search ) . '%';
-            $params[]        = $like_search;
-            $params[]        = $like_search;
-        }
-
-        $where_sql = implode( ' AND ', $where_clauses );
-
-        // 1. Рахуємо загальну кількість для пагінації
-        $count_sql = "SELECT COUNT(l.Logs_ID) 
-		              FROM Logs l 
-		              LEFT JOIN vUserFSTU u ON u.User_ID = l.User_ID 
-		              WHERE {$where_sql}";
-        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-        $total = (int) $wpdb->get_var( $wpdb->prepare( $count_sql, ...$params ) );
-
-        // 2. Отримуємо самі дані
-        $data_sql = "SELECT l.User_ID, l.Logs_DateCreate, l.Logs_Type, l.Logs_Name, l.Logs_Text, l.Logs_Error, u.FIO 
-		             FROM Logs l 
-		             LEFT JOIN vUserFSTU u ON u.User_ID = l.User_ID 
-		             WHERE {$where_sql} 
-		             ORDER BY l.Logs_DateCreate DESC 
-		             LIMIT %d OFFSET %d";
-
-        $data_params = array_merge( $params, [ $per_page, $offset ] );
-        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-        $rows = $wpdb->get_results( $wpdb->prepare( $data_sql, ...$data_params ), ARRAY_A );
-
-        // 3. Формуємо HTML
-        $html = '';
-        if ( empty( $rows ) ) {
-            $html = '<tr><td colspan="6" style="text-align:center; padding: 20px; color: #7f8c8d;">Записів у протоколі не знайдено.</td></tr>';
-        } else {
-            foreach ( $rows as $row ) {
-                $date    = esc_html( gmdate( 'd.m.Y H:i', strtotime( $row['Logs_DateCreate'] ) ) );
-                $type    = esc_html( $row['Logs_Type'] );
-                $message = esc_html( $row['Logs_Text'] );
-                $status  = esc_html( $row['Logs_Error'] );
-                $fio     = esc_html( $this->get_protocol_user_label( $row ) );
-
-                // Красива стилізація статусу
-                $status_html = ( $status === '✓' )
-                    ? '<span style="color: #27ae60; font-weight: bold;">✓</span>'
-                    : '<span style="color: #e74c3c; font-size: 11px;">' . $status . '</span>';
-
-                // Кольорові бейджі для типів операцій
-                $type_color = match( $type ) {
-                    'INSERT' => '#27ae60', // Зелений
-                    'UPDATE' => '#f39c12', // Помаранчевий
-                    'DELETE' => '#e74c3c', // Червоний
-                    default  => '#7f8c8d', // Сірий
-                };
-                $type_html = '<span style="background: ' . $type_color . '; color: #fff; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: 600;">' . $type . '</span>';
-
-                $html .= "<tr>
-					<td>{$date}</td>
-					<td style=\"text-align:center;\">{$type_html}</td>
-					<td style=\"font-weight: 500;\">" . esc_html( self::LOG_NAME ) . "</td>
-					<td>{$message}</td>
-					<td style=\"text-align:center;\">{$status_html}</td>
-					<td>{$fio}</td>
-				</tr>";
-            }
-        }
-
-        wp_send_json_success( [
+        $response = [
             'html'        => $html,
             'total'       => $total,
             'page'        => $page,
             'per_page'    => $per_page,
             'total_pages' => (int) ceil( $total / max( 1, $per_page ) ),
-        ] );
+        ];
+
+        if ( $this->is_debug_enabled() ) {
+            $response['debug'] = [
+                'execution_ms' => round( ( microtime( true ) - $started_at ) * 1000, 2 ),
+                'rows_count'    => count( $rows ),
+                'filters'       => [
+                    'search'   => $search,
+                    'page'     => $page,
+                    'per_page' => $per_page,
+                ],
+            ];
+        }
+
+        wp_send_json_success( $response );
     }
     //
 }

@@ -2,8 +2,8 @@
 /**
  * Клас централізованого керування capability-моделлю ФСТУ.
  *
- * Version:     1.5.0
- * Date_update: 2026-04-06
+ * Version:     1.6.0
+ * Date_update: 2026-04-07
  *
  * @package FSTU\Core
  */
@@ -60,6 +60,8 @@ class Capabilities {
 	 * Призначає capability потрібним ролям.
 	 */
 	public static function register_role_capabilities(): void {
+		self::ensure_core_roles();
+
 		$role_caps = [
 			'administrator' => [
 				self::ACCESS_ADMIN             => true,
@@ -122,6 +124,21 @@ class Capabilities {
 					$role->add_cap( $capability, true );
 				}
 			}
+		}
+	}
+
+	/**
+	 * Реєструє базові службові ролі плагіна, якщо їх ще немає у WordPress.
+	 */
+	private static function ensure_core_roles(): void {
+		if ( ! get_role( 'applicants' ) ) {
+			add_role(
+				'applicants',
+				'Заявник ФСТУ',
+				[
+					'read' => true,
+				]
+			);
 		}
 	}
 

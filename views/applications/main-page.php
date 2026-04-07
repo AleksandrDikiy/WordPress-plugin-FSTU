@@ -20,6 +20,11 @@ if ( ! defined( 'ABSPATH' ) ) {
         <?php include __DIR__ . '/protocol-list.php'; ?>
     </div>
 
-    <div id="fstu-modals-container"></div>
+    <div id="fstu-modals-container">
+        <?php include __DIR__ . '/modal-view.php'; ?>
+        <?php include __DIR__ . '/modal-change-ofst.php'; ?>
+        <?php include __DIR__ . '/modal-accept.php'; ?>
+        <?php include __DIR__ . '/modal-message.php'; ?>
+    </div>
 
 </div>

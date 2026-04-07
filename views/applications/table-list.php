@@ -28,7 +28,7 @@ if ( ! defined( 'ABSPATH' ) ) {
         </thead>
         <tbody id="fstu-applications-tbody">
         <tr>
-            <td colspan="8" style="text-align:center; padding: 20px; color: #7f8c8d;">
+            <td colspan="8" class="fstu-table-state fstu-table-state--loading">
                 Завантаження даних...
             </td>
         </tr>
