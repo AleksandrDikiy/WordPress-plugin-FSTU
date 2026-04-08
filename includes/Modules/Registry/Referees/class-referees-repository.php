@@ -49,6 +49,42 @@ class Referees_Repository {
 	}
 
 	/**
+	 * Повертає повний список суддів без SQL-пошуку для fallback-фільтрації на рівні PHP.
+	 *
+	 * @param array<string,mixed> $filters Набір фільтрів.
+	 * @return array<int,array<string,mixed>>
+	 */
+	public function get_referees_for_search_fallback( array $filters ): array {
+		global $wpdb;
+
+		$filters['search'] = '';
+		[ $where_sql, $params ] = $this->build_referees_where( $filters );
+
+		$sql = "SELECT vr.Referee_ID, vr.User_ID, vr.FIO, vr.FIOshort, vr.Region_Name, vr.Region_ID,
+				vr.RefereeCategory_ID, vr.RefereeCategory_Name, vr.Referee_NumOrder, vr.Referee_DateOrder,
+				vr.Referee_URLOrder, mc.CardNumber, COALESCE(cert.CertificatesCount, 0) AS CntCertificates
+			FROM vReferee vr
+			LEFT JOIN vUserMemberCard mc ON mc.User_ID = vr.User_ID
+			LEFT JOIN (
+				SELECT User_ID, COUNT(*) AS CertificatesCount
+				FROM CertificatesForRefereeing
+				GROUP BY User_ID
+			) cert ON cert.User_ID = vr.User_ID
+			{$where_sql}
+			ORDER BY vr.FIO ASC";
+
+		if ( ! empty( $params ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.NotPrepared
+			$items = $wpdb->get_results( $wpdb->prepare( $sql, ...$params ), ARRAY_A );
+		} else {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$items = $wpdb->get_results( $sql, ARRAY_A );
+		}
+
+		return is_array( $items ) ? $items : [];
+	}
+
+	/**
 	 * @param array<string,mixed> $filters Набір фільтрів.
 	 */
 	public function count_referees( array $filters ): int {
@@ -431,7 +467,9 @@ class Referees_Repository {
 		$search = trim( (string) ( $filters['search'] ?? '' ) );
 		if ( '' !== $search ) {
 			$like    = '%' . $wpdb->esc_like( $search ) . '%';
-			$where  .= ' AND vr.FIO LIKE %s';
+			$where  .= ' AND (vr.FIO LIKE %s OR vr.FIOshort LIKE %s OR vr.Referee_NumOrder LIKE %s)';
+			$params[] = $like;
+			$params[] = $like;
 			$params[] = $like;
 		}
 

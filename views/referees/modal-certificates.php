@@ -17,12 +17,12 @@ $can_manage_certificates = ! empty( $permissions['canManageCertificates'] );
 ?>
 
 <div id="fstu-referees-certificates-modal" class="fstu-modal-overlay fstu-hidden" role="dialog" aria-modal="true" aria-labelledby="fstu-referees-certificates-modal-title">
-	<div class="fstu-modal fstu-modal--wide">
+	<div class="fstu-modal fstu-modal--wide fstu-modal--referees-certificates">
 		<div class="fstu-modal__header">
 			<h3 class="fstu-modal__title" id="fstu-referees-certificates-modal-title"><?php esc_html_e( 'Довідки за суддівство', 'fstu' ); ?></h3>
 			<button type="button" class="fstu-modal__close" data-close-modal="fstu-referees-certificates-modal">×</button>
 		</div>
-		<div class="fstu-modal__body">
+		<div class="fstu-modal__body fstu-modal__body--compact-certificates">
 			<div id="fstu-referees-certificates-message" class="fstu-form-message fstu-hidden"></div>
 			<div class="fstu-referees-certificates-toolbar">
 				<div class="fstu-referees-certificates-toolbar__title">

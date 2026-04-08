@@ -1,7 +1,7 @@
 /**
  * JS модуля «Реєстр суддів ФСТУ».
  *
- * Version:     1.0.0
+ * Version:     1.0.1
  * Date_update: 2026-04-08
  *
  * @package FSTU
@@ -24,7 +24,7 @@ jQuery( document ).ready( function ( $ ) {
 	const l10n = fstuRefereesL10n;
 	const permissions = l10n.permissions || {};
 	const listState = {
-		page: parseInt( l10n.defaults.perPage, 10 ) ? 1 : 1,
+		page: 1,
 		perPage: parseInt( l10n.defaults.perPage, 10 ) || 10,
 		search: '',
 		regionId: 0,
@@ -78,8 +78,14 @@ jQuery( document ).ready( function ( $ ) {
 			loadList();
 		} );
 
-		$( document ).on( 'input', '#fstu-referees-search', debounce( function () {
-			listState.search = $( this ).val().trim();
+		$( document ).on( 'input keyup change search', '#fstu-referees-search', debounce( function () {
+			const nextSearch = $( this ).val().trim();
+
+			if ( nextSearch === listState.search ) {
+				return;
+			}
+
+			listState.search = nextSearch;
 			listState.page = 1;
 			loadList();
 		}, 300 ) );
@@ -183,6 +189,7 @@ jQuery( document ).ready( function ( $ ) {
 			$( '#fstu-referees-protocol' ).removeClass( 'fstu-hidden' );
 			$( '#fstu-referees-protocol-btn' ).addClass( 'fstu-hidden' );
 			$( '#fstu-referees-protocol-back-btn' ).removeClass( 'fstu-hidden' );
+			protocolState.page = 1;
 			loadProtocol();
 		} );
 
@@ -341,12 +348,7 @@ jQuery( document ).ready( function ( $ ) {
 			listState.totalPages = parseInt( response.total_pages, 10 ) || 1;
 			listState.page = parseInt( response.page, 10 ) || 1;
 			listState.perPage = parseInt( response.per_page, 10 ) || listState.perPage;
-			renderPagination(
-				'#fstu-referees-pagination-pages',
-				'#fstu-referees-pagination-info',
-				listState,
-				'fstu-referees-page-btn'
-			);
+			updateListPagination();
 		} ).fail( function ( response ) {
 			setTableError( '#fstu-referees-tbody', 7, getErrorMessage( response, l10n.messages.error ) );
 		} ).always( function () {
@@ -372,12 +374,7 @@ jQuery( document ).ready( function ( $ ) {
 			protocolState.totalPages = parseInt( response.total_pages, 10 ) || 1;
 			protocolState.page = parseInt( response.page, 10 ) || 1;
 			protocolState.perPage = parseInt( response.per_page, 10 ) || protocolState.perPage;
-			renderPagination(
-				'#fstu-referees-protocol-pagination-pages',
-				'#fstu-referees-protocol-pagination-info',
-				protocolState,
-				'fstu-referees-protocol-page-btn'
-			);
+			updateProtocolPagination();
 		} ).fail( function ( response ) {
 			setTableError( '#fstu-referees-protocol-tbody', 6, getErrorMessage( response, l10n.messages.protocolError ) );
 		} ).always( function () {
@@ -682,19 +679,64 @@ jQuery( document ).ready( function ( $ ) {
 		$select.html( html );
 	}
 
-	function renderPagination( pagesSelector, infoSelector, state, buttonClass ) {
-		const $pages = $( pagesSelector );
-		const totalPages = Math.max( 1, state.totalPages || 1 );
-		const currentPage = Math.max( 1, state.page || 1 );
-		let html = '';
+	function updateListPagination() {
+		$( '#fstu-referees-per-page' ).val( String( listState.perPage ) );
+		$( '#fstu-referees-pagination-pages' ).html( buildPaginationButtons( listState.page, listState.totalPages, 'fstu-referees-page-btn' ) );
+		$( '#fstu-referees-pagination-info' ).text( buildPaginationInfo( listState.total, listState.page, listState.totalPages ) );
+		setPaginationArrowState( '#fstu-referees-prev-page', '#fstu-referees-next-page', listState.page, listState.totalPages );
+	}
 
-		for ( let i = 1; i <= totalPages; i++ ) {
-			const activeClass = i === currentPage ? ' fstu-btn--page-active' : '';
-			html += '<button type="button" class="fstu-btn--page ' + buttonClass + activeClass + '" data-page="' + i + '">' + i + '</button>';
+	function updateProtocolPagination() {
+		$( '#fstu-referees-protocol-per-page' ).val( String( protocolState.perPage ) );
+		$( '#fstu-referees-protocol-pagination-pages' ).html( buildPaginationButtons( protocolState.page, protocolState.totalPages, 'fstu-referees-protocol-page-btn' ) );
+		$( '#fstu-referees-protocol-pagination-info' ).text( buildPaginationInfo( protocolState.total, protocolState.page, protocolState.totalPages ) );
+		setPaginationArrowState( '#fstu-referees-protocol-prev-page', '#fstu-referees-protocol-next-page', protocolState.page, protocolState.totalPages );
+	}
+
+	function buildPaginationButtons( currentPage, totalPages, buttonClass ) {
+		let html = '';
+		const safeCurrentPage = Math.max( 1, currentPage || 1 );
+		const safeTotalPages = Math.max( 1, totalPages || 1 );
+		const start = Math.max( 1, safeCurrentPage - 2 );
+		const end = Math.min( safeTotalPages, safeCurrentPage + 2 );
+
+		if ( start > 1 ) {
+			html += buildPageButton( 1, safeCurrentPage === 1, buttonClass );
+			if ( start > 2 ) {
+				html += '<span class="fstu-pagination__ellipsis">…</span>';
+			}
 		}
 
-		$pages.html( html );
-		$( infoSelector ).text( 'Записів: ' + ( state.total || 0 ) + ' | Сторінка ' + currentPage + ' з ' + totalPages );
+		for ( let page = start; page <= end; page++ ) {
+			html += buildPageButton( page, page === safeCurrentPage, buttonClass );
+		}
+
+		if ( end < safeTotalPages ) {
+			if ( end < safeTotalPages - 1 ) {
+				html += '<span class="fstu-pagination__ellipsis">…</span>';
+			}
+			html += buildPageButton( safeTotalPages, safeCurrentPage === safeTotalPages, buttonClass );
+		}
+
+		return html;
+	}
+
+	function buildPageButton( page, isActive, buttonClass ) {
+		const activeClass = isActive ? ' fstu-btn--page-active' : '';
+		const disabled = isActive ? ' disabled' : '';
+		return '<button type="button" class="fstu-btn--page ' + buttonClass + activeClass + '" data-page="' + page + '"' + disabled + '>' + page + '</button>';
+	}
+
+	function buildPaginationInfo( total, page, totalPages ) {
+		return 'Записів: ' + ( total || 0 ) + ' | Сторінка ' + Math.max( 1, page || 1 ) + ' з ' + Math.max( 1, totalPages || 1 );
+	}
+
+	function setPaginationArrowState( prevSelector, nextSelector, page, totalPages ) {
+		const safePage = Math.max( 1, page || 1 );
+		const safeTotalPages = Math.max( 1, totalPages || 1 );
+
+		$( prevSelector ).prop( 'disabled', safePage <= 1 );
+		$( nextSelector ).prop( 'disabled', safePage >= safeTotalPages );
 	}
 
 	function ajaxRequest( action, data ) {
@@ -811,6 +853,7 @@ jQuery( document ).ready( function ( $ ) {
 
 		$notice.data( 'hideTimer', timerId );
 	}
+
 
 	function getErrorMessage( response, fallback ) {
 		if ( response && response.message ) {

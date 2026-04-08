@@ -1,7 +1,7 @@
 /**
  * CSS модуля «Реєстр суддів ФСТУ».
  *
- * Version:     1.0.0
+ * Version:     1.0.1
  * Date_update: 2026-04-08
  *
  * @package FSTU
@@ -150,6 +150,15 @@ body.fstu-modal-open {
 	background: #c65b41;
 	border-color: #c65b41;
 	color: #fff;
+}
+
+.fstu-btn[disabled],
+.fstu-btn--page[disabled],
+.fstu-referees-dropdown__toggle[disabled],
+.fstu-referees-dropdown__item[disabled] {
+	opacity: .6;
+	cursor: not-allowed;
+	pointer-events: none;
 }
 
 .fstu-btn--primary {
@@ -358,7 +367,10 @@ body.fstu-modal-open {
 }
 
 .fstu-pagination--compact {
-	padding: 6px 0 0;
+	padding: 10px 12px;
+	background: #f8f9fa;
+	border: 1px solid #d1d5db;
+	border-radius: 4px;
 	gap: 10px;
 	flex-wrap: nowrap;
 }
@@ -383,6 +395,14 @@ body.fstu-modal-open {
 	flex-wrap: wrap;
 }
 
+.fstu-pagination__controls > div {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	flex-wrap: wrap;
+}
+
 .fstu-pagination__info {
 	flex: 1;
 	justify-content: flex-end;
@@ -390,6 +410,17 @@ body.fstu-modal-open {
 	color: #4b5563;
 	white-space: nowrap;
 	text-align: right;
+}
+
+.fstu-pagination__ellipsis {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 18px;
+	height: 32px;
+	color: #6b7280;
+	font-size: 14px;
+	line-height: 1;
 }
 
 .fstu-pagination__per-page-label {
@@ -530,6 +561,7 @@ body.fstu-modal-open {
 	width: 100%;
 	max-width: 760px;
 	max-height: calc(100vh - 20px);
+	min-height: 0;
 	display: flex;
 	flex-direction: column;
 	background: #fff;
@@ -602,9 +634,26 @@ body.fstu-modal-open {
 }
 
 .fstu-modal__body {
+	flex: 1 1 auto;
+	min-height: 0;
 	padding: 12px;
 	overflow-y: auto;
 	background: #fff;
+}
+
+.fstu-modal--referees-view {
+	max-width: min(1040px, calc(100vw - 32px));
+	max-height: min(700px, calc(100vh - 40px));
+}
+
+.fstu-modal--referees-certificates {
+	max-width: min(960px, calc(100vw - 32px));
+	max-height: min(620px, calc(100vh - 40px));
+}
+
+.fstu-modal__body--compact-view,
+.fstu-modal__body--compact-certificates {
+	padding: 10px;
 }
 
 .fstu-form-grid {
@@ -651,11 +700,11 @@ body.fstu-modal-open {
 .fstu-view-layout {
 	display: grid;
 	grid-template-columns: repeat(3, minmax(0, 1fr));
-	gap: 12px;
+	gap: 10px;
 }
 
 .fstu-view-section {
-	padding: 10px 12px;
+	padding: 8px 10px;
 	border: 1px solid #e5e7eb;
 	border-radius: 6px;
 	background: #fafbfd;
@@ -675,7 +724,7 @@ body.fstu-modal-open {
 
 .fstu-form-section__title {
 	margin: 0 0 8px;
-	font-size: 16px;
+	font-size: 15px;
 	font-weight: 600;
 	color: #1f2937;
 }
@@ -689,7 +738,7 @@ body.fstu-modal-open {
 	display: grid;
 	grid-template-columns: minmax(120px, 150px) 1fr;
 	gap: 8px;
-	padding: 5px 0;
+	padding: 4px 0;
 	border-bottom: 1px solid #eef2f7;
 }
 
@@ -699,11 +748,11 @@ body.fstu-modal-open {
 }
 
 .fstu-view-grid__value {
-	padding: 8px 10px;
-	min-height: 20px;
+	padding: 6px 8px;
+	min-height: 18px;
 	border-radius: 10px;
 	background: #f5f7fb;
-	font-size: 14px;
+	font-size: 13px;
 	word-break: break-word;
 }
 
@@ -724,7 +773,7 @@ body.fstu-modal-open {
 	align-items: center;
 	justify-content: space-between;
 	gap: 10px;
-	margin-bottom: 12px;
+	margin-bottom: 10px;
 	flex-wrap: wrap;
 }
 

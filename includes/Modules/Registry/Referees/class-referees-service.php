@@ -32,8 +32,25 @@ class Referees_Service {
 		$page     = max( 1, (int) ( $filters['page'] ?? 1 ) );
 		$per_page = max( 1, (int) ( $filters['per_page'] ?? 10 ) );
 		$offset   = (int) ( $filters['offset'] ?? ( $page - 1 ) * $per_page );
-		$total    = $this->repository->count_referees( $filters );
-		$items    = $this->repository->get_referees( $filters, $per_page, $offset );
+		$search   = trim( (string) ( $filters['search'] ?? '' ) );
+
+		if ( '' !== $search ) {
+			$all_items = $this->repository->get_referees_for_search_fallback( $filters );
+			$filtered_items = array_values(
+				array_filter(
+					$all_items,
+					function ( array $item ) use ( $search ): bool {
+						return $this->matches_search( $item, $search );
+					}
+				)
+			);
+
+			$total = count( $filtered_items );
+			$items = array_slice( $filtered_items, $offset, $per_page );
+		} else {
+			$total = $this->repository->count_referees( $filters );
+			$items = $this->repository->get_referees( $filters, $per_page, $offset );
+		}
 
 		return [
 			'items'       => $items,
@@ -42,6 +59,40 @@ class Referees_Service {
 			'per_page'    => $per_page,
 			'total_pages' => max( 1, (int) ceil( $total / max( 1, $per_page ) ) ),
 		];
+	}
+
+	/**
+	 * Визначає, чи відповідає запис пошуковому запиту.
+	 *
+	 * @param array<string,mixed> $item Запис судді.
+	 */
+	private function matches_search( array $item, string $search ): bool {
+		$needle = $this->normalize_search_string( $search );
+
+		if ( '' === $needle ) {
+			return true;
+		}
+
+		$haystacks = [
+			(string) ( $item['FIO'] ?? '' ),
+			(string) ( $item['FIOshort'] ?? '' ),
+			(string) ( $item['Referee_NumOrder'] ?? '' ),
+			(string) ( $item['CardNumber'] ?? '' ),
+		];
+
+		foreach ( $haystacks as $haystack ) {
+			if ( '' !== $haystack && false !== mb_stripos( $this->normalize_search_string( $haystack ), $needle ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private function normalize_search_string( string $value ): string {
+		$value = trim( preg_replace( '/\s+/u', ' ', $value ) ?? '' );
+
+		return mb_strtolower( $value );
 	}
 
 	/**

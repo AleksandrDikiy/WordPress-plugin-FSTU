@@ -14,12 +14,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 ?>
 
 <div id="fstu-referees-view-modal" class="fstu-modal-overlay fstu-hidden" role="dialog" aria-modal="true" aria-labelledby="fstu-referees-view-modal-title">
-	<div class="fstu-modal fstu-modal--wide">
+	<div class="fstu-modal fstu-modal--wide fstu-modal--referees-view">
 		<div class="fstu-modal__header">
 			<h3 class="fstu-modal__title" id="fstu-referees-view-modal-title"><?php esc_html_e( 'Картка судді', 'fstu' ); ?></h3>
 			<button type="button" class="fstu-modal__close" data-close-modal="fstu-referees-view-modal">×</button>
 		</div>
-		<div class="fstu-modal__body">
+		<div class="fstu-modal__body fstu-modal__body--compact-view">
 			<div id="fstu-referees-view-message" class="fstu-form-message fstu-hidden"></div>
 			<div class="fstu-view-layout">
 				<div class="fstu-view-section">

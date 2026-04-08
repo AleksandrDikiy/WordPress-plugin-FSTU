@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * AJAX-обробники модуля «Реєстр суддів ФСТУ».
  *
- * Version:     1.0.0
+ * Version:     1.0.1
  * Date_update: 2026-04-08
  *
  * @package FSTU\Modules\Registry\Referees
@@ -429,7 +429,7 @@ class Referees_Ajax {
 			return __( 'Номер наказу не може бути довшим за 120 символів.', 'fstu' );
 		}
 
-		if ( '' !== $num_order && ! preg_match( '/^[\p{L}\p{N}\s\/\-\.,()№#]+$/u', $num_order ) ) {
+		if ( '' !== $num_order && ! preg_match( '/^[\p{L}\p{N}\s\/\-.,()№#]+$/u', $num_order ) ) {
 			return __( 'Номер наказу містить недопустимі символи.', 'fstu' );
 		}
 

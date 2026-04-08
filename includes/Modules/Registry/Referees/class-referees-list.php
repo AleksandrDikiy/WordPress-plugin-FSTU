@@ -70,11 +70,13 @@ class Referees_List {
 	}
 
 	private function enqueue_style(): void {
+		$style_path = FSTU_PLUGIN_DIR . 'css/fstu-referees.css';
+
 		wp_enqueue_style(
 			self::ASSET_HANDLE,
 			FSTU_PLUGIN_URL . 'css/fstu-referees.css',
 			[],
-			FSTU_VERSION
+			$this->get_asset_version( $style_path )
 		);
 	}
 
@@ -89,7 +91,7 @@ class Referees_List {
 			self::ASSET_HANDLE,
 			FSTU_PLUGIN_URL . 'js/fstu-referees.js',
 			[ 'jquery' ],
-			FSTU_VERSION,
+			$this->get_asset_version( FSTU_PLUGIN_DIR . 'js/fstu-referees.js' ),
 			true
 		);
 
@@ -175,6 +177,18 @@ class Referees_List {
 	 */
 	private function get_permissions(): array {
 		return Capabilities::get_referees_permissions();
+	}
+
+	private function get_asset_version( string $file_path ): string {
+		if ( file_exists( $file_path ) ) {
+			$filemtime = filemtime( $file_path );
+
+			if ( false !== $filemtime ) {
+				return (string) $filemtime;
+			}
+		}
+
+		return (string) FSTU_VERSION;
 	}
 
 	private static function resolve_configured_url( string $configured_url ): string {
