@@ -106,24 +106,28 @@ jQuery(document).ready(function($) {
 			}
 		});
 
-		$(document).on('click', '.fstu-typeevent-opts-btn', function(event) {
+		// Відкриття/закриття Dropdown
+		$(document).on('click', '.fstu-dropdown-toggle', function(event) {
 			event.preventDefault();
 			event.stopPropagation();
-
-			const $parent = $(this).parent();
-			$('.fstu-typeevent-opts').not($parent).removeClass('fstu-typeevent-opts--open fstu-typeevent-dropup');
-
-			const menuHeight = 180;
-			const windowHeight = $(window).height();
-			const rect = this.getBoundingClientRect();
-
-			if (rect.bottom + menuHeight > windowHeight && rect.top > menuHeight) {
-				$parent.addClass('fstu-typeevent-dropup');
-			} else {
-				$parent.removeClass('fstu-typeevent-dropup');
+			const $dd = $(this).closest('.fstu-dropdown');
+			const isOpen = $dd.hasClass('fstu-dropdown--open');
+			$('.fstu-dropdown--open').removeClass('fstu-dropdown--open');
+			
+			if (!isOpen) {
+				$dd.addClass('fstu-dropdown--open');
+				// Перевірка, чи не вилазить за низ екрану
+				const $menu = $dd.find('.fstu-dropdown-menu');
+				if ($menu[0].getBoundingClientRect().bottom > window.innerHeight) {
+					$dd.addClass('fstu-dropdown--up');
+				} else {
+					$dd.removeClass('fstu-dropdown--up');
+				}
 			}
+		});
 
-			$parent.toggleClass('fstu-typeevent-opts--open');
+		$(document).on('click', function() {
+			$('.fstu-dropdown--open').removeClass('fstu-dropdown--open');
 		});
 
 		$(document).on('click', '.fstu-typeevent-opts-list', function(event) {
@@ -212,16 +216,16 @@ jQuery(document).ready(function($) {
 			html += '<td class="fstu-td">' + escapeHtml(item.TypeEvent_Name || '') + '</td>';
 
 			if (permissions.canView) {
-				html += '<td class="fstu-td fstu-td--actions"><div class="fstu-typeevent-opts">';
-				html += '<button type="button" class="fstu-typeevent-opts-btn" title="Дії" aria-label="Дії">▼</button>';
-				html += '<ul class="fstu-typeevent-opts-list">';
-				html += '<li><a href="#" class="fstu-typeevent-btn-view" data-typeevent-id="' + absint(item.TypeEvent_ID) + '">🔎 Перегляд</a></li>';
+				html += '<td class="fstu-td fstu-td--actions"><div class="fstu-dropdown">';
+				html += '<button type="button" class="fstu-dropdown-toggle" title="Дії" aria-label="Дії">▼</button>';
+				html += '<ul class="fstu-dropdown-menu">';
+				html += '<li><button type="button" class="fstu-typeevent-btn-view" data-typeevent-id="' + absint(item.TypeEvent_ID) + '">🔎 Перегляд</button></li>';
 				if (permissions.canManage) {
-					html += '<li><a href="#" class="fstu-typeevent-btn-edit" data-typeevent-id="' + absint(item.TypeEvent_ID) + '">📝 Редагування</a></li>';
+					html += '<li><button type="button" class="fstu-typeevent-btn-edit" data-typeevent-id="' + absint(item.TypeEvent_ID) + '">📝 Редагування</button></li>';
 				}
 				if (permissions.canDelete) {
-					html += '<li><hr class="fstu-typeevent-opts-divider"></li>';
-					html += '<li><a href="#" class="fstu-typeevent-btn-delete" data-typeevent-id="' + absint(item.TypeEvent_ID) + '">❌ Видалення</a></li>';
+					html += '<li><hr class="fstu-dropdown-divider"></li>';
+					html += '<li><button type="button" class="fstu-typeevent-btn-delete fstu-text-danger" data-typeevent-id="' + absint(item.TypeEvent_ID) + '">❌ Видалення</button></li>';
 				}
 				html += '</ul></div></td>';
 			}
@@ -509,7 +513,7 @@ jQuery(document).ready(function($) {
 
 			html += '<tr class="fstu-row">';
 			html += '<td class="fstu-td fstu-td--date">' + escapeHtml(dateCreate) + '</td>';
-			html += '<td class="fstu-td fstu-td--type">' + escapeHtml(logsType) + '</td>';
+			html += '<td class="fstu-td fstu-td--type">' + buildTypeBadge(logsType) + '</td>';
 			html += '<td class="fstu-td fstu-td--operation">' + escapeHtml(logsName) + '</td>';
 			html += '<td class="fstu-td fstu-td--message">' + escapeHtml(logsText) + '</td>';
 			html += '<td class="fstu-td fstu-td--status">' + escapeHtml(logsStatus) + '</td>';
@@ -649,6 +653,15 @@ jQuery(document).ready(function($) {
 				callback.apply(context, args);
 			}, wait);
 		};
+	}
+
+	function buildTypeBadge( type ) {
+		var cls = 'fstu-badge--default';
+		var label = type || '—';
+		if ( type === 'INSERT' || type === 'I' ) { cls = 'fstu-badge--insert'; label = 'INSERT'; }
+		if ( type === 'UPDATE' || type === 'U' ) { cls = 'fstu-badge--update'; label = 'UPDATE'; }
+		if ( type === 'DELETE' || type === 'D' ) { cls = 'fstu-badge--delete'; label = 'DELETE'; }
+		return '<span class="fstu-badge ' + cls + '">' + escapeHtml( label ) + '</span>';
 	}
 });
 

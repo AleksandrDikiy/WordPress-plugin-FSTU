@@ -30,13 +30,13 @@ class TypeEvent_Ajax {
 	private const LOG_NAME = 'TypeEvent';
 
 	/** Тип логування створення. */
-	private const LOG_TYPE_INSERT = 'INSERT';
+	private const LOG_TYPE_INSERT = 'I'; // Було 'INSERT'
 
 	/** Тип логування оновлення. */
-	private const LOG_TYPE_UPDATE = 'UPDATE';
+	private const LOG_TYPE_UPDATE = 'U'; // Було 'UPDATE'
 
 	/** Тип логування видалення. */
-	private const LOG_TYPE_DELETE = 'DELETE';
+	private const LOG_TYPE_DELETE = 'D'; // Було 'DELETE'
 
 	/** Успішний статус логування. */
 	private const LOG_STATUS_SUCCESS = 'успішно';

@@ -2,8 +2,8 @@
 /**
  * View: Головна сторінка плагіна в адмінці.
  *
- * Version:     1.6.1
- * Date_update: 2026-04-06
+ * Version:     1.7.0
+ * Date_update: 2026-04-08
  */
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -16,6 +16,10 @@ $member_regional_page_url = isset( $member_regional_page_url ) ? (string) $membe
 $member_guidance_page_url = isset( $member_guidance_page_url ) ? (string) $member_guidance_page_url : '';
 $country_page_url = isset( $country_page_url ) ? (string) $country_page_url : '';
 $region_page_url = isset( $region_page_url ) ? (string) $region_page_url : '';
+$city_page_url = isset( $city_page_url ) ? (string) $city_page_url : '';
+$eventtype_page_url = isset( $eventtype_page_url ) ? (string) $eventtype_page_url : '';
+$tourismtype_page_url = isset( $tourismtype_page_url ) ? (string) $tourismtype_page_url : '';
+$referees_page_url = isset( $referees_page_url ) ? (string) $referees_page_url : '';
 ?>
 
 <div class="wrap">
@@ -53,6 +57,16 @@ $region_page_url = isset( $region_page_url ) ? (string) $region_page_url : '';
                                 <td>
                                     <strong>Заявки в ФСТУ</strong><br>
                                     Службовий модуль для перегляду та обробки заявок на вступ до ФСТУ. Розміщуйте його лише на внутрішній сторінці для адміністраторів і реєстраторів.
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_referees]</code></th>
+                                <td>
+                                    <strong>Реєстр суддів ФСТУ</strong><br>
+                                    Виводить реєстр суддів з пошуком по ПІБ, фільтрами за областю і категорією, compact-пагінацією, карткою судді, довідками за суддівство та розділом «ПРОТОКОЛ». Для ролей administrator і referee доступне повне керування, для userregistrar і userfstu — лише перегляд.
+                                    <?php if ( '' !== $referees_page_url ) : ?>
+                                        <br><a href="<?php echo esc_url( $referees_page_url ); ?>">Відкрити сторінку реєстру →</a>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                             <tr>
@@ -133,6 +147,36 @@ $region_page_url = isset( $region_page_url ) ? (string) $region_page_url : '';
                                     Виводить список областей з пошуком у шапці таблиці, compact-пагінацією, shared-модалкою та розділом «ПРОТОКОЛ». Для ролі userregistrar доступні перегляд і протокол, для адміністратора — повне керування, а видалення дозволяється лише після перевірки залежностей запису.
                                     <?php if ( '' !== $region_page_url ) : ?>
                                         <br><a href="<?php echo esc_url( $region_page_url ); ?>">Відкрити сторінку довідника →</a>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_city]</code></th>
+                                <td>
+                                    <strong>Довідник міст</strong><br>
+                                    Виводить список міст з колонкою області, пошуком у шапці таблиці, compact-пагінацією, shared-модалкою та розділом «ПРОТОКОЛ». Для ролі userregistrar доступні перегляд, створення, редагування та видалення, для адміністратора — повне керування модулем.
+                                    <?php if ( '' !== $city_page_url ) : ?>
+                                        <br><a href="<?php echo esc_url( $city_page_url ); ?>">Відкрити сторінку довідника →</a>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_eventtype]</code></th>
+                                <td>
+                                    <strong>Довідник типів заходів</strong><br>
+                                    Виводить список типів заходів з пошуком у шапці таблиці, compact-пагінацією, shared-модалкою та розділом «ПРОТОКОЛ». Для ролі userregistrar доступні перегляд, створення, редагування та видалення, для адміністратора — повне керування модулем.
+                                    <?php if ( '' !== ( $eventtype_page_url ?? '' ) ) : ?>
+                                        <br><a href="<?php echo esc_url( (string) ( $eventtype_page_url ?? '' ) ); ?>">Відкрити сторінку довідника →</a>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_tourismtype]</code></th>
+                                <td>
+                                    <strong>Довідник типів туризму</strong><br>
+                                    Виводить список типів туризму з пошуком у шапці таблиці, compact-пагінацією, shared-модалкою та розділом «ПРОТОКОЛ». Для ролі userregistrar доступні перегляд, створення, редагування та видалення, для адміністратора — повне керування модулем.
+                                    <?php if ( '' !== ( $tourismtype_page_url ?? '' ) ) : ?>
+                                        <br><a href="<?php echo esc_url( (string) ( $tourismtype_page_url ?? '' ) ); ?>">Відкрити сторінку довідника →</a>
                                     <?php endif; ?>
                                 </td>
                             </tr>

@@ -2,8 +2,8 @@
 /**
  * Клас централізованого керування capability-моделлю ФСТУ.
  *
- * Version:     1.6.0
- * Date_update: 2026-04-07
+ * Version:     1.9.0
+ * Date_update: 2026-04-08
  *
  * @package FSTU\Core
  */
@@ -41,6 +41,25 @@ class Capabilities {
 	public const MANAGE_REGION                 = 'fstu_manage_region';
 	public const DELETE_REGION                 = 'fstu_delete_region';
 	public const VIEW_REGION_PROTOCOL          = 'fstu_view_region_protocol';
+	public const VIEW_CITY                     = 'fstu_view_city';
+	public const MANAGE_CITY                   = 'fstu_manage_city';
+	public const DELETE_CITY                   = 'fstu_delete_city';
+	public const VIEW_CITY_PROTOCOL            = 'fstu_view_city_protocol';
+	public const VIEW_SAILBOATS                = 'fstu_view_sailboats';
+	public const SUBMIT_SAILBOATS_APPLICATIONS = 'fstu_submit_sailboats_applications';
+	public const MANAGE_SAILBOATS              = 'fstu_manage_sailboats';
+	public const DELETE_SAILBOATS              = 'fstu_delete_sailboats';
+	public const VIEW_SAILBOATS_PROTOCOL       = 'fstu_view_sailboats_protocol';
+	public const MANAGE_SAILBOATS_PAYMENTS     = 'fstu_manage_sailboats_payments';
+	public const MANAGE_SAILBOATS_STATUS       = 'fstu_manage_sailboats_status';
+	public const SEND_SAILBOATS_NOTIFICATIONS  = 'fstu_send_sailboats_notifications';
+	public const VIEW_SAILBOATS_FINANCE_COLUMNS = 'fstu_view_sailboats_finance_columns';
+	public const VIEW_REFEREES                 = 'fstu_view_referees';
+	public const MANAGE_REFEREES               = 'fstu_manage_referees';
+	public const DELETE_REFEREES               = 'fstu_delete_referees';
+	public const VIEW_REFEREES_PROTOCOL        = 'fstu_view_referees_protocol';
+	public const MANAGE_REFEREE_CERTIFICATES   = 'fstu_manage_referee_certificates';
+	public const UNBIND_REFEREE_CERTIFICATES   = 'fstu_unbind_referee_certificates';
 
 	/**
 	 * Ініціалізує capability-модель для поточного запиту.
@@ -88,6 +107,36 @@ class Capabilities {
 				self::MANAGE_REGION                 => true,
 				self::DELETE_REGION                 => true,
 				self::VIEW_REGION_PROTOCOL          => true,
+				self::VIEW_CITY                     => true,
+				self::MANAGE_CITY                   => true,
+				self::DELETE_CITY                   => true,
+				self::VIEW_CITY_PROTOCOL            => true,
+				self::VIEW_SAILBOATS                => true,
+				self::SUBMIT_SAILBOATS_APPLICATIONS => true,
+				self::MANAGE_SAILBOATS              => true,
+				self::DELETE_SAILBOATS              => true,
+				self::VIEW_SAILBOATS_PROTOCOL       => true,
+				self::MANAGE_SAILBOATS_PAYMENTS     => true,
+				self::MANAGE_SAILBOATS_STATUS       => true,
+				self::SEND_SAILBOATS_NOTIFICATIONS  => true,
+				self::VIEW_SAILBOATS_FINANCE_COLUMNS => true,
+				self::VIEW_REFEREES                 => true,
+				self::MANAGE_REFEREES               => true,
+				self::DELETE_REFEREES               => true,
+				self::VIEW_REFEREES_PROTOCOL        => true,
+				self::MANAGE_REFEREE_CERTIFICATES   => true,
+				self::UNBIND_REFEREE_CERTIFICATES   => true,
+			],
+			'sailadministrator' => [
+				self::ACCESS_ADMIN                  => true,
+				self::VIEW_SAILBOATS                => true,
+				self::SUBMIT_SAILBOATS_APPLICATIONS => true,
+				self::MANAGE_SAILBOATS              => true,
+				self::VIEW_SAILBOATS_PROTOCOL       => true,
+				self::MANAGE_SAILBOATS_PAYMENTS     => true,
+				self::MANAGE_SAILBOATS_STATUS       => true,
+				self::SEND_SAILBOATS_NOTIFICATIONS  => true,
+				self::VIEW_SAILBOATS_FINANCE_COLUMNS => true,
 			],
 			'userregistrar' => [
 				self::ACCESS_ADMIN             => true,
@@ -105,10 +154,26 @@ class Capabilities {
 				self::VIEW_COUNTRY_PROTOCOL      => true,
 				self::VIEW_REGION                => true,
 				self::VIEW_REGION_PROTOCOL       => true,
+				self::VIEW_CITY                  => true,
+				self::MANAGE_CITY                => true,
+				self::DELETE_CITY                => true,
+				self::VIEW_CITY_PROTOCOL         => true,
+				self::VIEW_REFEREES              => true,
 			],
 			'userfstu' => [
 				self::VIEW_TYPEGUIDANCE => true,
 				self::VIEW_MEMBER_GUIDANCE => true,
+				self::VIEW_SAILBOATS => true,
+				self::SUBMIT_SAILBOATS_APPLICATIONS => true,
+				self::VIEW_REFEREES => true,
+			],
+			'referee' => [
+				self::VIEW_REFEREES               => true,
+				self::MANAGE_REFEREES             => true,
+				self::DELETE_REFEREES             => true,
+				self::VIEW_REFEREES_PROTOCOL      => true,
+				self::MANAGE_REFEREE_CERTIFICATES => true,
+				self::UNBIND_REFEREE_CERTIFICATES => true,
 			],
 		];
 
@@ -135,6 +200,16 @@ class Capabilities {
 			add_role(
 				'applicants',
 				'Заявник ФСТУ',
+				[
+					'read' => true,
+				]
+			);
+		}
+
+		if ( ! get_role( 'referee' ) ) {
+			add_role(
+				'referee',
+				'Суддя ФСТУ',
 				[
 					'read' => true,
 				]
@@ -238,6 +313,61 @@ class Capabilities {
 			'canManage'   => self::current_user_can_manage_region(),
 			'canDelete'   => self::current_user_can_delete_region(),
 			'canProtocol' => self::current_user_can_view_region_protocol(),
+		];
+	}
+
+	/**
+	 * Повертає прапорці прав для модуля довідника міст.
+	 *
+	 * @return array<string,bool>
+	 */
+	public static function get_city_permissions(): array {
+		$can_view = self::current_user_can_view_city();
+
+		return [
+			'canView'     => $can_view,
+			'canManage'   => self::current_user_can_manage_city(),
+			'canDelete'   => self::current_user_can_delete_city(),
+			'canProtocol' => self::current_user_can_view_city_protocol(),
+		];
+	}
+
+	/**
+	 * Повертає прапорці прав для модуля реєстру суден.
+	 *
+	 * @return array<string,bool>
+	 */
+	public static function get_sailboats_permissions(): array {
+		$can_view = self::current_user_can_view_sailboats();
+
+		return [
+			'canView'      => $can_view,
+			'canSubmit'    => self::current_user_can_submit_sailboats_applications(),
+			'canManage'    => self::current_user_can_manage_sailboats(),
+			'canDelete'    => self::current_user_can_delete_sailboats(),
+			'canProtocol'  => self::current_user_can_view_sailboats_protocol(),
+			'canPayments'  => self::current_user_can_manage_sailboats_payments(),
+			'canStatus'    => self::current_user_can_manage_sailboats_status(),
+			'canNotify'    => self::current_user_can_send_sailboats_notifications(),
+			'canFinance'   => self::current_user_can_view_sailboats_finance_columns(),
+		];
+	}
+
+	/**
+	 * Повертає прапорці прав для модуля суддів.
+	 *
+	 * @return array<string,bool>
+	 */
+	public static function get_referees_permissions(): array {
+		$can_view = self::current_user_can_view_referees();
+
+		return [
+			'canView'               => $can_view,
+			'canManage'             => self::current_user_can_manage_referees(),
+			'canDelete'             => self::current_user_can_delete_referees(),
+			'canProtocol'           => self::current_user_can_view_referees_protocol(),
+			'canManageCertificates' => self::current_user_can_manage_referee_certificates(),
+			'canUnbindCertificates' => self::current_user_can_unbind_referee_certificates(),
 		];
 	}
 
@@ -414,5 +544,138 @@ class Capabilities {
 	 */
 	public static function current_user_can_view_region_protocol(): bool {
 		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_REGION_PROTOCOL );
+	}
+
+	/**
+	 * Чи може користувач переглядати довідник міст.
+	 */
+	public static function current_user_can_view_city(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_CITY );
+	}
+
+	/**
+	 * Чи може користувач керувати довідником міст.
+	 */
+	public static function current_user_can_manage_city(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_CITY );
+	}
+
+	/**
+	 * Чи може користувач видаляти записи довідника міст.
+	 */
+	public static function current_user_can_delete_city(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::DELETE_CITY );
+	}
+
+	/**
+	 * Чи може користувач переглядати протокол довідника міст.
+	 */
+	public static function current_user_can_view_city_protocol(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_CITY_PROTOCOL );
+	}
+
+	/**
+	 * Чи може користувач переглядати реєстр суден.
+	 */
+	public static function current_user_can_view_sailboats(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_SAILBOATS );
+	}
+
+	/**
+	 * Чи може користувач керувати реєстром суден.
+	 */
+	public static function current_user_can_manage_sailboats(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_SAILBOATS );
+	}
+
+	/**
+	 * Чи може користувач подавати заявки модуля реєстру суден.
+	 */
+	public static function current_user_can_submit_sailboats_applications(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::SUBMIT_SAILBOATS_APPLICATIONS );
+	}
+
+	/**
+	 * Чи може користувач видаляти записи реєстру суден.
+	 */
+	public static function current_user_can_delete_sailboats(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::DELETE_SAILBOATS );
+	}
+
+	/**
+	 * Чи може користувач переглядати протокол реєстру суден.
+	 */
+	public static function current_user_can_view_sailboats_protocol(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_SAILBOATS_PROTOCOL );
+	}
+
+	/**
+	 * Чи може користувач виконувати фінансові операції реєстру суден.
+	 */
+	public static function current_user_can_manage_sailboats_payments(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_SAILBOATS_PAYMENTS );
+	}
+
+	/**
+	 * Чи може користувач змінювати статуси у реєстрі суден.
+	 */
+	public static function current_user_can_manage_sailboats_status(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_SAILBOATS_STATUS );
+	}
+
+	/**
+	 * Чи може користувач надсилати сповіщення модуля реєстру суден.
+	 */
+	public static function current_user_can_send_sailboats_notifications(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::SEND_SAILBOATS_NOTIFICATIONS );
+	}
+
+	/**
+	 * Чи може користувач бачити фінансові колонки модуля.
+	 */
+	public static function current_user_can_view_sailboats_finance_columns(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_SAILBOATS_FINANCE_COLUMNS );
+	}
+
+	/**
+	 * Чи може користувач переглядати довідник суддів.
+	 */
+	public static function current_user_can_view_referees(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_REFEREES );
+	}
+
+	/**
+	 * Чи може користувач керувати довідником суддів.
+	 */
+	public static function current_user_can_manage_referees(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_REFEREES );
+	}
+
+	/**
+	 * Чи може користувач видаляти записи довідника суддів.
+	 */
+	public static function current_user_can_delete_referees(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::DELETE_REFEREES );
+	}
+
+	/**
+	 * Чи може користувач переглядати протокол довідника суддів.
+	 */
+	public static function current_user_can_view_referees_protocol(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_REFEREES_PROTOCOL );
+	}
+
+	/**
+	 * Чи може користувач керувати сертифікатами суддів.
+	 */
+	public static function current_user_can_manage_referee_certificates(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_REFEREE_CERTIFICATES );
+	}
+
+	/**
+	 * Чи може користувач розв'язувати сертифікати суддів.
+	 */
+	public static function current_user_can_unbind_referee_certificates(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::UNBIND_REFEREE_CERTIFICATES );
 	}
 }

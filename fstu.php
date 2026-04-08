@@ -3,7 +3,7 @@
  * Plugin Name:  FSTU Portal
  * Plugin URI:   https://www.fstu.com.ua/
  * Description:  Офіційний плагін Федерації спортивного туризму України. Enterprise ERP/CRM система управління реєстрами, структурою та фінансами федерації.
- * Version:      1.10.2
+ * Version:      1.10.7
  * Author:       Oleksandr Dykyi
  * Author URI:   https://www.fstu.com.ua/
  * Text Domain:  fstu
@@ -11,7 +11,7 @@
  * Requires PHP: 8.0
  * Requires at least: 6.0
  *
- * Date_update: 2026-04-06
+ * Date_update: 2026-04-07
  *
  * @package FSTU
  */
@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // ─── Константи плагіна ────────────────────────────────────────────────────────
 
-define( 'FSTU_VERSION',      '1.10.2' );
+define( 'FSTU_VERSION',      '1.10.7' );
 define( 'FSTU_DB_VERSION',   '1.0.0' );
 define( 'FSTU_PLUGIN_FILE',  __FILE__ );
 define( 'FSTU_PLUGIN_DIR',   plugin_dir_path( __FILE__ ) );
@@ -31,8 +31,8 @@ define( 'FSTU_PLUGIN_BASE',  plugin_basename( __FILE__ ) );
 
 // Тимчасовий тестовий ключ Cloudflare (завжди успішний)
 // TODO: замінити на реальні ключі у production через wp-config.php
-define( 'FSTU_TURNSTILE_SITE_KEY',   '1x00000000000000000000AA' );
-define( 'FSTU_TURNSTILE_SECRET_KEY', '1x0000000000000000000000000000000AA' );
+//define( 'FSTU_TURNSTILE_SITE_KEY',   '1x00000000000000000000AA' );
+//define( 'FSTU_TURNSTILE_SECRET_KEY', '1x0000000000000000000000000000000AA' );
 
 // ─── Автозавантажувач ─────────────────────────────────────────────────────────
 
@@ -90,9 +90,21 @@ require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/Country/class-country-ajax
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/Region/class-region-list.php';
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/Region/class-region-ajax.php';
 
+// City — Довідник міст ФСТУ (2026-04-07)
+require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/City/class-city-list.php';
+require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/City/class-city-ajax.php';
+
 // Commission — Довідник комісій та колегій ФСТУ (2026-04-06)
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/Commission/class-commission-list.php';
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/Commission/class-commission-ajax.php';
+
+// EventType — Довідник типів заходів ФСТУ (2026-04-07)
+require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/EventType/class-eventtype-list.php';
+require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/EventType/class-eventtype-ajax.php';
+
+// TourismType — Довідник типів туризму ФСТУ (2026-04-07)
+require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/TourismType/class-tourismtype-list.php';
+require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/TourismType/class-tourismtype-ajax.php';
 
 // Admin
 if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Admin/class-admin-menu.php' ) ) {
@@ -125,6 +137,43 @@ if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Applications/class-applica
 }
 if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Applications/class-applications-ajax.php' ) ) {
 	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Applications/class-applications-ajax.php';
+}
+
+// Sailboats — Реєстр суден ФСТУ (2026-04-07)
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Sailboats/class-sailboats-repository.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Sailboats/class-sailboats-repository.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Sailboats/class-sailboats-protocol-service.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Sailboats/class-sailboats-protocol-service.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Sailboats/class-sailboats-notification-service.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Sailboats/class-sailboats-notification-service.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Sailboats/class-sailboats-service.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Sailboats/class-sailboats-service.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Sailboats/class-sailboats-list.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Sailboats/class-sailboats-list.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Sailboats/class-sailboats-ajax.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Sailboats/class-sailboats-ajax.php';
+}
+
+// Referees — Реєстр суддів ФСТУ (2026-04-08)
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Referees/class-referees-repository.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Referees/class-referees-repository.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Referees/class-referees-protocol-service.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Referees/class-referees-protocol-service.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Referees/class-referees-service.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Referees/class-referees-service.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Referees/class-referees-list.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Referees/class-referees-list.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Referees/class-referees-ajax.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Referees/class-referees-ajax.php';
 }
 // ── Довідники (Хаб) ──────────────────────────────────────────────────────
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/class-dictionaries-hub.php';
@@ -179,10 +228,22 @@ function fstu_init(): void {
 	( new FSTU\Dictionaries\Region\Region_List() )->init();
 	( new FSTU\Dictionaries\Region\Region_Ajax() )->init();
 
+	// ── Довідник міст ФСТУ ────────────────────────────────────────────────────
+	( new FSTU\Dictionaries\City\City_List() )->init();
+	( new FSTU\Dictionaries\City\City_Ajax() )->init();
+
 	// ── Довідник комісій та колегій ФСТУ ──────────────────────────────────────
 	( new FSTU\Dictionaries\Commission\Commission_List() )->init();
 	( new FSTU\Dictionaries\Commission\Commission_Ajax() )->init();
 
+	// ── Довідник типів заходів ФСТУ ───────────────────────────────────────────
+	( new FSTU\Dictionaries\EventType\EventType_List() )->init();
+	( new FSTU\Dictionaries\EventType\EventType_Ajax() )->init();
+
+	// ── Довідник типів туризму ФСТУ ───────────────────────────────────────────
+	( new FSTU\Dictionaries\TourismType\TourismType_List() )->init();
+	( new FSTU\Dictionaries\TourismType\TourismType_Ajax() )->init();
+	
 	// ── Адмінка ───────────────────────────────────────────────────────────────
 	if ( class_exists( 'FSTU\\Admin\\Admin_Menu' ) ) {
 		( new FSTU\Admin\Admin_Menu() )->init();
@@ -202,5 +263,21 @@ function fstu_init(): void {
 	}
 	if ( class_exists( 'FSTU\\Modules\\Applications\\Applications_Ajax' ) ) {
 		( new FSTU\Modules\Applications\Applications_Ajax() )->init();
+	}
+
+	// ── Реєстр суден ФСТУ ────────────────────────────────────────────────────
+	if ( class_exists( 'FSTU\\Modules\\Registry\\Sailboats\\Sailboats_List' ) ) {
+		( new FSTU\Modules\Registry\Sailboats\Sailboats_List() )->init();
+	}
+	if ( class_exists( 'FSTU\\Modules\\Registry\\Sailboats\\Sailboats_Ajax' ) ) {
+		( new FSTU\Modules\Registry\Sailboats\Sailboats_Ajax() )->init();
+	}
+
+	// ── Реєстр суддів ФСТУ ────────────────────────────────────────────────────
+	if ( class_exists( 'FSTU\\Modules\\Registry\\Referees\\Referees_List' ) ) {
+		( new FSTU\Modules\Registry\Referees\Referees_List() )->init();
+	}
+	if ( class_exists( 'FSTU\\Modules\\Registry\\Referees\\Referees_Ajax' ) ) {
+		( new FSTU\Modules\Registry\Referees\Referees_Ajax() )->init();
 	}
 }

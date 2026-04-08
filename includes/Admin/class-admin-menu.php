@@ -2,8 +2,8 @@
 /**
  * Реєстрація меню плагіна в адмін-панелі WordPress.
  *
- * Version:     1.6.0
- * Date_update: 2026-04-06
+ * Version:     1.9.0
+ * Date_update: 2026-04-08
  *
  * @package FSTU\Admin
  */
@@ -21,6 +21,25 @@ class Admin_Menu {
 
     public function init(): void {
         add_action( 'admin_menu', [ $this, 'register_menus' ] );
+        add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_assets' ] );
+    }
+
+    /**
+     * Підключає стилі для службових адмін-сторінок плагіна.
+     */
+    public function enqueue_admin_assets(): void {
+        $page = sanitize_text_field( wp_unslash( $_GET['page'] ?? '' ) );
+
+        if ( 'fstu-settings' !== $page ) {
+            return;
+        }
+
+        wp_enqueue_style(
+            'fstu-admin-settings',
+            FSTU_PLUGIN_URL . 'css/fstu-admin-settings.css',
+            [],
+            FSTU_VERSION
+        );
     }
 
     public function register_menus(): void {
@@ -28,16 +47,15 @@ class Admin_Menu {
 
         // Головне меню "ФСТУ"
         add_menu_page(
-            'ФСТУ - Керування системою', // Title сторінки
-            'ФСТУ',                      // Назва в меню
-            $admin_capability,           // Права доступу до розділів ФСТУ
-            'fstu-main',                 // Slug (URL)
-            [ $this, 'render_main_page' ], // Метод виводу
-            'dashicons-groups',          // Іконка (люди)
-            30                           // Позиція в меню
+            'ФСТУ - Керування системою',
+            'ФСТУ',
+            $admin_capability,
+            'fstu-main',
+            [ $this, 'render_main_page' ],
+            'dashicons-groups',
+            30
         );
 
-        // Підменю "Головна" (дублює перший пункт, це стандарт WP)
         add_submenu_page(
             'fstu-main',
             'Головна інформація',
@@ -47,7 +65,6 @@ class Admin_Menu {
             [ $this, 'render_main_page' ]
         );
 
-        // Підменю "Налаштування" (для майбутньої таблиці Settings)
         add_submenu_page(
             'fstu-main',
             'Налаштування системи ФСТУ',
@@ -63,37 +80,54 @@ class Admin_Menu {
         $member_regional_list_class = 'FSTU\\Dictionaries\\MemberRegional\\Member_Regional_List';
         $member_guidance_list_class = 'FSTU\\Dictionaries\\MemberGuidance\\Member_Guidance_List';
         $country_list_class = 'FSTU\\Dictionaries\\Country\\Country_List';
-            $region_list_class = 'FSTU\\Dictionaries\\Region\\Region_List';
-        $plugin_data = get_plugin_data( WP_PLUGIN_DIR . '/fstu_new/fstu.php' ); // Вкажіть правильну папку вашого плагіна
-            $version     = ! empty( $plugin_data['Version'] ) ? $plugin_data['Version'] : '1.10.0';
+        $region_list_class = 'FSTU\\Dictionaries\\Region\\Region_List';
+        $city_list_class = 'FSTU\\Dictionaries\\City\\City_List';
+        $eventtype_list_class = 'FSTU\\Dictionaries\\EventType\\EventType_List';
+        $tourismtype_list_class = 'FSTU\\Dictionaries\\TourismType\\TourismType_List';
+        $referees_list_class = 'FSTU\\Modules\\Registry\\Referees\\Referees_List';
+        $plugin_data = get_plugin_data( WP_PLUGIN_DIR . '/fstu_new/fstu.php' );
+        $version = ! empty( $plugin_data['Version'] ) ? $plugin_data['Version'] : '1.10.0';
         $commission_page_url = class_exists( Commission_List::class )
           ? Commission_List::get_module_url( 'admin' )
           : '';
         $typeguidance_page_url = class_exists( $typeguidance_list_class )
           ? $typeguidance_list_class::get_module_url( 'admin' )
           : '';
-            $member_regional_page_url = class_exists( $member_regional_list_class )
-              ? $member_regional_list_class::get_module_url( 'admin' )
-              : '';
-                $member_guidance_page_url = class_exists( $member_guidance_list_class )
-                  ? $member_guidance_list_class::get_module_url( 'admin' )
-                  : '';
-            $country_page_url = class_exists( $country_list_class )
-              ? $country_list_class::get_module_url( 'admin' )
-              : '';
-                    $region_page_url = class_exists( $region_list_class )
-                      ? $region_list_class::get_module_url( 'admin' )
-                      : '';
+        $member_regional_page_url = class_exists( $member_regional_list_class )
+          ? $member_regional_list_class::get_module_url( 'admin' )
+          : '';
+        $member_guidance_page_url = class_exists( $member_guidance_list_class )
+          ? $member_guidance_list_class::get_module_url( 'admin' )
+          : '';
+        $country_page_url = class_exists( $country_list_class )
+          ? $country_list_class::get_module_url( 'admin' )
+          : '';
+        $region_page_url = class_exists( $region_list_class )
+          ? $region_list_class::get_module_url( 'admin' )
+          : '';
+        $city_page_url = class_exists( $city_list_class )
+          ? $city_list_class::get_module_url( 'admin' )
+          : '';
+        $eventtype_page_url = class_exists( $eventtype_list_class )
+            ? $eventtype_list_class::get_module_url( 'admin' )
+            : '';
+        $tourismtype_page_url = class_exists( $tourismtype_list_class )
+          ? $tourismtype_list_class::get_module_url( 'admin' )
+          : '';
+        $referees_page_url = class_exists( $referees_list_class )
+          ? $referees_list_class::get_module_url( 'admin' )
+          : '';
 
         include dirname( __DIR__, 2 ) . '/views/admin/main-page.php';
     }
-
 
     /**
      * Вивід та обробка сторінки "Налаштування".
      */
     public function render_settings_page(): void {
         global $wpdb;
+
+        $this->ensure_sailboats_settings_defaults();
 
         // 1. Обробка збереження форми (POST запит)
         if ( $_SERVER['REQUEST_METHOD'] === 'POST' && isset( $_POST['fstu_save_settings'] ) ) {
@@ -130,4 +164,111 @@ class Admin_Menu {
         // 3. Підключення View
         include FSTU_PLUGIN_DIR . 'views/admin/settings-page.php';
     }
+
+    /**
+     * Гарантує наявність Settings-рядків для шаблонів Sailboats.
+     */
+    private function ensure_sailboats_settings_defaults(): void {
+        global $wpdb;
+
+        $notification_service_class = 'FSTU\\Modules\\Registry\\Sailboats\\Sailboats_Notification_Service';
+        if ( ! class_exists( $notification_service_class ) || ! method_exists( $notification_service_class, 'get_settings_defaults' ) ) {
+            return;
+        }
+
+        $defaults = $notification_service_class::get_settings_defaults();
+        if ( ! is_array( $defaults ) || empty( $defaults ) ) {
+            return;
+        }
+
+        $settings_columns = $this->get_settings_columns();
+        $has_description  = in_array( 'Description', $settings_columns, true );
+
+        foreach ( $defaults as $param_name => $meta ) {
+            $clean_name = sanitize_text_field( (string) $param_name );
+            if ( '' === $clean_name ) {
+                continue;
+            }
+
+            $description = isset( $meta['description'] ) ? sanitize_textarea_field( (string) $meta['description'] ) : '';
+
+            $select_fields = $has_description ? 'ParamName, Description' : 'ParamName';
+
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+            $existing_row = $wpdb->get_row(
+                $wpdb->prepare( 'SELECT ' . $select_fields . ' FROM Settings WHERE ParamName = %s LIMIT 1', $clean_name ),
+                ARRAY_A
+            );
+
+            if ( is_array( $existing_row ) ) {
+                if ( $has_description && '' !== $description && '' === trim( (string) ( $existing_row['Description'] ?? '' ) ) ) {
+                    // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+                    $wpdb->update(
+                        'Settings',
+                        [ 'Description' => $description ],
+                        [ 'ParamName' => $clean_name ],
+                        [ '%s' ],
+                        [ '%s' ]
+                    );
+                }
+
+                continue;
+            }
+
+            $default_value = isset( $meta['value'] ) ? sanitize_textarea_field( (string) $meta['value'] ) : '';
+            $insert_data   = [
+                'ParamName'  => $clean_name,
+                'ParamValue' => $default_value,
+            ];
+            $insert_format = [ '%s', '%s' ];
+
+            if ( $has_description ) {
+                $insert_data['Description'] = $description;
+                $insert_format[]            = '%s';
+            }
+
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+            $wpdb->insert(
+                'Settings',
+                $insert_data,
+                $insert_format
+            );
+        }
+    }
+
+    /**
+     * Повертає список колонок таблиці Settings.
+     *
+     * @return array<int,string>
+     */
+    private function get_settings_columns(): array {
+        static $columns = null;
+
+        if ( is_array( $columns ) ) {
+            return $columns;
+        }
+
+        global $wpdb;
+
+        $schema_name = defined( 'DB_NAME' ) ? (string) DB_NAME : '';
+        if ( '' === $schema_name ) {
+            $columns = [];
+
+            return $columns;
+        }
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.NotPrepared
+        $result = $wpdb->get_col(
+            $wpdb->prepare(
+                'SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s ORDER BY ORDINAL_POSITION ASC',
+                $schema_name,
+                'Settings'
+            )
+        );
+
+        $columns = is_array( $result ) ? array_values( array_map( 'strval', $result ) ) : [];
+
+        return $columns;
+    }
 }
+

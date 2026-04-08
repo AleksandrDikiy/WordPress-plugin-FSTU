@@ -1,0 +1,749 @@
+/**
+ * Стилі модуля "Довідник видів туризму".
+ *
+ * Правила:
+ * — Усі класи мають обов'язковий префікс .fstu-
+ * — !important заборонено, крім крайніх випадків override теми
+ * — CSS-змінні для кольорів у :root для легкого ребрендингу
+ *
+ * Version:     1.0.0
+ * Date_update: 2026-04-07
+ */
+
+/* ============================================================ */
+/* CSS-змінні (корпоративна палітра ФСТУ)                       */
+/* ============================================================ */
+:root {
+    --fstu-color-primary:       #c0392b;   /* корпоративний червоний */
+    --fstu-color-primary-dark:  #a93226;
+    --fstu-color-primary-light: #fadbd8;
+    --fstu-color-secondary:     #6c757d;
+    --fstu-color-secondary-dark:#545b62;
+    --fstu-color-success:       #27ae60;
+    --fstu-color-danger:        #e74c3c;
+    --fstu-color-warning:       #f39c12;
+
+    --fstu-table-head-bg:       #dcead6;   /* зелена шапка таблиці */
+    --fstu-table-head-color:    #2c3e50;
+    --fstu-table-even-bg:       #f8faf6;   /* зебра */
+    --fstu-table-border:        #c8ddc2;
+
+    --fstu-btn-bg:              #f8f9fa;
+    --fstu-btn-border:          #d1d5db;
+    --fstu-btn-color:           #343a40;
+    --fstu-btn-hover-bg:        var(--fstu-color-primary);
+    --fstu-btn-hover-color:     #fff;
+
+    --fstu-modal-overlay-bg:    rgba(0, 0, 0, .5);
+    --fstu-border-radius:       4px;
+    --fstu-transition:          .18s ease;
+}
+
+/* ============================================================ */
+/* Універсальний клас приховування (ОБОВ'ЯЗКОВО З !important)   */
+/* ============================================================ */
+.fstu-hidden {
+    display: none !important;
+}
+
+/* ============================================================ */
+/* Обгортка модуля                                              */
+/* ============================================================ */
+.fstu-module-wrap {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 14px;
+    color: #2c3e50;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+/* ============================================================ */
+/* Заголовок                                                    */
+/* ============================================================ */
+.fstu-module-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.fstu-module-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--fstu-table-head-color);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.fstu-module-title__icon {
+    font-size: 20px;
+    line-height: 1;
+}
+
+/* ============================================================ */
+/* Панель дій (action-bar)                                      */
+/* ============================================================ */
+.fstu-action-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+    padding: 8px 10px;
+    background: #f8f9fa;
+    border: 1px solid var(--fstu-btn-border);
+    border-radius: var(--fstu-border-radius);
+}
+
+/* ============================================================ */
+/* Кнопки                                                       */
+/* ============================================================ */
+.fstu-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: var(--fstu-border-radius);
+    cursor: pointer;
+    transition: background var(--fstu-transition), color var(--fstu-transition),
+                border-color var(--fstu-transition);
+    line-height: 1.4;
+    white-space: nowrap;
+    border: 1px solid transparent;
+    text-decoration: none;
+}
+
+.fstu-btn:focus-visible {
+    outline: 2px solid var(--fstu-color-primary);
+    outline-offset: 2px;
+}
+
+/* — дія (сірі кнопки верхньої панелі) */
+.fstu-btn--action {
+    background: var(--fstu-btn-bg);
+    color:      var(--fstu-btn-color);
+    border-color: var(--fstu-btn-border);
+}
+
+.fstu-btn--action:hover,
+.fstu-btn--action:focus-visible {
+    background:  var(--fstu-btn-hover-bg);
+    color:       var(--fstu-btn-hover-color);
+    border-color:var(--fstu-btn-hover-bg);
+}
+
+/* — primary (зберегти у формі) */
+.fstu-btn--primary {
+    background:  var(--fstu-color-primary);
+    color:       #fff;
+    border-color:var(--fstu-color-primary);
+}
+
+.fstu-btn--primary:hover {
+    background:  var(--fstu-color-primary-dark);
+    border-color:var(--fstu-color-primary-dark);
+}
+
+/* — secondary (скасувати) */
+.fstu-btn--secondary {
+    background: var(--fstu-btn-bg);
+    color:      var(--fstu-btn-color);
+    border-color:var(--fstu-btn-border);
+}
+
+.fstu-btn--secondary:hover {
+    background: #e2e6ea;
+}
+
+/* — кнопки-іконки у таблиці (dropdown тригер) */
+.fstu-btn--icon {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    justify-content: center;
+    font-size: 15px;
+    background: var(--fstu-btn-bg);
+    border-color: var(--fstu-btn-border);
+    color: var(--fstu-btn-color);
+    border-radius: var(--fstu-border-radius);
+}
+
+.fstu-btn--icon:hover {
+    background:  var(--fstu-btn-hover-bg);
+    color:       var(--fstu-btn-hover-color);
+    border-color:var(--fstu-btn-hover-bg);
+}
+
+/* — мала кнопка у dropdown-меню */
+.fstu-dropdown__item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    padding: 6px 14px;
+    font-size: 13px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    white-space: nowrap;
+    color: var(--fstu-btn-color);
+    transition: background var(--fstu-transition), color var(--fstu-transition);
+}
+
+.fstu-dropdown__item:hover {
+    background: var(--fstu-color-primary-light);
+    color: var(--fstu-color-primary-dark);
+}
+
+.fstu-dropdown__item--danger:hover {
+    background: #fdecea;
+    color: var(--fstu-color-danger);
+}
+
+/* ============================================================ */
+/* Dropdown-меню дій у рядку таблиці                            */
+/* ============================================================ */
+.fstu-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.fstu-dropdown__menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 2px);
+    z-index: 200;
+    background: #fff;
+    border: 1px solid var(--fstu-btn-border);
+    border-radius: var(--fstu-border-radius);
+    box-shadow: 0 4px 12px rgba(0,0,0,.12);
+    min-width: 150px;
+    padding: 4px 0;
+}
+
+.fstu-dropdown--open .fstu-dropdown__menu {
+    display: block;
+}
+
+/* Виправлення: якщо меню виходить за нижній край — відкриваємо вгору */
+.fstu-dropdown--up .fstu-dropdown__menu {
+    top: auto;
+    bottom: calc(100% + 2px);
+}
+
+/* ============================================================ */
+/* Таблиця                                                      */
+/* ============================================================ */
+.fstu-table-wrap {
+    overflow-x: auto;
+    position: relative;
+    min-height: 80px;
+}
+
+.fstu-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: auto;
+}
+
+/* Шапка — зелена */
+.fstu-table thead .fstu-tr--head {
+    background-color: var(--fstu-table-head-bg);
+}
+
+.fstu-th {
+    padding: 8px 10px;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--fstu-table-head-color);
+    border: 1px solid var(--fstu-table-border);
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+/* Зебра */
+.fstu-table--zebra tbody tr:nth-child(even) {
+    background-color: var(--fstu-table-even-bg);
+}
+
+.fstu-table td {
+    padding: 7px 10px;
+    border: 1px solid #e0e8dc;
+    vertical-align: middle;
+    font-size: 13px;
+}
+
+.fstu-table tbody tr:hover {
+    background-color: #eef7ea;
+}
+
+/* Розміри колонок */
+.fstu-th--num       { width: 44px;  text-align: center; }
+.fstu-th--narrow    { width: 90px;  }
+.fstu-th--center    { text-align: center; }
+.fstu-th--wide-name { min-width: 180px; }
+.fstu-th--actions   { width: 50px;  text-align: center; }
+
+/* Розміри колонок протоколу */
+.fstu-th--date    { width: 140px; white-space: nowrap; }
+.fstu-th--type    { width: 80px;  text-align: center; }
+.fstu-th--message { min-width: 200px; }
+.fstu-th--status  { width: 80px;  text-align: center; }
+.fstu-th--user    { width: 140px; }
+
+/* ============================================================ */
+/* Пошук усередині <th>                                         */
+/* ============================================================ */
+.fstu-th-with-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.fstu-input--in-header {
+    height: 24px;
+    padding: 2px 6px;
+    font-size: 12px;
+    background: rgba(255, 255, 255, .85);
+    border: 1px solid rgba(0, 0, 0, .18);
+    border-radius: var(--fstu-border-radius);
+    outline: none;
+    min-width: 120px;
+    max-width: 200px;
+    transition: border-color var(--fstu-transition), box-shadow var(--fstu-transition);
+    font-family: inherit;
+    color: #2c3e50;
+}
+
+.fstu-input--in-header:focus {
+    border-color: var(--fstu-color-primary);
+    box-shadow: 0 0 0 2px rgba(192, 57, 43, .15);
+    background: #fff;
+}
+
+/* ============================================================ */
+/* Форма у модальному вікні                                     */
+/* ============================================================ */
+.fstu-form-group {
+    margin-bottom: 14px;
+}
+
+.fstu-form-label {
+    display: block;
+    margin-bottom: 4px;
+    font-weight: 500;
+    font-size: 13px;
+    color: #495057;
+}
+
+.fstu-form-label--required::after {
+    content: ' *';
+    color: var(--fstu-color-primary);
+}
+
+.fstu-form-control {
+    width: 100%;
+    padding: 6px 10px;
+    font-size: 13px;
+    border: 1px solid #ced4da;
+    border-radius: var(--fstu-border-radius);
+    font-family: inherit;
+    color: #2c3e50;
+    transition: border-color var(--fstu-transition), box-shadow var(--fstu-transition);
+    box-sizing: border-box;
+}
+
+.fstu-form-control:focus {
+    border-color: var(--fstu-color-primary);
+    box-shadow: 0 0 0 3px rgba(192, 57, 43, .12);
+    outline: none;
+}
+
+.fstu-form-control--short {
+    width: 120px;
+}
+
+/* Honeypot — приховане поле від ботів */
+.fstu-honeypot {
+    display: none;
+    visibility: hidden;
+    position: absolute;
+    left: -9999px;
+}
+
+/* ============================================================ */
+/* Пагінація                                                    */
+/* ============================================================ */
+.fstu-pagination--compact {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+    padding: 6px 0;
+}
+
+.fstu-pagination__left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.fstu-pagination__per-page-label {
+    font-size: 12px;
+    color: #6c757d;
+    white-space: nowrap;
+}
+
+.fstu-select--compact {
+    height: 28px;
+    padding: 2px 8px;
+    font-size: 13px;
+    border: 1px solid var(--fstu-btn-border);
+    border-radius: var(--fstu-border-radius);
+    background: #fff;
+    cursor: pointer;
+    font-family: inherit;
+    /* Додано обмеження ширини: */
+    width: 70px !important;
+    min-width: 70px !important;
+}
+
+.fstu-pagination__controls {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    flex-wrap: nowrap;
+}
+
+.fstu-page-btn {
+    min-width: 28px;
+    height: 26px;
+    padding: 0 6px;
+    font-size: 12px;
+    background: var(--fstu-btn-bg);
+    border: 1px solid var(--fstu-btn-border);
+    border-radius: var(--fstu-border-radius);
+    cursor: pointer;
+    color: var(--fstu-btn-color);
+    transition: background var(--fstu-transition), color var(--fstu-transition);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fstu-page-btn:hover {
+    background: var(--fstu-color-primary);
+    color: #fff;
+    border-color: var(--fstu-color-primary);
+}
+
+.fstu-page-btn--active {
+    background: var(--fstu-color-primary);
+    color: #fff;
+    border-color: var(--fstu-color-primary);
+    font-weight: 600;
+    pointer-events: none;
+}
+
+.fstu-page-btn:disabled {
+    opacity: .45;
+    pointer-events: none;
+}
+
+.fstu-pagination__info {
+    margin-left: auto;
+    font-size: 12px;
+    color: #6c757d;
+    white-space: nowrap;
+}
+
+/* ============================================================ */
+/* Повідомлення (notice)                                        */
+/* ============================================================ */
+.fstu-notice {
+    padding: 9px 14px;
+    border-radius: var(--fstu-border-radius);
+    font-size: 13px;
+    margin-bottom: 10px;
+    border-left: 4px solid transparent;
+}
+
+.fstu-notice--hidden { display: none; }
+
+.fstu-notice--success {
+    background: #d4edda;
+    border-color: var(--fstu-color-success);
+    color: #155724;
+}
+
+.fstu-notice--error {
+    background: #fdecea;
+    border-color: var(--fstu-color-danger);
+    color: #721c24;
+}
+
+.fstu-notice--info {
+    background: #d1ecf1;
+    border-color: #17a2b8;
+    color: #0c5460;
+}
+
+/* ============================================================ */
+/* Секції (перемикання Довідник ↔ Протокол)                     */
+/* ============================================================ */
+.fstu-hidden  { display: none; }
+.fstu-active  { display: block; }
+
+/* ============================================================ */
+/* Спінер завантаження                                          */
+/* ============================================================ */
+.fstu-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.fstu-loading--hidden { display: none; }
+
+.fstu-spinner {
+    width: 28px;
+    height: 28px;
+    border: 3px solid #e0e0e0;
+    border-top-color: var(--fstu-color-primary);
+    border-radius: 50%;
+    animation: fstu-spin .7s linear infinite;
+    display: inline-block;
+}
+
+@keyframes fstu-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ============================================================ */
+/* Модальне вікно                                               */
+/* ============================================================ */
+.fstu-modal--hidden { display: none; }
+
+.fstu-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fstu-modal__overlay {
+    position: absolute;
+    inset: 0;
+    background: var(--fstu-modal-overlay-bg);
+}
+
+.fstu-modal__dialog {
+    position: relative;
+    z-index: 1;
+    background: #fff;
+    border-radius: 6px;
+    box-shadow: 0 10px 40px rgba(0,0,0,.25);
+    width: 100%;
+    max-width: 480px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: fstu-modal-in .2s ease;
+}
+
+@keyframes fstu-modal-in {
+    from { opacity: 0; transform: scale(.96) translateY(-10px); }
+    to   { opacity: 1; transform: scale(1)  translateY(0);      }
+}
+
+.fstu-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px 10px;
+    border-bottom: 1px solid #e9ecef;
+    background: var(--fstu-table-head-bg);
+}
+
+.fstu-modal__title {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+    color: var(--fstu-table-head-color);
+}
+
+.fstu-modal__close {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    color: #6c757d;
+    line-height: 1;
+    padding: 2px 6px;
+    border-radius: var(--fstu-border-radius);
+    transition: color var(--fstu-transition), background var(--fstu-transition);
+}
+
+.fstu-modal__close:hover {
+    color: var(--fstu-color-primary);
+    background: #f5f5f5;
+}
+
+.fstu-modal__body {
+    padding: 18px;
+}
+
+.fstu-modal__footer {
+    display: flex;
+    gap: 8px;
+    padding: 12px 18px;
+    border-top: 1px solid #e9ecef;
+    background: #f8f9fa;
+    justify-content: flex-end;
+}
+
+/* ============================================================ */
+/* Бейджі типів операцій у протоколі                            */
+/* ============================================================ */
+.fstu-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+}
+
+.fstu-badge--insert  { background: #d4edda; color: #155724; }
+.fstu-badge--update  { background: #d1ecf1; color: #0c5460; }
+.fstu-badge--delete  { background: #fdecea; color: #721c24; }
+.fstu-badge--default { background: #e2e3e5; color: #383d41; }
+
+/* Статус "✓" у протоколі */
+.fstu-status--ok  { color: var(--fstu-color-success); font-weight: 700; }
+.fstu-status--err { color: var(--fstu-color-danger);  font-weight: 700; }
+
+/* ============================================================ */
+/* Рядок "немає даних"                                          */
+/* ============================================================ */
+.fstu-td--empty {
+    text-align: center;
+    padding: 20px;
+    color: #6c757d;
+    font-style: italic;
+}
+
+/* ============================================================ */
+/* Пагінація (3 рівні колонки)                                  */
+/* ============================================================ */
+.fstu-pagination--compact {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f8f9fa;
+    padding: 10px 15px;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    margin-top: 15px;
+}
+
+.fstu-pagination__left {
+    flex: 1;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 6px;
+}
+
+.fstu-pagination__per-page-label {
+    font-size: 13px;
+    color: #6c757d;
+    white-space: nowrap;
+}
+
+.fstu-select--compact {
+    height: 28px;
+    padding: 2px 8px;
+    font-size: 13px;
+    border: 1px solid var(--fstu-btn-border);
+    border-radius: var(--fstu-border-radius);
+    background: #fff;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.fstu-pagination__controls {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+}
+
+.fstu-page-btn {
+    min-width: 30px;
+    height: 30px;
+    padding: 0 8px;
+    font-size: 13px;
+    background: #fff;
+    border: 1px solid var(--fstu-btn-border);
+    border-radius: var(--fstu-border-radius);
+    cursor: pointer;
+    color: var(--fstu-btn-color);
+    transition: background var(--fstu-transition), color var(--fstu-transition);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fstu-page-btn:hover {
+    background: var(--fstu-color-primary);
+    color: #fff;
+    border-color: var(--fstu-color-primary);
+}
+
+.fstu-page-btn--active {
+    background: var(--fstu-color-primary);
+    color: #fff;
+    border-color: var(--fstu-color-primary);
+    font-weight: 600;
+    pointer-events: none;
+}
+
+.fstu-page-btn:disabled {
+    opacity: .45;
+    pointer-events: none;
+    background: #f8f9fa;
+}
+
+.fstu-pagination__info {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+    font-size: 13px;
+    color: #6c757d;
+    white-space: nowrap;
+}
+
+/* Адаптивність для мобілок (скидаємо 3 колонки у стовпчик) */
+@media (max-width: 768px) {
+    .fstu-pagination--compact {
+        flex-direction: column;
+        gap: 12px;
+    }
+    .fstu-pagination__left, 
+    .fstu-pagination__controls, 
+    .fstu-pagination__info {
+        justify-content: center;
+        width: 100%;
+    }
+}

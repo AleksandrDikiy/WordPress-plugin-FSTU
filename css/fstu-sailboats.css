@@ -1,0 +1,1311 @@
+/**
+ * CSS модуля "Реєстр суден".
+ * Skeleton-рівень: таблиця, guest-state, протокол, модалки та пагінація.
+ *
+ * Version:     1.9.1
+ * Date_update: 2026-04-08
+ *
+ * @package FSTU
+ */
+
+body.fstu-modal-open {
+	overflow: hidden;
+}
+
+.fstu-sailboats-wrap {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+	font-size: 13px;
+	color: #2c3e50;
+	width: 100%;
+}
+
+.fstu-sailboats-title {
+	font-size: 24px;
+	font-weight: 700;
+	margin: 0 0 12px;
+	color: #1f2d3d;
+}
+
+.fstu-sailboats-access-state {
+	display: flex;
+	align-items: flex-start;
+	gap: 16px;
+	padding: 20px;
+	background: #f8f9fa;
+	border: 1px solid #d1d5db;
+	border-radius: 6px;
+}
+
+.fstu-sailboats-access-state__icon {
+	font-size: 28px;
+	line-height: 1;
+}
+
+.fstu-sailboats-access-state__content {
+	flex: 1;
+}
+
+.fstu-sailboats-access-state__title {
+	margin: 0 0 8px;
+	font-size: 18px;
+	font-weight: 700;
+	color: #1f2937;
+}
+
+.fstu-sailboats-access-state__text {
+	margin: 0 0 14px;
+	font-size: 13px;
+	color: #4b5563;
+}
+
+.fstu-sailboats-access-state__actions {
+	display: flex;
+	gap: 10px;
+	flex-wrap: wrap;
+}
+
+.fstu-action-bar {
+	display: flex;
+	flex-wrap: nowrap;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 12px;
+	padding: 10px 12px;
+	background: #f8f9fa;
+	border: 1px solid #d1d5db;
+	border-radius: 4px;
+	overflow-x: auto;
+}
+
+.fstu-action-bar--sailboats {
+	justify-content: space-between;
+}
+
+.fstu-action-bar__group {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: nowrap;
+	white-space: nowrap;
+	flex: 0 0 auto;
+}
+
+.fstu-action-bar__group--filters {
+	flex: 1 1 auto;
+	justify-content: center;
+	min-width: 0;
+}
+
+.fstu-action-bar--sailboats .fstu-select--compact {
+	width: auto;
+	min-width: 180px;
+	height: 36px;
+	padding: 0 36px 0 10px;
+	font-size: 13px;
+}
+
+.fstu-btn,
+.fstu-btn--page {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	height: 36px;
+	padding: 0 14px;
+	font-size: 13px;
+	font-weight: 500;
+	line-height: 1;
+	border: 1px solid #d1d5db;
+	border-radius: 4px;
+	background: #f8f9fa;
+	color: #374151;
+	text-decoration: none;
+	box-shadow: none;
+	cursor: pointer;
+	transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+}
+
+.fstu-btn:hover,
+.fstu-btn--page:hover {
+	background: #c65b41;
+	border-color: #c65b41;
+	color: #fff;
+}
+
+.fstu-btn--primary {
+	background: #c65b41;
+	border-color: #c65b41;
+	color: #fff;
+}
+
+.fstu-btn--primary:hover,
+.fstu-btn--page-active,
+.fstu-btn--page-active:hover {
+	background: #b14e36;
+	border-color: #b14e36;
+	color: #fff;
+}
+
+.fstu-btn--page {
+	min-width: 32px;
+	height: 32px;
+	padding: 0 10px;
+}
+
+.fstu-btn--small {
+	height: 32px;
+	padding: 0 10px;
+	font-size: 12px;
+}
+
+.fstu-btn__icon {
+	font-style: normal;
+	font-size: 13px;
+}
+
+.fstu-table-wrap {
+	position: relative;
+	margin: 0 0 12px;
+	border: 1px solid #c8d8c0;
+	border-radius: 4px;
+	background: #fff;
+	overflow-x: auto;
+}
+
+.fstu-table-wrap--compact {
+	margin-bottom: 8px;
+}
+
+.fstu-table {
+	width: 100%;
+	border-collapse: collapse;
+	min-width: 980px;
+}
+
+.fstu-table--compact {
+	min-width: 860px;
+}
+
+.fstu-thead .fstu-th {
+	background: #dcead6;
+	padding: 10px 8px;
+	text-align: left;
+	font-weight: 600;
+	border: 1px solid #c8d8c0;
+	vertical-align: middle;
+	color: #2c3328;
+}
+
+.fstu-td {
+	padding: 8px;
+	border: 1px solid #e5e7eb;
+	vertical-align: middle;
+	background: #fff;
+}
+
+.fstu-tbody .fstu-row:nth-child(even) .fstu-td {
+	background: #f8faf6;
+}
+
+.fstu-th--num,
+.fstu-td--num {
+	width: 60px;
+	text-align: center;
+}
+
+/* Зменшення ширини колонки "Найменування" */
+.fstu-th--wide-name {
+	min-width: 120px; /* Було 156px */
+}
+
+.fstu-th--wide-name-search {
+	width: 130px; /* Було 168px */
+}
+
+.fstu-th--actions,
+.fstu-td--actions {
+	width: 84px;
+	text-align: center;
+	white-space: nowrap;
+}
+
+.fstu-th--finance,
+.fstu-td--finance {
+	width: 70px;
+	text-align: center;
+}
+
+.fstu-th--date,
+.fstu-td--date {
+	width: 140px;
+}
+
+.fstu-th--type,
+.fstu-td--type,
+.fstu-th--status,
+.fstu-td--status {
+	width: 80px;
+	text-align: center;
+}
+
+.fstu-th--message,
+.fstu-td--message {
+	min-width: 200px;
+}
+
+.fstu-th--user,
+.fstu-td--user {
+	width: 120px;
+}
+
+.fstu-th-with-search {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	white-space: nowrap;
+}
+
+.fstu-th-with-search--stack {
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 4px;
+	white-space: normal;
+}
+
+.fstu-th-with-search--stack span {
+	line-height: 1.1;
+	width: 100%;
+}
+
+.fstu-input--in-header {
+	min-width: 80px; /* Було 100px */
+	max-width: 100%;
+	height: 20px; /* Зменшено висоту з 22px */
+	padding: 0 4px; /* Зменшено відступи */
+	font-size: 11px; /* Зменшено шрифт для компактності */
+	border: 1px solid #b7d7b7;
+	border-radius: 3px;
+	background: rgba(255, 255, 255, 0.85);
+	color: #1f2937;
+}
+
+.fstu-input--in-header-compact {
+	width: 100%;
+	max-width: 108px;
+	height: 18px;
+	padding: 1px 5px;
+	font-size: 11px;
+}
+
+.fstu-select,
+.fstu-select--compact,
+.fstu-input--compact {
+	height: 26px;
+	padding: 2px 6px;
+	font-size: 12px;
+	border: 1px solid #d1d5db;
+	border-radius: 4px;
+	background: #fff;
+	color: #374151;
+}
+
+.fstu-pagination {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	flex-wrap: wrap;
+}
+
+.fstu-pagination--compact {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	background: #f8f9fa;
+	padding: 10px 15px;
+	border: 1px solid #e0e0e0;
+	border-radius: 4px;
+	margin-top: 15px;
+}
+
+.fstu-pagination__left {
+	flex: 1;
+	display: flex;
+	justify-content: flex-start;
+	align-items: center;
+	gap: 6px;
+}
+
+.fstu-pagination__per-page-label {
+	font-size: 13px;
+	color: #6c757d;
+	white-space: nowrap;
+}
+
+/* Базові стилі компактного селектора */
+.fstu-select--compact {
+	height: 28px;
+	padding: 2px 24px 2px 8px; /* 24px справа залишає місце для стрілочки браузера */
+	font-size: 13px;
+	border: 1px solid #d1d5db;
+	border-radius: 4px;
+	background: #fff;
+	cursor: pointer;
+	box-sizing: border-box;
+}
+
+/* Жорстке обмеження ширини ТІЛЬКИ для нижньої пагінації */
+.fstu-pagination__left .fstu-select--compact {
+	width: 75px !important;
+	min-width: 75px !important;
+}
+
+.fstu-pagination__controls {
+	flex: 1;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 4px;
+}
+
+.fstu-pagination__info {
+	flex: 1;
+	display: flex;
+	justify-content: flex-end;
+	font-size: 13px;
+	color: #6c757d;
+	white-space: nowrap;
+}
+
+.fstu-no-results {
+	padding: 18px;
+	text-align: center;
+	color: #6b7280;
+}
+
+.fstu-text-muted {
+	color: #6b7280;
+}
+
+.fstu-sailboats-link-button {
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: #2563eb;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+}
+
+.fstu-sailboats-link-button:hover {
+	color: #c65b41;
+}
+
+.fstu-sailboats-dropdown {
+	position: relative;
+	display: inline-block;
+	z-index: 5;
+}
+
+.fstu-sailboats-dropdown__toggle {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	border: 1px solid #d1d5db;
+	border-radius: 4px;
+	background: #f8f9fa;
+	color: #2c3e50; /* Темний колір стрілки */
+	font-size: 11px; /* Оптимальний розмір для символу ▼ */
+	cursor: pointer;
+	transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+}
+
+.fstu-sailboats-dropdown__toggle:hover,
+.fstu-sailboats-dropdown.is-open .fstu-sailboats-dropdown__toggle {
+	background: #c0392b; /* Корпоративний червоний */
+	border-color: #c0392b;
+	color: #fff; /* Біла стрілка */
+}
+
+.fstu-sailboats-dropdown__menu {
+	position: absolute;
+	right: 0;
+	top: calc(100% + 6px);
+	z-index: 40;
+	min-width: 180px;
+	padding: 6px 0;
+	border: 1px solid #d1d5db;
+	border-radius: 6px;
+	background: #fff;
+	box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+	display: none;
+}
+
+.fstu-sailboats-dropdown.is-open .fstu-sailboats-dropdown__menu {
+	display: block;
+}
+
+.fstu-sailboats-dropdown.is-dropup .fstu-sailboats-dropdown__menu {
+	top: auto;
+	bottom: calc(100% + 6px);
+}
+
+.fstu-sailboats-dropdown__item {
+	display: flex;
+	width: 100%;
+	padding: 9px 12px;
+	border: 0;
+	background: transparent;
+	text-align: left;
+	font-size: 13px;
+	color: #374151;
+	cursor: pointer;
+}
+
+.fstu-sailboats-dropdown__item:hover {
+	background: #f9fafb;
+	color: #c65b41;
+}
+
+.fstu-sailboats-dropdown__item--danger:hover {
+	color: #b91c1c;
+}
+
+.fstu-hidden {
+	display: none;
+}
+
+.fstu-hidden-field {
+	position: absolute;
+	left: -9999px;
+	top: auto;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+}
+
+.fstu-honeypot {
+	position: absolute;
+	left: -9999px;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+}
+
+.fstu-modal-overlay {
+	position: fixed;
+	inset: 0;
+	z-index: 9999;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 20px;
+	background: rgba(17, 24, 39, 0.45);
+}
+
+.fstu-modal-overlay.fstu-hidden {
+	display: none;
+}
+
+.fstu-modal {
+	width: 100%;
+	max-width: 760px;
+	max-height: calc(100vh - 20px);
+	display: flex;
+	flex-direction: column;
+	background: #fff;
+	border-radius: 6px;
+	box-shadow: 0 18px 48px rgba(15, 23, 42, 0.18);
+	overflow: hidden;
+}
+
+.fstu-modal--wide {
+	max-width: min(1960px, calc(100vw - 24px));
+}
+
+.fstu-modal--compact {
+	max-width: 560px;
+}
+
+.fstu-modal__header,
+.fstu-modal__footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 8px 12px;
+	border-bottom: 1px solid #e5e7eb;
+}
+
+.fstu-modal__footer {
+	border-top: 1px solid #e5e7eb;
+	border-bottom: 0;
+	justify-content: flex-end;
+}
+
+.fstu-modal__title {
+	margin: 0;
+	font-size: 14px;
+	font-weight: 700;
+	color: #1f2937;
+}
+
+.fstu-modal__close {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 22px;
+	height: 22px;
+	padding: 0;
+	border: 1px solid #d1d5db;
+	border-radius: 4px;
+	background: #f8f9fa;
+	font-size: 12px;
+	line-height: 1;
+	cursor: pointer;
+	color: #6b7280;
+}
+
+.fstu-modal__close:hover {
+	background: #c65b41;
+	border-color: #c65b41;
+	color: #fff;
+}
+
+.fstu-modal__body {
+	padding: 8px 12px 10px;
+	overflow-y: auto;
+	background: #fff;
+}
+
+.fstu-placeholder-box {
+	padding: 16px;
+	border: 1px dashed #d1d5db;
+	border-radius: 4px;
+	background: #fafafa;
+	color: #4b5563;
+}
+
+/* ============================================================ */
+/* ЗАКЛАДКИ (ТАБИ) ДЛЯ ПЕРЕГЛЯДУ                                */
+/* ============================================================ */
+.fstu-tabs-wrapper {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+}
+
+.fstu-tabs-nav {
+	display: flex;
+	gap: 16px;
+	border-bottom: 2px solid #e5e7eb;
+	margin-bottom: 16px;
+	padding: 0 4px;
+}
+
+.fstu-tab-btn {
+	background: transparent;
+	border: none;
+	border-bottom: 2px solid transparent;
+	padding: 8px 12px 10px;
+	margin-bottom: -2px;
+	font-size: 13px;
+	font-weight: 700;
+	color: #6b7280;
+	cursor: pointer;
+	transition: color 0.2s, border-color 0.2s;
+}
+
+.fstu-tab-btn:hover {
+	color: #111827;
+}
+
+.fstu-tab-btn.is-active {
+	color: #c0392b; /* Корпоративний червоний ФСТУ */
+	border-bottom-color: #c0392b;
+}
+
+.fstu-tab-content {
+	display: none;
+}
+
+.fstu-tab-content.is-active {
+	display: block;
+}
+
+/* ============================================================ */
+/* КОМПАКТНИЙ ПЕРЕГЛЯД (View Modal) ОНОВЛЕНИЙ                    */
+/* ============================================================ */
+
+/* Динамічні колонки для Службового табу */
+.fstu-view-layout__meta--3col {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 12px;
+}
+
+.fstu-view-layout__meta--4col {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 12px;
+}
+
+/* Стискаємо ширину лейблів спеціально для вузьких колонок (4 колонки) */
+.fstu-view-layout__meta--4col .fstu-view-grid__row {
+	grid-template-columns: 105px 1fr;
+	gap: 4px;
+}
+
+/* ============================================================ */
+/* КОМПАКТНИЙ ПЕРЕГЛЯД (View Modal)                             */
+/* ============================================================ */
+
+/* Обмежуємо ширину модалки перегляду аналогічно до форми */
+#fstu-sailboats-view-modal .fstu-modal {
+	max-width: 1060px !important;
+	margin: 0 auto;
+}
+
+#fstu-sailboats-view-modal .fstu-modal__body {
+	padding: 10px 12px;
+	background: #f8f9fa;
+}
+
+/* Сітка перегляду на 3 колонки */
+.fstu-view-layout {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 10px;
+	align-items: stretch;
+}
+
+/* Колонки та нижні блоки */
+.fstu-view-layout__column { display: grid; gap: 10px; }
+.fstu-view-layout__bottom { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 10px;}
+
+/* Робимо 4 колонки для нижніх блоків */
+.fstu-view-layout__meta { 
+	grid-column: 1 / -1; 
+	display: grid; 
+	grid-template-columns: repeat(4, minmax(0, 1fr)); /* Було repeat(2) */
+	gap: 10px; 
+	margin-top: 10px;
+}
+
+/* Оскільки 4 колонки вужчі, стискаємо ширину лейблів спеціально для цього блоку */
+.fstu-view-layout__meta .fstu-view-grid__row {
+	grid-template-columns: 105px 1fr; /* Лейбл займає 105px, решта під значення */
+	gap: 4px;
+}
+
+/* Картки секцій (аналог блоків у формі) */
+.fstu-view-section {
+	padding: 10px 12px;
+	border: 1px solid #e0e0e0;
+	border-radius: 6px;
+	background: #fff;
+	height: 100%;
+	box-sizing: border-box;
+}
+
+/* Заголовки карток */
+.fstu-view-section .fstu-form-section__title {
+	margin: 0 0 8px;
+	font-size: 12px;
+	font-weight: 700;
+	color: #1f2937;
+	text-transform: uppercase;
+}
+
+.fstu-view-grid { display: grid; gap: 5px; }
+
+/* Сітка: Лейбл зліва, Значення справа */
+.fstu-view-grid__row {
+	display: grid;
+	grid-template-columns: 140px minmax(100px, 200px);
+	align-items: center;
+	justify-content: start;
+	gap: 6px;
+	padding: 0;
+	border-bottom: none; /* Прибираємо старі лінії */
+}
+
+/* Лейбли у перегляді */
+.fstu-view-grid__label {
+	font-size: 11px;
+	font-weight: 600;
+	color: #374151;
+	margin: 0;
+	line-height: 1.1;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* Значення у перегляді (імітуємо вигляд компактних інпутів) */
+.fstu-view-grid__value {
+	width: 100%;
+	min-height: 24px; /* Ультра-низькі як інпути */
+	padding: 4px 6px;
+	display: flex;
+	align-items: center;
+	border-radius: 3px;
+	background: #f4f5f7; /* Світло-сірий фон як у інпутів */
+	border: 1px solid transparent; 
+	font-size: 12px;
+	color: #111827;
+	box-sizing: border-box;
+	word-break: break-word;
+}
+
+/* ========================= форма ==============================*/
+.fstu-form-grid {
+	display: grid;
+	gap: 8px;
+}
+
+.fstu-form-grid--compact-form {
+	gap: 10px;
+}
+
+.fstu-sailboats-form {
+	gap: 8px;
+}
+
+.fstu-form-grid--two-cols {
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.fstu-form-grid--three-cols {
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.fstu-form-grid--four-cols {
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+
+.fstu-form-grid--operation-row {
+	align-items: start;
+}
+
+.fstu-form-grid--operation-inline {
+	display: grid;
+	grid-template-columns: minmax(320px, 0.9fr) minmax(520px, 1.1fr);
+	gap: 10px;
+	align-items: center;
+}
+
+.fstu-inline-field {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+}
+
+.fstu-inline-field .fstu-label {
+	flex: 0 0 auto;
+	margin: 0;
+	white-space: nowrap;
+}
+
+.fstu-inline-field .fstu-input,
+.fstu-inline-field .fstu-select {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.fstu-form-group {
+	display: grid;
+	gap: 3px;
+}
+
+.fstu-form-group--operation-mode,
+.fstu-form-group--operation-search {
+	align-self: start;
+}
+
+.fstu-sailboats-toolbar-card {
+	padding: 14px 16px 12px;
+	border: 1px solid #dfe4ea;
+	border-radius: 24px;
+	background: #fff;
+	box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+}
+
+.fstu-sailboats-toolbar-card__item {
+	min-width: 0;
+}
+
+.fstu-form-group--full-width {
+	grid-column: 1 / -1;
+}
+
+.fstu-form-group--span-3 {
+	grid-column: span 3;
+}
+
+.fstu-label {
+	font-size: 11px;
+	font-weight: 600;
+	color: #374151;
+}
+
+.fstu-label--required::after {
+	content: ' *';
+	color: #b91c1c;
+}
+
+
+.fstu-input:focus,
+.fstu-select:focus,
+.fstu-textarea:focus,
+.fstu-input--in-header:focus {
+	border-color: #c65b41;
+	outline: none;
+	box-shadow: 0 0 0 2px rgba(198, 91, 65, 0.12);
+}
+
+.fstu-hint {
+	font-size: 10px;
+	color: #6b7280;
+}
+
+.fstu-form-section--card {
+	padding: 14px 16px 16px;
+	border: 1px solid #dfe4ea;
+	border-radius: 24px;
+	background: #fff;
+}
+
+.fstu-form-section--operation {
+	padding: 6px 0 0;
+}
+
+/* ============================================================ */
+/* УЛЬТРА-КОМПАКТНА ФОРМА В МОДАЛЦІ (Горизонтальні поля)        */
+/* ============================================================ */
+
+/* Жорстко обмежуємо ширину всієї модалки форми */
+.fstu-modal--sailboats-form {
+	max-width: 1060px !important;
+	margin: 0 auto;
+}
+
+/* Зменшуємо загальні відступи модалки */
+.fstu-modal--sailboats-form .fstu-modal__body {
+	padding: 10px 12px;
+	background: #f8f9fa;
+}
+
+/* Верхня панель та нижній рядок */
+.fstu-sailboats-toolbar-card,
+.fstu-form-section--card {
+	padding: 10px 14px;
+	border: 1px solid #e0e0e0;
+	border-radius: 6px;
+	background: #fff;
+	margin-bottom: 8px;
+}
+
+/* Заголовки секцій */
+.fstu-form-section__title {
+	margin: 0 0 8px;
+	font-size: 12px;
+	font-weight: 700;
+	color: #1f2937;
+	text-transform: uppercase;
+}
+
+/* 3 колонки */
+.fstu-sailboats-form-layout {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 10px;
+	align-items: stretch;
+	margin-bottom: 8px;
+}
+
+.fstu-sailboats-form-card {
+	margin-bottom: 0;
+	padding: 10px 12px;
+}
+
+/* --- ГОЛОВНА ФІШКА: ГОРИЗОНТАЛЬНІ ПОЛЯ --- */
+.fstu-sailboats-form-card__fields {
+	display: flex;
+	flex-direction: column;
+	gap: 5px; /* Мінімальна відстань між полями */
+}
+
+/* Перетворюємо групу на Grid: зліва лейбл, справа інпут */
+.fstu-sailboats-form-card__fields .fstu-form-group {
+	display: grid;
+	/* Лейбл 140px, а інпут не розтягується більше ніж на 200px */
+	grid-template-columns: 140px minmax(100px, 200px); 
+	align-items: center;
+	justify-content: start; /* Притискаємо поля до лівого краю */
+	gap: 6px;
+}
+
+/* Лейбли */
+.fstu-modal--sailboats-form .fstu-label {
+	font-size: 11px;
+	font-weight: 600;
+	color: #374151;
+	margin: 0;
+	line-height: 1.1;
+	white-space: nowrap; /* Забороняємо перенос тексту */
+	overflow: hidden;
+	text-overflow: ellipsis; /* Додаємо "..." якщо не влізло */
+}
+
+.fstu-label--required::after {
+	content: ' *';
+	color: #c0392b;
+}
+
+/* ІНПУТИ - Ультра-низькі (24px) */
+.fstu-modal--sailboats-form .fstu-input,
+.fstu-modal--sailboats-form .fstu-select {
+	width: 100%;
+	height: 24px !important;
+	min-height: 24px !important;
+	padding: 0 6px;
+	border: 1px solid #d1d5db;
+	border-radius: 3px;
+	background: #f4f5f7;
+	font-size: 12px;
+	color: #111827;
+	box-sizing: border-box;
+}
+
+.fstu-modal--sailboats-form .fstu-input:focus,
+.fstu-modal--sailboats-form .fstu-select:focus {
+	background: #fff;
+	border-color: #c0392b;
+	box-shadow: 0 0 0 2px rgba(192, 57, 43, 0.15);
+	outline: none;
+}
+
+/* Горизонтальні поля (Тип дії, Область, Місто) */
+.fstu-inline-field {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	width: 100%;
+}
+
+.fstu-inline-field .fstu-label {
+	white-space: nowrap;
+	margin: 0;
+	flex-shrink: 0;
+}
+
+.fstu-inline-field .fstu-select,
+.fstu-inline-field .fstu-input {
+	flex-grow: 1;
+	max-width: 220px; /* Не даємо нижнім та верхнім полям розтягуватись на кілометр */
+}
+
+.fstu-form-grid--operation-inline {
+	display: grid;
+	grid-template-columns: 1fr 1.5fr;
+	gap: 16px;
+}
+
+.fstu-search-input-wrapper {
+	display: flex;
+	gap: 6px;
+	flex-grow: 1;
+}
+
+/* Нижній рядок (Область, Місто, Нова пошта) */
+.fstu-sailboats-form-bottom-row {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 10px;
+	align-items: center;
+}
+
+/* Нижні кнопки (Відправити, Скасувати) */
+.fstu-modal__footer--sailboats {
+	border-top: none;
+	padding: 0;
+	margin-top: 8px;
+	justify-content: flex-end;
+	background: transparent;
+}
+
+.fstu-modal__footer--sailboats .fstu-btn {
+	height: 30px;
+	padding: 0 16px;
+	font-size: 12px;
+	border-radius: 3px;
+}
+
+/* Адаптивність для мобілок (повертаємо поля у стовпчик) */
+@media (max-width: 900px) {
+	.fstu-sailboats-form-layout {
+		grid-template-columns: 1fr;
+	}
+	.fstu-sailboats-form-card__fields .fstu-form-group {
+		grid-template-columns: 1fr; /* Скидаємо горизонтальний вигляд */
+		gap: 2px;
+	}
+	.fstu-sailboats-form-bottom-row,
+	.fstu-form-grid--operation-inline {
+		grid-template-columns: 1fr;
+		gap: 10px;
+	}
+}
+
+/* ------------------------------------------*/
+.fstu-sailboats-form-card {
+	height: 100%;
+}
+
+.fstu-sailboats-form-card__fields {
+	grid-template-columns: 1fr;
+	gap: 10px;
+}
+
+.fstu-sailboats-form-bottom-row {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 12px;
+	align-items: start;
+}
+
+.fstu-sailboats-existing-search {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: nowrap;
+	min-width: 0;
+}
+
+.fstu-sailboats-existing-search .fstu-input {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.fstu-sailboats-existing-search.fstu-inline-field {
+	flex-wrap: nowrap;
+}
+
+.fstu-sailboats-existing-search .fstu-label {
+	min-width: 220px;
+	font-size: 13px;
+}
+
+#fstu-sailboats-existing-id-group.is-disabled {
+	opacity: 0.65;
+}
+
+#fstu-sailboats-existing-id-group.is-disabled .fstu-input,
+#fstu-sailboats-existing-id-group.is-disabled .fstu-btn {
+	pointer-events: none;
+}
+
+.fstu-sailboats-existing-selected {
+	padding: 10px 12px;
+	border: 1px solid #b7d7b7;
+	border-radius: 4px;
+	background: #f0f9eb;
+	color: #1f2937;
+	font-size: 13px;
+}
+
+.fstu-sailboats-existing-results {
+	max-height: 220px;
+	overflow-y: auto;
+	border: 1px solid #d1d5db;
+	border-radius: 4px;
+	background: #fff;
+}
+
+.fstu-sailboats-existing-results.is-error {
+	border-color: #fecaca;
+	background: #fff7f7;
+}
+
+.fstu-sailboats-existing-results__item {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	width: 100%;
+	padding: 10px 12px;
+	border: 0;
+	border-bottom: 1px solid #eef2f7;
+	background: #fff;
+	text-align: left;
+	color: #1f2937;
+	cursor: pointer;
+}
+
+.fstu-sailboats-existing-results__item:last-child {
+	border-bottom: 0;
+}
+
+.fstu-sailboats-existing-results__item:hover {
+	background: #f8faf6;
+	color: #c65b41;
+}
+
+.fstu-sailboats-existing-results__title {
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.fstu-sailboats-existing-results__meta,
+.fstu-sailboats-existing-results__message {
+	font-size: 12px;
+	color: #6b7280;
+}
+
+.fstu-sailboats-existing-results__message {
+	display: block;
+	padding: 10px 12px;
+}
+
+.fstu-form-message {
+	margin-bottom: 12px;
+	padding: 8px 10px;
+	border-radius: 4px;
+	font-size: 12px;
+	border: 1px solid transparent;
+}
+
+.fstu-form-message--success {
+	background: #ecfdf5;
+	border-color: #a7f3d0;
+	color: #065f46;
+}
+
+.fstu-form-message--error {
+	background: #fef2f2;
+	border-color: #fecaca;
+	color: #991b1b;
+}
+
+.fstu-form-section__title {
+	margin: 0 0 4px;
+	font-size: 18px;
+	font-weight: 600;
+	color: #1f2937;
+}
+
+/* Базові інпути для всього модуля (і для модалки, і для фільтрів) */
+.fstu-input,
+.fstu-select,
+.fstu-textarea {
+	width: 100%;
+	height: 30px;
+	min-height: 30px;
+	padding: 2px 8px;
+	border: 1px solid #d1d5db;
+	border-radius: 4px;
+	background: #f4f5f7;
+	font-size: 13px;
+	color: #111827;
+	box-sizing: border-box;
+	transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.fstu-textarea {
+	height: auto;
+	min-height: 80px;
+	resize: vertical;
+}
+
+.fstu-modal--sailboats-form .fstu-input::placeholder,
+.fstu-modal--sailboats-form .fstu-textarea::placeholder,
+#fstu-sailboats-view-modal .fstu-input::placeholder,
+#fstu-sailboats-view-modal .fstu-textarea::placeholder {
+	color: #6b7280;
+}
+
+/* Кнопки в модалці форми */
+.fstu-modal--sailboats-form .fstu-modal__footer .fstu-btn {
+	height: 28px;
+	padding: 0 12px;
+	font-size: 12px;
+}
+
+.fstu-form-section--compact .fstu-form-section__title {
+	display: none;
+}
+
+@media (max-width: 767px) {
+	.fstu-pagination {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+
+	.fstu-pagination--compact {
+		flex-wrap: wrap;
+	}
+
+	.fstu-modal-overlay {
+		padding: 10px;
+	}
+
+	.fstu-action-bar {
+		flex-wrap: wrap;
+		overflow-x: visible;
+	}
+
+	.fstu-action-bar__group,
+	.fstu-action-bar__group--filters {
+		flex-wrap: wrap;
+		justify-content: flex-start;
+	}
+
+	.fstu-action-bar--sailboats .fstu-select--compact {
+		width: 100%;
+		min-width: 0;
+	}
+
+	.fstu-view-grid__row {
+		grid-template-columns: 1fr;
+		gap: 4px;
+	}
+
+	.fstu-view-layout {
+		grid-template-columns: 1fr;
+	}
+
+	.fstu-view-layout__bottom,
+	.fstu-view-layout__meta,
+	.fstu-sailboats-form-layout,
+	.fstu-sailboats-form-bottom-row {
+		grid-template-columns: 1fr;
+	}
+
+	.fstu-form-grid--operation-inline {
+		grid-template-columns: 1fr;
+	}
+
+	.fstu-sailboats-existing-search {
+		flex-wrap: wrap;
+	}
+
+	.fstu-sailboats-existing-search .fstu-label {
+		min-width: 0;
+	}
+
+	.fstu-form-grid--two-cols,
+	.fstu-form-grid--three-cols,
+	.fstu-form-grid--four-cols {
+		grid-template-columns: 1fr;
+	}
+
+	.fstu-form-group--span-3 {
+		grid-column: auto;
+	}
+}
+

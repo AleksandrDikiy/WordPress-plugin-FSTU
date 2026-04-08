@@ -372,86 +372,42 @@
 	font-size: 12px;
 }
 
-.fstu-typeevent-opts {
-	position: relative;
-	display: inline-block;
+/* ============================================================ */
+/* Dropdown-меню дій у рядку таблиці                            */
+/* ============================================================ */
+.fstu-dropdown { position: relative; display: inline-block; }
+
+.fstu-dropdown-toggle { 
+    background: #f8f9fa; 
+    border: 1px solid #d1d5db; 
+    width: 28px; 
+    height: 28px; 
+    border-radius: 4px; 
+    cursor: pointer; 
+    font-size: 12px; /* Трохи менший розмір для стрілки, щоб виглядала акуратно */
+    color: #2c3e50; /* Темний (чорний) колір стрілки */
+    display: inline-flex; 
+    align-items: center; 
+    justify-content: center; 
+    transition: 0.2s; 
 }
 
-.fstu-typeevent-opts-btn {
-	background-color: var(--fstu-typeevent-primary);
-	color: #ffffff;
-	border: none;
-	padding: 4px 9px;
-	border-radius: 4px;
-	cursor: pointer;
-	font-size: 13px;
-	line-height: 1;
-	box-shadow: none;
-	height: auto;
-	width: auto;
+/* Червоний фон і біла стрілка при наведенні АБО коли меню відкрите */
+.fstu-dropdown-toggle:hover,
+.fstu-dropdown--open .fstu-dropdown-toggle { 
+    background: var(--fstu-typeevent-primary, #c0392b); 
+    color: #fff; 
+    border-color: var(--fstu-typeevent-primary, #c0392b); 
 }
 
-.fstu-typeevent-opts-btn:hover {
-	background-color: #a93226;
-}
-
-.fstu-typeevent-opts-list {
-	display: none;
-	position: absolute;
-	right: 0;
-	top: 100%;
-	min-width: 200px;
-	background: #ffffff;
-	border: 1px solid #ccc;
-	box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-	padding: 5px 0;
-	margin: 2px 0 0 0;
-	z-index: 99999;
-	list-style: none;
-}
-
-.fstu-typeevent-opts--open .fstu-typeevent-opts-list {
-	display: block;
-}
-
-.fstu-typeevent-opts.fstu-typeevent-dropup .fstu-typeevent-opts-list {
-	top: auto;
-	bottom: 100%;
-	margin-top: 0;
-	margin-bottom: 2px;
-	box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
-}
-
-.fstu-typeevent-opts-list li {
-	padding: 0;
-	margin: 0;
-	list-style: none;
-}
-
-.fstu-typeevent-opts-list li a {
-	padding: 8px 15px;
-	margin: 0;
-	display: block;
-	white-space: nowrap;
-	text-decoration: none;
-	color: #333;
-	text-align: left;
-	font-size: 13px;
-	border: none;
-	background: transparent;
-}
-
-.fstu-typeevent-opts-list li a:hover {
-	background-color: #f8f9fa;
-	color: var(--fstu-typeevent-primary);
-}
-
-.fstu-typeevent-opts-divider {
-	height: 1px;
-	background-color: #eee;
-	margin: 5px 0;
-	border: none;
-}
+.fstu-dropdown-menu { display: none; position: absolute; right: 0; top: calc(100% + 2px); background: #fff; min-width: 150px; border: 1px solid #d1d5db; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 100; padding: 4px 0; margin: 0; list-style: none; text-align: left; }
+.fstu-dropdown--open .fstu-dropdown-menu { display: block; }
+.fstu-dropdown--up .fstu-dropdown-menu { top: auto; bottom: calc(100% + 2px); }
+.fstu-dropdown-menu button { display: block; width: 100%; padding: 8px 14px; border: none; background: transparent; text-align: left; cursor: pointer; font-size: 13px; color: #2c3e50; }
+.fstu-dropdown-menu button:hover { background: #f0f2f5; color: var(--fstu-typeevent-primary); }
+.fstu-dropdown-divider { height: 1px; background: #e9ecef; margin: 4px 0; border: none; }
+.fstu-text-danger { color: #e74c3c !important; }
+.fstu-text-danger:hover { background: #fdecea !important; }
 
 .fstu-no-results {
 	text-align: center;
@@ -466,25 +422,26 @@
 	background: #f8d7da;
 }
 
-.fstu-pagination {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	justify-content: space-between;
-	gap: 8px;
-	margin-top: 12px;
-}
+/* ============================================================ */
+/* Пагінація (3 рівні колонки)                                  */
+/* ============================================================ */
+.fstu-pagination--compact { display: flex; align-items: center; justify-content: space-between; background: #f8f9fa; padding: 10px 15px; border: 1px solid #e0e0e0; border-radius: 4px; margin-top: 15px; }
+.fstu-pagination__left { flex: 1; display: flex; justify-content: flex-start; align-items: center; gap: 6px; }
+.fstu-pagination__per-page-label { font-size: 13px; color: #6c757d; white-space: nowrap; }
+.fstu-select--compact { height: 28px; padding: 2px 8px; font-size: 13px; border: 1px solid #d1d5db; border-radius: 4px; background: #fff; cursor: pointer; width: 70px !important; min-width: 70px !important; }
+.fstu-pagination__controls { flex: 1; display: flex; justify-content: center; align-items: center; gap: 4px; }
+.fstu-btn--page { min-width: 30px; height: 30px; padding: 0 8px; font-size: 13px; background: #fff; border: 1px solid #d1d5db; border-radius: 4px; cursor: pointer; color: #343a40; display: inline-flex; align-items: center; justify-content: center; transition: 0.2s; }
+.fstu-btn--page:hover { background: var(--fstu-typeevent-primary); color: #fff; border-color: var(--fstu-typeevent-primary); }
+.fstu-btn--page-active { background: var(--fstu-typeevent-primary); color: #fff; border-color: var(--fstu-typeevent-primary); font-weight: 600; pointer-events: none; }
+.fstu-btn--page:disabled { opacity: 0.45; pointer-events: none; background: #f8f9fa; }
+.fstu-pagination__info { flex: 1; display: flex; justify-content: flex-end; font-size: 13px; color: #6c757d; white-space: nowrap; }
 
-.fstu-pagination__info {
-	font-size: 11px;
-	color: var(--fstu-typeevent-text-light);
-}
-
-.fstu-pagination__controls {
-	display: flex;
-	align-items: center;
-	gap: 3px;
-}
+/* Бейджі протоколу */
+.fstu-badge { display: inline-block; padding: 3px 6px; font-size: 10px; font-weight: 600; border-radius: 3px; }
+.fstu-badge--insert { background: #d4edda; color: #155724; }
+.fstu-badge--update { background: #d1ecf1; color: #0c5460; }
+.fstu-badge--delete { background: #fdecea; color: #721c24; }
+.fstu-badge--default { background: #e2e3e5; color: #383d41; }
 
 .fstu-btn--page {
 	min-width: 28px;

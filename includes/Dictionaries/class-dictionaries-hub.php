@@ -54,6 +54,7 @@ class Dictionaries_Hub {
         $member_guidance_list_class = 'FSTU\\Dictionaries\\MemberGuidance\\Member_Guidance_List';
         $country_list_class = 'FSTU\\Dictionaries\\Country\\Country_List';
         $region_list_class = 'FSTU\\Dictionaries\\Region\\Region_List';
+        $city_list_class = 'FSTU\\Dictionaries\\City\\City_List';
         $commission_url = class_exists( Commission_List::class )
             ? Commission_List::get_module_url( 'hub' )
           : '';
@@ -71,6 +72,9 @@ class Dictionaries_Hub {
           : '';
         $region_url = class_exists( $region_list_class )
           ? $region_list_class::get_module_url( 'hub' )
+          : '';
+        $city_url = class_exists( $city_list_class )
+          ? $city_list_class::get_module_url( 'hub' )
           : '';
 
         if ( '' === $commission_url ) {
@@ -96,6 +100,9 @@ class Dictionaries_Hub {
         if ( '' === $region_url ) {
           $region_url = '#';
         }
+        if ( '' === $city_url ) {
+          $city_url = '#';
+        }
 
         return [
             'structure' => [
@@ -116,7 +123,7 @@ class Dictionaries_Hub {
                 'items' => [
                     [ 'title' => 'Країни', 'desc' => 'Довідник країн', 'url' => $country_url ],
                     [ 'title' => 'Області', 'desc' => 'Довідник областей України', 'url' => $region_url ],
-                    [ 'title' => 'Населені пункти', 'desc' => 'Довідник міст та сіл', 'url' => '/adm/City/' ],
+                    [ 'title' => 'Населені пункти', 'desc' => 'Довідник міст та сіл', 'url' => $city_url ],
                 ],
             ],
             'sports_events' => [

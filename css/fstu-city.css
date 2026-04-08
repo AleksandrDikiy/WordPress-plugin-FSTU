@@ -1,0 +1,108 @@
+/**
+ * CSS модуля "Довідник міст".
+ *
+ * Version:     1.1.0
+ * Date_update: 2026-04-07
+ *
+ * @package FSTU
+ */
+
+@import url("fstu-country.css");
+
+.fstu-city-wrap {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+	font-size: 13px;
+	color: #2c3e50;
+	width: 100%;
+}
+
+.fstu-city-access-state {
+	display: flex;
+	align-items: flex-start;
+	gap: 16px;
+	padding: 20px;
+	background: #f8f9fa;
+	border: 1px solid #d1d5db;
+	border-radius: 6px;
+}
+
+.fstu-city-link-button {
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: #1d4ed8;
+	text-align: left;
+	cursor: pointer;
+}
+
+.fstu-city-link-button:hover {
+	color: #c65b41;
+}
+
+.fstu-city-dropdown {
+	position: relative;
+	display: inline-block;
+	z-index: 5;
+}
+
+.fstu-city-dropdown__toggle {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	border: 1px solid #d1d5db;
+	border-radius: 4px;
+	background: #f8f9fa;
+	color: #374151;
+	cursor: pointer;
+}
+
+.fstu-city-dropdown__menu {
+	position: absolute;
+	right: 0;
+	top: calc(100% + 6px);
+	z-index: 40;
+	min-width: 180px;
+	padding: 6px 0;
+	border: 1px solid #d1d5db;
+	border-radius: 6px;
+	background: #fff;
+	box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+	display: none;
+}
+
+.fstu-city-dropdown.is-open .fstu-city-dropdown__menu {
+	display: block;
+}
+
+.fstu-city-dropdown__item {
+	display: flex;
+	width: 100%;
+	padding: 9px 12px;
+	border: 0;
+	background: transparent;
+	text-align: left;
+	font-size: 13px;
+	color: #374151;
+	cursor: pointer;
+}
+
+.fstu-city-dropdown__item:hover {
+	background: #f9fafb;
+	color: #c65b41;
+}
+
+.fstu-city-filter-wrap {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.fstu-city-filter-label {
+	font-size: 12px;
+	color: #374151;
+	white-space: nowrap;
+}
+

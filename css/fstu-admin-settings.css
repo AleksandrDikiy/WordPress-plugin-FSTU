@@ -1,0 +1,32 @@
+/**
+ * CSS адмін-сторінки налаштувань плагіна FSTU.
+ *
+ * Version:     1.0.0
+ * Date_update: 2026-04-07
+ *
+ * @package FSTU
+ */
+
+.fstu-admin-settings .postbox {
+	border-color: #d1d5db;
+}
+
+.fstu-admin-settings__heading {
+	padding: 12px 15px;
+}
+
+.fstu-admin-settings__field-label {
+	font-weight: 600;
+}
+
+.fstu-admin-settings__input {
+	width: 100%;
+	max-width: 600px;
+}
+
+.fstu-admin-settings__textarea {
+	width: 100%;
+	max-width: 800px;
+	min-height: 180px;
+}
+
