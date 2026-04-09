@@ -11,7 +11,7 @@
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
-
+/** @var array $item Дані судна та мерилки, передані з контролера */
 // Функція для безпечного виводу нулів і порожніх значень
 function fstu_print_val( $val ) {
 	return '' !== trim( (string) $val ) ? esc_html( $val ) : '—';

@@ -24,6 +24,8 @@ class Merilkas_Ajax {
 		// TODO: Додати хуки для get_single, create, update, delete, print
         add_action( 'wp_ajax_fstu_merilkas_print', [ $this, 'handle_print_merilka' ] );
         add_action( 'wp_ajax_fstu_merilkas_get_single', [ $this, 'handle_get_single' ] );
+        // 2026-04-09
+        add_action( 'wp_ajax_fstu_merilkas_get_list_by_sailboat', [ $this, 'handle_get_list_by_sailboat' ] );
 	}
 
 	/**
@@ -122,4 +124,40 @@ class Merilkas_Ajax {
 
 		wp_send_json_success( [ 'item' => $item ] );
 	}
+    /**
+     * Повертає готову HTML-таблицю історії мерилок для вкладення у вкладку Суднового реєстру.
+     */
+    public function handle_get_list_by_sailboat(): void {
+        // Перевіряємо обидва nonce, оскільки запит приходить з модалки суден
+        if ( ! wp_verify_nonce( $_POST['nonce'] ?? '', 'fstu_merilkas_nonce' ) && ! wp_verify_nonce( $_POST['nonce'] ?? '', \FSTU\Modules\Registry\Sailboats\Sailboats_List::NONCE_ACTION ) ) {
+            wp_send_json_error( [ 'message' => 'Помилка безпеки (Nonce).' ] );
+        }
+
+        $sailboat_id = absint( $_POST['sailboat_id'] ?? 0 );
+        if ( $sailboat_id <= 0 ) {
+            wp_send_json_error( [ 'message' => 'Невірний ідентифікатор судна.' ] );
+        }
+
+        // Перевіряємо базові права на перегляд Суднового реєстру
+        $permissions = \FSTU\Core\Capabilities::get_sailboats_permissions();
+        if ( empty( $permissions['canView'] ) ) {
+            wp_send_json_error( [ 'message' => 'Немає прав для перегляду.' ] );
+        }
+
+        // Отримуємо дані
+        $items      = $this->get_repository()->get_list_by_sailboat( $sailboat_id );
+        $can_manage = $this->current_user_can_manage_merilka( $sailboat_id );
+
+        // Генеруємо HTML (змінні $items та $can_manage будуть доступні всередині tab-list.php)
+        ob_start();
+        $template_path = FSTU_PLUGIN_DIR . 'views/merilkas/tab-list.php';
+        if ( file_exists( $template_path ) ) {
+            include $template_path;
+        } else {
+            echo '<div class="fstu-no-results">Шаблон таблиці не знайдено.</div>';
+        }
+        $html = ob_get_clean();
+
+        wp_send_json_success( [ 'html' => $html ] );
+    }
 }
