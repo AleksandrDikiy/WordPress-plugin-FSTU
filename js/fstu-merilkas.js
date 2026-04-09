@@ -275,5 +275,112 @@ jQuery( document ).ready( function( $ ) {
 			calculateGB();
 		}
 	});
+	// Допоміжна функція: перезавантаження вкладки у Судновому реєстрі
+	function reloadMerilkasTab() {
+		const $container = $( '#fstu-merilkas-tab-container' );
+		if ( $container.length ) {
+			$container.removeClass( 'is-loaded' );
+			// Клікаємо на активну вкладку, щоб запустився існуючий AJAX-обробник Lazy Loading
+			$( '.fstu-tab-btn[data-tab="merilka"]' ).trigger( 'click' );
+		}
+	}
+
+	// ЗБЕРЕЖЕННЯ (CREATE / UPDATE)
+	$( document ).on( 'submit', '#fstu-merilkas-form', function( event ) {
+		event.preventDefault();
+
+		const $form = $( this );
+		const $submitBtn = $( '#fstu-merilkas-form-submit' );
+		const $msg = $( '#fstu-merilkas-form-message' );
+
+		$submitBtn.prop( 'disabled', true );
+		$msg.removeClass( 'fstu-hidden fstu-form-message--success fstu-form-message--error' ).text( 'Збереження...' );
+
+		const formData = $form.serializeArray();
+		formData.push({ name: 'action', value: 'fstu_merilkas_save' });
+
+		$.ajax({
+			url: fstuMerilkasL10n.ajaxUrl,
+			method: 'POST',
+			data: formData
+		}).done(function( response ) {
+			if ( response.success ) {
+				$msg.addClass( 'fstu-form-message--success' ).text( response.data.message );
+				setTimeout(function() {
+					// Закриваємо модалку форми
+					$( '#fstu-merilkas-form-modal' ).addClass( 'fstu-hidden' ).attr( 'aria-hidden', 'true' );
+					if ( ! $( '.fstu-modal-overlay:not(.fstu-hidden)' ).length ) {
+						$( 'body' ).removeClass( 'fstu-modal-open' );
+					}
+					// Перезавантажуємо таблицю мерилок!
+					reloadMerilkasTab();
+				}, 700);
+			} else {
+				$msg.addClass( 'fstu-form-message--error' ).text( response.data.message );
+				$submitBtn.prop( 'disabled', false );
+			}
+		}).fail(function() {
+			$msg.addClass( 'fstu-form-message--error' ).text( 'Помилка з\'єднання з сервером.' );
+			$submitBtn.prop( 'disabled', false );
+		});
+	});
+
+	// ВИДАЛЕННЯ (DELETE)
+	$( document ).on( 'click', '.fstu-merilkas-delete-btn', function( event ) {
+		event.preventDefault();
+		const mrId = parseInt( $( this ).data( 'mr-id' ), 10 ) || 0;
+		const sailboatId = parseInt( $( '#fstu-merilkas-tab-container' ).data( 'sailboat-id' ), 10 ) || 0;
+
+		if ( mrId > 0 && confirm( 'Ви впевнені, що хочете видалити це свідоцтво? Операція незворотна.' ) ) {
+			$.ajax({
+				url: fstuMerilkasL10n.ajaxUrl,
+				method: 'POST',
+				data: {
+					action: 'fstu_merilkas_delete',
+					nonce: fstuMerilkasL10n.nonce,
+					mr_id: mrId,
+					sailboat_id: sailboatId
+				}
+			}).done(function( response ) {
+				if ( response.success ) {
+					reloadMerilkasTab();
+				} else {
+					alert( response.data.message || 'Помилка видалення.' );
+				}
+			}).fail(function() {
+				alert( 'Помилка з\'єднання з сервером.' );
+			});
+		}
+	});
+
+	// ПЕРЕГЛЯД / РЕДАГУВАННЯ (Завантаження даних у форму)
+	$( document ).on( 'click', '.fstu-merilkas-edit-btn', function( event ) {
+		event.preventDefault();
+		const mrId = parseInt( $( this ).data( 'mr-id' ), 10 ) || 0;
+		if ( mrId <= 0 ) return;
+
+		$( '#fstu-merilkas-form-modal' ).removeClass( 'fstu-hidden' ).attr( 'aria-hidden', 'false' );
+		$( 'body' ).addClass( 'fstu-modal-open' );
+		$( '#fstu-merilkas-form-title' ).text( 'Редагування свідоцтва' );
+		$( '#fstu-merilkas-form' )[0].reset();
+
+		$.ajax({
+			url: fstuMerilkasL10n.ajaxUrl,
+			method: 'POST',
+			data: { action: 'fstu_merilkas_get_single', nonce: fstuMerilkasL10n.nonce, mr_id: mrId }
+		}).done(function( response ) {
+			if ( response.success && response.data.item ) {
+				const item = response.data.item;
+				$( '#fstu-merilkas-item-id' ).val( item.MR_ID );
+				$( '#fstu-merilkas-sailboat-id' ).val( item.Sailboat_ID );
+				// Заповнюємо всі поля (беремо логіку з клонування)
+				const fields = [ 'MR_DateObmera', 'MR_GrevNumber', 'MR_CrewWeight', 'MR_Weight', 'MR_WeightMotor', 'MR_Length', 'MR_Machta_PPD', 'MR_Machta_PRD', 'MR_Liktros', 'MR_Grot_P', 'MR_Grot_B', 'MR_Grot_E', 'MR_Grot_HP', 'MR_Grot_HB', 'MR_Grot_HE', 'MR_Grot_VLM', 'MR_Staksel_P', 'MR_Staksel_B', 'MR_Staksel_E', 'MR_Staksel_HP', 'MR_Staksel_HB', 'MR_Staksel_HE', 'MR_Staksel_VLM', 'MR_Kliver_P', 'MR_Kliver_B', 'MR_Kliver_E', 'MR_Kliver_HP', 'MR_Kliver_HB', 'MR_Kliver_HE', 'MR_Kliver_VLM', 'MR_Spinaker_P', 'MR_Spinaker_B', 'MR_Spinaker_E', 'MR_Spinaker_SMW'];
+				fields.forEach(f => { if(item[f] !== null) $('#'+f).val(item[f]); });
+				if ( typeof calculateGB === 'function' ) calculateGB();
+			} else {
+				alert( response.data?.message || 'Помилка.' );
+			}
+		});
+	});
 	// ===================================================
 }); // Це остання дужка всього файлу

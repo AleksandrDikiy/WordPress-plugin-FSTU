@@ -354,11 +354,11 @@ function fstu_init(): void {
 	if ( class_exists( 'FSTU\\Modules\\PersonalCabinet\\Personal_Cabinet_Ajax' ) ) {
 		( new FSTU\Modules\PersonalCabinet\Personal_Cabinet_Ajax() )->init();
 	}
-	// ── Реєстр мерилок ФСТУ ────────────────────────────────────────────────────
-	if ( class_exists( 'FSTU\\Modules\\Registry\\Merilkas\\Merilkas_List' ) ) {
-		( new FSTU\Modules\Registry\Merilkas\Merilkas_List() )->init();
-	}
-	if ( class_exists( 'FSTU\\Modules\\Registry\\Merilkas\\Merilkas_Ajax' ) ) {
-		( new FSTU\Modules\Registry\Merilkas\Merilkas_Ajax() )->init();
-	}
+    // ── Реєстр мерилок ФСТУ ────────────────────────────────────────────────────
+    if ( class_exists( 'FSTU\\Modules\\Registry\\Merilkas\\Merilkas_List' ) ) {
+        ( new FSTU\Modules\Registry\Merilkas\Merilkas_List() )->init();
+    }
+    if ( class_exists( 'FSTU\\Modules\\Registry\\Merilkas\\Merilkas_Ajax' ) ) {
+        ( new FSTU\Modules\Registry\Merilkas\Merilkas_Ajax() )->init();
+    }
 }

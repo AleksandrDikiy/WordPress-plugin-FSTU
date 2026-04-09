@@ -239,4 +239,80 @@ class Merilkas_Service {
 			'MR_GB_CrewWeight'          => round( $gb_crew, 3 ),
 		];
 	}
+    /**
+     * Зберігає (створює або оновлює) свідоцтво з автоматичним розрахунком ГБ.
+     */
+    public function save_item( array $data ): array {
+        $mr_id       = (int) ( $data['mr_id'] ?? 0 );
+        $sailboat_id = (int) ( $data['sailboat_id'] ?? 0 );
+
+        if ( $sailboat_id <= 0 ) {
+            throw new \RuntimeException( 'Невірний ID судна.' );
+        }
+
+        // 1. Пропускаємо сирі дані через наш серверний калькулятор (Фаза 2)
+        $calc_params = $this->calculate_merilka_params( $data );
+
+        // 2. Формуємо масив безпечних даних для БД
+        $db_data = [
+            'Sailboat_ID' => $sailboat_id,
+            'User_ID'     => get_current_user_id(),
+        ];
+
+        // Всі поля, які прийшли з форми
+        $fields = [
+            'MR_DateObmera', 'MR_GrevNumber', 'MR_CrewWeight', 'MR_Weight', 'MR_WeightMotor', 'MR_Length',
+            'MR_Machta_PPD', 'MR_Machta_PRD', 'MR_Liktros',
+            'MR_Grot_P', 'MR_Grot_B', 'MR_Grot_E', 'MR_Grot_HP', 'MR_Grot_HB', 'MR_Grot_HE', 'MR_Grot_VLM',
+            'MR_Staksel_P', 'MR_Staksel_B', 'MR_Staksel_E', 'MR_Staksel_HP', 'MR_Staksel_HB', 'MR_Staksel_HE', 'MR_Staksel_VLM',
+            'MR_Kliver_P', 'MR_Kliver_B', 'MR_Kliver_E', 'MR_Kliver_HP', 'MR_Kliver_HB', 'MR_Kliver_HE', 'MR_Kliver_VLM',
+            'MR_Spinaker_P', 'MR_Spinaker_B', 'MR_Spinaker_E', 'MR_Spinaker_SMW'
+        ];
+
+        foreach ( $fields as $field ) {
+            if ( 'MR_DateObmera' === $field ) {
+                $db_data[ $field ] = sanitize_text_field( $data[ $field ] ?? '' );
+            } else {
+                $db_data[ $field ] = $this->parse_float( $data[ $field ] ?? 0 );
+            }
+        }
+
+        // 3. Об'єднуємо введені дані з розрахованими ГБ і площами
+        $db_data = array_merge( $db_data, $calc_params );
+
+        $this->begin_transaction();
+        try {
+            if ( $mr_id > 0 ) {
+                $this->repository->update_merilka( $mr_id, $db_data );
+                $this->protocol_service->log_action( 'U', sprintf( 'Оновлено обмірне свідоцтво (MR_ID:%d) для судна (Sailboat_ID:%d)', $mr_id, $sailboat_id ) );
+            } else {
+                $mr_id = $this->repository->insert_merilka( $db_data );
+                $this->protocol_service->log_action( 'I', sprintf( 'Створено обмірне свідоцтво (MR_ID:%d) для судна (Sailboat_ID:%d)', $mr_id, $sailboat_id ) );
+            }
+            $this->commit_transaction();
+        } catch ( \Throwable $e ) {
+            $this->rollback_transaction();
+            throw $e;
+        }
+
+        return [ 'mr_id' => $mr_id ];
+    }
+
+    /**
+     * Видаляє свідоцтво із перевіркою залежностей.
+     */
+    public function delete_item( int $mr_id ): void {
+        $this->check_usage_dependency( $mr_id ); // Заблокує, якщо є в таблиці Application
+
+        $this->begin_transaction();
+        try {
+            $this->repository->delete_merilka( $mr_id );
+            $this->protocol_service->log_action( 'D', sprintf( 'Видалено обмірне свідоцтво (MR_ID:%d)', $mr_id ) );
+            $this->commit_transaction();
+        } catch ( \Throwable $e ) {
+            $this->rollback_transaction();
+            throw $e;
+        }
+    }
+    // --------------
 }

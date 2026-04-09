@@ -86,7 +86,7 @@ jQuery( document ).ready( function ( $ ) {
 						url: fstuSailboatsL10n.ajaxUrl,
 						method: 'POST',
 						data: {
-							action: 'fstu_merilkas_get_list_by_sailboat',
+							action: 'fstu_load_merilkas_tab',
 							nonce: fstuSailboatsL10n.nonce, // ЗМІНЕНО: Використовуємо рідний nonce суднового реєстру
 							sailboat_id: sailboatId
 						}
