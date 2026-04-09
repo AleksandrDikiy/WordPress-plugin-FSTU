@@ -1,0 +1,211 @@
+/**
+ * Специфічні стилі модуля "Мерилки".
+ * Version: 1.0.0
+ */
+
+/* Широка модалка для 3 колонок */
+.fstu-modal--merilkas {
+	max-width: 1080px !important;
+	margin: 0 auto;
+}
+
+.fstu-modal--merilkas .fstu-modal__body {
+	padding: 10px 14px;
+	background: #f0f2f5;
+	display: flex;
+	flex-direction: column;
+	max-height: calc(100vh - 80px); /* Запобігаємо випадінню за екран */
+	overflow-y: auto;
+}
+
+/* 3 колонки (CSS Grid) */
+.fstu-merilkas-layout {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 12px;
+	margin-bottom: 12px;
+}
+
+.fstu-merilkas-column {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+/* Картка секції */
+.fstu-merilkas-card {
+	background: #fff;
+	border: 1px solid #d1d5db;
+	border-radius: 6px;
+	padding: 10px 12px;
+	box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.fstu-merilkas-card__title {
+	margin: 0 0 10px;
+	font-size: 12px;
+	font-weight: 700;
+	color: #1f2937;
+	text-transform: uppercase;
+	border-bottom: 1px solid #e5e7eb;
+	padding-bottom: 4px;
+}
+
+/* Горизонтальні поля всередині картки */
+.fstu-merilkas-grid {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.fstu-merilkas-grid .fstu-form-group {
+	display: grid;
+	grid-template-columns: 140px minmax(50px, 1fr);
+	align-items: center;
+	gap: 8px;
+}
+
+.fstu-merilkas-grid .fstu-label {
+	font-size: 11px;
+	color: #4b5563;
+	margin: 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.fstu-text-primary {
+	color: #2563eb !important;
+	font-weight: 700 !important;
+}
+
+/* Ультра-компактні інпути */
+.fstu-modal--merilkas .fstu-input {
+	height: 24px !important;
+	min-height: 24px !important;
+	padding: 0 6px;
+	font-size: 12px;
+	border: 1px solid #c0c4cc;
+	border-radius: 3px;
+	background: #fdfdfd;
+}
+
+.fstu-modal--merilkas .fstu-input:focus {
+	background: #fff;
+	border-color: #c0392b;
+	box-shadow: 0 0 0 1px #c0392b;
+}
+
+.fstu-modal--merilkas .fstu-input[readonly] {
+	background: #eef2f7;
+	border-color: transparent;
+	font-weight: 600;
+	color: #1f2937;
+}
+
+/* ============================================================ */
+/* STICKY FOOTER З РЕЗУЛЬТАТАМИ ГБ                              */
+/* ============================================================ */
+.fstu-merilkas-live-footer {
+	position: sticky;
+	bottom: -10px;
+	background: #fff;
+	border: 1px solid #d1d5db;
+	border-radius: 6px;
+	padding: 10px 14px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	box-shadow: 0 -4px 12px rgba(0,0,0,0.08);
+	z-index: 10;
+}
+
+.fstu-merilkas-results-grid {
+	display: flex;
+	gap: 16px;
+}
+
+.fstu-result-item {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.fstu-result-label {
+	font-size: 10px;
+	font-weight: 700;
+	color: #6b7280;
+	text-transform: uppercase;
+}
+
+.fstu-result-value {
+	border: none;
+	background: #dcfce7; /* Легкий зелений фон для акценту */
+	color: #065f46;
+	font-size: 16px;
+	font-weight: 700;
+	padding: 2px 8px;
+	border-radius: 4px;
+	width: 80px;
+	text-align: center;
+}
+
+.fstu-merilkas-actions .fstu-btn {
+	height: 36px;
+	padding: 0 24px;
+	font-size: 14px;
+}
+/* ============================================================ */
+/* ЖОРСТКЕ ПЕРЕКРИТТЯ СТИЛІВ WORDPRESS ДЛЯ КНОПОК               */
+/* ============================================================ */
+
+/* Кнопка закриття (Хрестик) */
+.fstu-modal--merilkas .fstu-modal__close {
+	background: transparent !important;
+	border: none !important;
+	color: #6b7280 !important;
+	font-size: 28px !important;
+	line-height: 1 !important;
+	width: 32px !important;
+	height: 32px !important;
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	box-shadow: none !important;
+	cursor: pointer;
+	padding: 0 !important;
+	border-radius: 4px !important;
+}
+
+.fstu-modal--merilkas .fstu-modal__close:hover,
+.fstu-modal--merilkas .fstu-modal__close:focus {
+	color: #c0392b !important; /* Корпоративний червоний при наведенні */
+	background: #f3f4f6 !important;
+	outline: none !important;
+	box-shadow: none !important;
+}
+
+/* Кнопка "Зберегти" */
+.fstu-merilkas-actions .fstu-btn--primary {
+	background: #c65b41 !important;
+	border-color: #c65b41 !important;
+	color: #fff !important;
+	font-weight: 600 !important;
+	box-shadow: none !important;
+	transition: background 0.2s, border-color 0.2s !important;
+	text-decoration: none !important;
+}
+
+.fstu-merilkas-actions .fstu-btn--primary:hover,
+.fstu-merilkas-actions .fstu-btn--primary:focus {
+	background: #b14e36 !important;
+	border-color: #b14e36 !important;
+	color: #fff !important;
+	outline: none !important;
+}
+/* Адаптив */
+@media (max-width: 900px) {
+	.fstu-merilkas-layout { grid-template-columns: 1fr; }
+	.fstu-merilkas-live-footer { flex-direction: column; gap: 12px; }
+	.fstu-merilkas-results-grid { flex-wrap: wrap; justify-content: center; }
+}
