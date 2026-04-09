@@ -88,6 +88,20 @@ class Steering_Repository {
 		return null !== $existing_id;
 	}
 
+	public function get_steering_id_by_user_id( int $user_id ): int {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$existing_id = $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT Steering_ID FROM Steering WHERE User_ID = %d LIMIT 1',
+				$user_id
+			)
+		);
+
+		return $existing_id ? (int) $existing_id : 0;
+	}
+
 	public function user_exists( int $user_id ): bool {
 		global $wpdb;
 

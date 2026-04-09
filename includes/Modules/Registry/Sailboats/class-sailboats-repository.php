@@ -9,8 +9,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Репозиторій модуля "Судновий реєстр ФСТУ".
  * Відповідає за SQL-запити списку, картки, протоколу та довідників фільтрів.
  *
- * Version:     1.11.0
- * Date_update: 2026-04-08
+ * Version:     1.11.1
+ * Date_update: 2026-04-09
  *
  * @package FSTU\Modules\Registry\Sailboats
  */
@@ -2471,5 +2471,38 @@ class Sailboats_Repository {
 		$sql = 'SELECT COUNT(*) FROM ApplicationShipTicket WHERE Sailboat_ID = %d AND AppShipTicket_ID <> %d';
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.NotPrepared
 		return (int) $wpdb->get_var( $wpdb->prepare( $sql, $sailboat_id, $appshipticket_id ) );
+	}
+	/**
+	 * Повертає список мерилок для конкретного судна.
+	 *
+	 * @param int $sailboat_id ID судна.
+	 * @return array<int,array<string,mixed>>
+	 */
+	public function get_list_by_sailboat( int $sailboat_id ): array {
+		if ( $sailboat_id <= 0 ) {
+			return [];
+		}
+
+		global $wpdb;
+
+		$sql = 'SELECT * FROM Merilka WHERE Sailboat_ID = %d ORDER BY MR_DateObmera DESC, MR_ID DESC';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+		$rows = $wpdb->get_results( $wpdb->prepare( $sql, $sailboat_id ), ARRAY_A );
+
+		if ( ! is_array( $rows ) || empty( $rows ) ) {
+			return [];
+		}
+
+		$items = [];
+		$is_first = true;
+
+		foreach ( $rows as $row ) {
+			$row['is_latest'] = $is_first; // Перша мерилка завжди актуальна
+			$row['is_used']   = $this->is_merilka_used( (int) $row['MR_ID'] );
+			$items[]          = $row;
+			$is_first         = false;
+		}
+
+		return $items;
 	}
 }

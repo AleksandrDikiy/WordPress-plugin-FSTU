@@ -2,8 +2,8 @@
 /**
  * Основний шаблон модуля «Реєстр стернових ФСТУ».
  *
- * Version:     1.4.0
- * Date_update: 2026-04-08
+ * Version:     1.5.0
+ * Date_update: 2026-04-09
  *
  * @package FSTU\Modules\Registry\Steering
  */
@@ -22,14 +22,24 @@ $can_see_finance = ! empty( $permissions['canSeeFinance'] );
 $show_submit_btn = $can_manage || ( $can_submit && ! $submit_blocked );
 $status_options  = isset( $status_options ) && is_array( $status_options ) ? $status_options : [];
 $policy_url      = isset( $policy_url ) ? (string) $policy_url : '';
+$bootstrap_notice = isset( $bootstrap_notice ) ? (string) $bootstrap_notice : '';
+$bootstrap_return_url = isset( $bootstrap_return_url ) ? (string) $bootstrap_return_url : '';
 ?>
 
 <div id="fstu-steering" class="fstu-steering-wrap">
 	<h2 class="fstu-steering-title"><?php esc_html_e( 'Реєстр стернових ФСТУ', 'fstu' ); ?></h2>
 	<div id="fstu-steering-notice" class="fstu-steering-notice fstu-hidden" aria-live="polite"></div>
+	<?php if ( '' !== $bootstrap_notice ) : ?>
+		<div class="fstu-steering-notice fstu-steering-notice--success" aria-live="polite"><?php echo esc_html( $bootstrap_notice ); ?></div>
+	<?php endif; ?>
 
 	<div class="fstu-action-bar fstu-action-bar--steering">
 		<div class="fstu-action-bar__group fstu-action-bar__group--buttons">
+			<?php if ( '' !== $bootstrap_return_url ) : ?>
+				<a class="fstu-btn fstu-btn--secondary" href="<?php echo esc_url( $bootstrap_return_url ); ?>">
+					<?php esc_html_e( 'ПОВЕРНУТИСЬ ДО КАБІНЕТУ', 'fstu' ); ?>
+				</a>
+			<?php endif; ?>
 			<?php if ( $show_submit_btn ) : ?>
 				<button type="button" class="fstu-btn fstu-btn--secondary" id="fstu-steering-add-btn">
 					<?php esc_html_e( 'ПОДАТИ ЗАЯВКУ', 'fstu' ); ?>

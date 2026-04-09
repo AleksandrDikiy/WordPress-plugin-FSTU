@@ -2,8 +2,8 @@
 /**
  * Основний шаблон модуля "Судновий реєстр ФСТУ".
  *
- * Version:     1.3.0
- * Date_update: 2026-04-07
+ * Version:     1.4.0
+ * Date_update: 2026-04-09
  *
  * @package FSTU\Modules\Registry\Sailboats
  */
@@ -19,10 +19,15 @@ $guest_login_url = isset( $guest_login_url ) ? (string) $guest_login_url : wp_lo
 $can_submit      = ! empty( $permissions['canSubmit'] );
 $can_manage      = ! empty( $permissions['canManage'] );
 $can_protocol    = ! empty( $permissions['canProtocol'] );
+$bootstrap_notice = isset( $bootstrap_notice ) ? (string) $bootstrap_notice : '';
+$bootstrap_return_url = isset( $bootstrap_return_url ) ? (string) $bootstrap_return_url : '';
 ?>
 
 <div id="fstu-sailboats" class="fstu-sailboats-wrap">
 	<h2 class="fstu-sailboats-title"><?php esc_html_e( 'Судновий реєстр ФСТУ', 'fstu' ); ?></h2>
+	<?php if ( '' !== $bootstrap_notice ) : ?>
+		<div class="fstu-page-notice fstu-page-notice--success" aria-live="polite"><?php echo esc_html( $bootstrap_notice ); ?></div>
+	<?php endif; ?>
 
 	<?php if ( $guest_mode ) : ?>
 		<div class="fstu-sailboats-access-state fstu-sailboats-access-state--guest">
@@ -51,6 +56,12 @@ $can_protocol    = ! empty( $permissions['canProtocol'] );
 
 	<div class="fstu-action-bar fstu-action-bar--sailboats">
 		<div class="fstu-action-bar__group fstu-action-bar__group--buttons">
+			<?php if ( '' !== $bootstrap_return_url ) : ?>
+				<a class="fstu-btn fstu-btn--secondary" href="<?php echo esc_url( $bootstrap_return_url ); ?>">
+					<span class="fstu-btn__icon">↩</span>
+					<?php esc_html_e( 'ПОВЕРНУТИСЬ ДО КАБІНЕТУ', 'fstu' ); ?>
+				</a>
+			<?php endif; ?>
 			<?php if ( $can_manage || $can_submit ) : ?>
 				<button type="button" class="fstu-btn fstu-btn--secondary" id="fstu-sailboats-add-btn">
 					<span class="fstu-btn__icon">➕</span>

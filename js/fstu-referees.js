@@ -1,8 +1,8 @@
 /**
  * JS модуля «Реєстр суддів ФСТУ».
  *
- * Version:     1.0.1
- * Date_update: 2026-04-08
+ * Version:     1.1.0
+ * Date_update: 2026-04-09
  *
  * @package FSTU
  */
@@ -53,6 +53,9 @@ jQuery( document ).ready( function ( $ ) {
 		userId: 0,
 		certificate: null,
 	};
+	const bootstrapState = {
+		applied: false,
+	};
 
 	bindGlobalEvents();
 	bindListEvents();
@@ -63,6 +66,7 @@ jQuery( document ).ready( function ( $ ) {
 
 	loadDictionaries().always( function () {
 		loadList();
+		applyBootstrapIntent();
 	} );
 
 	function bindGlobalEvents() {
@@ -415,6 +419,40 @@ jQuery( document ).ready( function ( $ ) {
 		} ).fail( function ( response ) {
 			showMessage( '#fstu-referees-form-message', getErrorMessage( response, l10n.messages.error ), 'error' );
 		} );
+	}
+
+	function applyBootstrapIntent() {
+		const bootstrap = l10n.bootstrap || {};
+
+		if ( bootstrapState.applied || ! bootstrap.autoOpen ) {
+			return;
+		}
+
+		bootstrapState.applied = true;
+
+		if ( bootstrap.mode === 'edit' && parseInt( bootstrap.refereeId, 10 ) > 0 ) {
+			openRefereeFormModal( parseInt( bootstrap.refereeId, 10 ) || 0 );
+			return;
+		}
+
+		openRefereeFormModal();
+		prefillBootstrapUser( parseInt( bootstrap.userId, 10 ) || 0, bootstrap.userFio || '' );
+	}
+
+	function prefillBootstrapUser( userId, fio ) {
+		if ( userId <= 0 ) {
+			return;
+		}
+
+		const $select = $( '#fstu-referees-form-user-id' );
+		if ( ! $select.find( 'option[value="' + userId + '"]' ).length ) {
+			$select.append( '<option value="' + escAttr( userId ) + '">' + escHtml( fio || ( 'User #' + userId ) ) + '</option>' );
+		}
+
+		$select.val( String( userId ) );
+		$( '#fstu-referees-user-group' ).addClass( 'fstu-hidden' );
+		$( '#fstu-referees-user-name-group' ).removeClass( 'fstu-hidden' );
+		$( '#fstu-referees-form-user-name' ).text( fio || ( 'User #' + userId ) );
 	}
 
 	function openCertificatesModal( refereeId, userId, fio ) {

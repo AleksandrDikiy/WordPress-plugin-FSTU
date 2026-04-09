@@ -606,26 +606,36 @@ body.fstu-modal-open {
 	padding: 0 4px;
 }
 
-.fstu-tab-btn {
-	background: transparent;
-	border: none;
-	border-bottom: 2px solid transparent;
-	padding: 8px 12px 10px;
-	margin-bottom: -2px;
-	font-size: 13px;
-	font-weight: 700;
-	color: #6b7280;
-	cursor: pointer;
-	transition: color 0.2s, border-color 0.2s;
+/* Жорсткий захист стилів вкладок (Табів) від теми (Astra тощо) */
+.fstu-tabs-nav .fstu-tab-btn {
+	background: transparent !important;
+	border: none !important;
+	border-bottom: 2px solid transparent !important;
+	color: #6b7280 !important; /* Сірий текст за замовчуванням */
+	padding: 10px 16px !important;
+	font-size: 13px !important;
+	font-weight: 600 !important;
+	text-transform: uppercase !important;
+	cursor: pointer !important;
+	border-radius: 0 !important;
+	box-shadow: none !important;
+	transition: all 0.2s ease !important;
+	outline: none !important;
 }
 
-.fstu-tab-btn:hover {
-	color: #111827;
+/* Стан при наведенні */
+.fstu-tabs-nav .fstu-tab-btn:hover,
+.fstu-tabs-nav .fstu-tab-btn:focus {
+	color: #374151 !important;
+	border-bottom-color: #d1d5db !important;
+	background: rgba(0,0,0,0.02) !important;
 }
 
-.fstu-tab-btn.is-active {
-	color: #c0392b; /* Корпоративний червоний ФСТУ */
-	border-bottom-color: #c0392b;
+/* Активна вкладка */
+.fstu-tabs-nav .fstu-tab-btn.is-active {
+	color: #c65b41 !important; /* Наш корпоративний теракотовий колір ФСТУ */
+	border-bottom-color: #c65b41 !important;
+	background: transparent !important; /* Прибираємо синій фон Астри! */
 }
 
 .fstu-tab-content {

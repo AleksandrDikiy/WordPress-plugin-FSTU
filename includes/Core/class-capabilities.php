@@ -2,8 +2,8 @@
 /**
  * Клас централізованого керування capability-моделлю ФСТУ.
  *
- * Version:     1.10.0
- * Date_update: 2026-04-08
+ * Version:     1.13.0
+ * Date_update: 2026-04-09
  *
  * @package FSTU\Core
  */
@@ -69,6 +69,24 @@ class Capabilities {
 	public const MANAGE_STEERING_STATUS        = 'fstu_manage_steering_status';
 	public const VIEW_STEERING_FINANCE_COLUMNS = 'fstu_view_steering_finance_columns';
 	public const SEND_STEERING_NOTIFICATIONS   = 'fstu_send_steering_notifications';
+	public const VIEW_PERSONAL_CABINET         = 'fstu_view_personal_cabinet';
+	public const MANAGE_PERSONAL_CABINET       = 'fstu_manage_personal_cabinet';
+	public const VIEW_PERSONAL_CABINET_PROTOCOL = 'fstu_view_personal_cabinet_protocol';
+	public const VIEW_OWN_PERSONAL_PRIVATE     = 'fstu_view_own_personal_private';
+	public const VIEW_PERSONAL_SERVICE         = 'fstu_view_personal_service';
+	public const MANAGE_PERSONAL_PROFILE       = 'fstu_manage_personal_profile';
+	public const MANAGE_PERSONAL_CLUBS         = 'fstu_manage_personal_clubs';
+	public const MANAGE_PERSONAL_CITIES        = 'fstu_manage_personal_cities';
+	public const MANAGE_PERSONAL_UNITS         = 'fstu_manage_personal_units';
+	public const MANAGE_PERSONAL_TOURISM_TYPES = 'fstu_manage_personal_tourism_types';
+	public const MANAGE_PERSONAL_EXPERIENCE    = 'fstu_manage_personal_experience';
+	public const MANAGE_PERSONAL_RANKS         = 'fstu_manage_personal_ranks';
+	public const MANAGE_PERSONAL_JUDGING       = 'fstu_manage_personal_judging';
+	public const MANAGE_PERSONAL_DUES          = 'fstu_manage_personal_dues';
+	public const PAY_PERSONAL_DUES_ONLINE      = 'fstu_pay_personal_dues_online';
+	public const MANAGE_PERSONAL_SAILING       = 'fstu_manage_personal_sailing';
+	public const MANAGE_PERSONAL_SAIL_DUES     = 'fstu_manage_personal_sail_dues';
+	public const VIEW_PERSONAL_SAIL_DUES       = 'fstu_view_personal_sail_dues';
 
 	/**
 	 * Ініціалізує capability-модель для поточного запиту.
@@ -144,6 +162,24 @@ class Capabilities {
 				self::MANAGE_STEERING_STATUS        => true,
 				self::VIEW_STEERING_FINANCE_COLUMNS => true,
 				self::SEND_STEERING_NOTIFICATIONS   => true,
+				self::VIEW_PERSONAL_CABINET         => true,
+				self::MANAGE_PERSONAL_CABINET       => true,
+				self::VIEW_PERSONAL_CABINET_PROTOCOL => true,
+				self::VIEW_OWN_PERSONAL_PRIVATE     => true,
+				self::VIEW_PERSONAL_SERVICE         => true,
+				self::MANAGE_PERSONAL_PROFILE       => true,
+				self::MANAGE_PERSONAL_CLUBS         => true,
+				self::MANAGE_PERSONAL_CITIES        => true,
+				self::MANAGE_PERSONAL_UNITS         => true,
+				self::MANAGE_PERSONAL_TOURISM_TYPES => true,
+				self::MANAGE_PERSONAL_EXPERIENCE    => true,
+				self::MANAGE_PERSONAL_RANKS         => true,
+				self::MANAGE_PERSONAL_JUDGING       => true,
+				self::MANAGE_PERSONAL_DUES          => true,
+				self::PAY_PERSONAL_DUES_ONLINE      => true,
+				self::MANAGE_PERSONAL_SAILING       => true,
+				self::MANAGE_PERSONAL_SAIL_DUES     => true,
+				self::VIEW_PERSONAL_SAIL_DUES       => true,
 			],
 			'sailadministrator' => [
 				self::ACCESS_ADMIN                  => true,
@@ -164,6 +200,23 @@ class Capabilities {
 				self::MANAGE_STEERING_STATUS        => true,
 				self::VIEW_STEERING_FINANCE_COLUMNS => true,
 				self::SEND_STEERING_NOTIFICATIONS   => true,
+				self::VIEW_PERSONAL_CABINET         => true,
+				self::MANAGE_PERSONAL_SAILING       => true,
+				self::VIEW_PERSONAL_SAIL_DUES       => true,
+			],
+			'globalregistrar' => [
+				self::ACCESS_ADMIN                  => true,
+				self::VIEW_PERSONAL_CABINET         => true,
+				self::MANAGE_PERSONAL_CABINET       => true,
+				self::VIEW_PERSONAL_CABINET_PROTOCOL => true,
+				self::VIEW_PERSONAL_SERVICE         => true,
+				self::MANAGE_PERSONAL_PROFILE       => true,
+				self::MANAGE_PERSONAL_CLUBS         => true,
+				self::MANAGE_PERSONAL_CITIES        => true,
+				self::MANAGE_PERSONAL_UNITS         => true,
+				self::MANAGE_PERSONAL_TOURISM_TYPES => true,
+				self::MANAGE_PERSONAL_EXPERIENCE    => true,
+				self::MANAGE_PERSONAL_JUDGING       => true,
 			],
 			'userregistrar' => [
 				self::ACCESS_ADMIN             => true,
@@ -186,6 +239,17 @@ class Capabilities {
 				self::DELETE_CITY                => true,
 				self::VIEW_CITY_PROTOCOL         => true,
 				self::VIEW_REFEREES              => true,
+				self::VIEW_PERSONAL_CABINET      => true,
+				self::MANAGE_PERSONAL_CABINET    => true,
+				self::VIEW_PERSONAL_CABINET_PROTOCOL => true,
+				self::VIEW_PERSONAL_SERVICE      => true,
+				self::MANAGE_PERSONAL_PROFILE    => true,
+				self::MANAGE_PERSONAL_CLUBS      => true,
+				self::MANAGE_PERSONAL_CITIES     => true,
+				self::MANAGE_PERSONAL_UNITS      => true,
+				self::MANAGE_PERSONAL_TOURISM_TYPES => true,
+				self::MANAGE_PERSONAL_EXPERIENCE => true,
+				self::MANAGE_PERSONAL_RANKS      => true,
 			],
 			'userfstu' => [
 				self::VIEW_TYPEGUIDANCE => true,
@@ -195,6 +259,9 @@ class Capabilities {
 				self::VIEW_REFEREES => true,
 				self::VIEW_STEERING => true,
 				self::SUBMIT_STEERING_APPLICATIONS => true,
+				self::VIEW_PERSONAL_CABINET => true,
+				self::VIEW_OWN_PERSONAL_PRIVATE => true,
+				self::PAY_PERSONAL_DUES_ONLINE => true,
 			],
 			'referee' => [
 				self::VIEW_REFEREES               => true,
@@ -203,6 +270,15 @@ class Capabilities {
 				self::VIEW_REFEREES_PROTOCOL      => true,
 				self::MANAGE_REFEREE_CERTIFICATES => true,
 				self::UNBIND_REFEREE_CERTIFICATES => true,
+				self::VIEW_PERSONAL_CABINET       => true,
+				self::MANAGE_PERSONAL_EXPERIENCE  => true,
+				self::MANAGE_PERSONAL_JUDGING     => true,
+			],
+			'sailingfinancier' => [
+				self::VIEW_PERSONAL_CABINET => true,
+				self::MANAGE_PERSONAL_SAILING => true,
+				self::MANAGE_PERSONAL_SAIL_DUES => true,
+				self::VIEW_PERSONAL_SAIL_DUES => true,
 			],
 		];
 
@@ -417,6 +493,55 @@ class Capabilities {
 			'canSeeFinance'        => self::current_user_can_view_steering_finance_columns(),
 			'canNotify'            => self::current_user_can_send_steering_notifications(),
 			'canViewHiddenExpired' => self::current_user_can_view_steering_finance_columns(),
+		];
+	}
+
+	/**
+	 * Повертає прапорці прав для модуля особистого кабінету.
+	 *
+	 * @return array<string,bool>
+	 */
+	public static function get_personal_cabinet_permissions( int $profile_user_id = 0 ): array {
+		$current_user_id  = get_current_user_id();
+		$normalized_user  = $profile_user_id > 0 ? $profile_user_id : $current_user_id;
+		$profile_user     = $normalized_user > 0 ? get_userdata( $normalized_user ) : false;
+		$has_target_user  = $profile_user instanceof \WP_User;
+		$is_logged_in     = is_user_logged_in();
+		$is_owner         = $current_user_id > 0 && $normalized_user === $current_user_id;
+		$current_user     = wp_get_current_user();
+		$user_roles       = $current_user instanceof \WP_User ? array_map( 'strval', (array) $current_user->roles ) : [];
+		$can_view_public  = $has_target_user;
+		$can_view         = self::current_user_can_view_personal_cabinet() || $can_view_public;
+		$can_manage       = self::current_user_can_manage_personal_cabinet();
+		$can_private      = $has_target_user && $is_logged_in && ( $can_manage || $is_owner || ( $is_owner && self::current_user_can_view_own_personal_private() ) );
+		$can_service      = $has_target_user && $is_logged_in && ( $is_owner || $can_manage || self::current_user_can_view_personal_service() );
+		$can_manage_profile = $is_logged_in && ( self::current_user_can_manage_personal_profile() || $is_owner );
+		$can_manage_dues  = $has_target_user && $is_logged_in && ( self::current_user_can_manage_personal_dues() || $is_owner );
+		$can_pay_online   = $has_target_user && $is_logged_in && ( self::current_user_can_manage_personal_dues() || ( $is_owner && self::current_user_can_pay_personal_dues_online() ) );
+		$can_view_sail_dues = $has_target_user && ( self::current_user_can_view_personal_sail_dues() || ( $is_owner && in_array( 'usersail', $user_roles, true ) ) );
+
+		return [
+			'canView'          => $can_view,
+			'canViewPrivate'   => $can_private,
+			'canViewService'   => $can_service,
+			'canManage'        => $can_manage,
+			'canProtocol'      => self::current_user_can_view_personal_cabinet_protocol(),
+			'canEditProfile'   => $can_manage_profile,
+			'canManageClubs'   => self::current_user_can_manage_personal_clubs(),
+			'canManageCities'  => self::current_user_can_manage_personal_cities(),
+			'canManageUnits'   => self::current_user_can_manage_personal_units(),
+			'canManageTourism' => self::current_user_can_manage_personal_tourism_types(),
+			'canManageExperience' => self::current_user_can_manage_personal_experience() || $is_owner,
+			'canManageRanks'   => self::current_user_can_manage_personal_ranks(),
+			'canManageJudging' => self::current_user_can_manage_personal_judging(),
+			'canManageDues'    => $can_manage_dues,
+			'canUploadReceipt' => $can_manage_dues,
+			'canPayOnline'     => $can_pay_online,
+			'canManageSailing' => self::current_user_can_manage_personal_sailing(),
+			'canManageSailDues' => self::current_user_can_manage_personal_sail_dues(),
+			'canViewSailDues'  => $can_view_sail_dues,
+			'isOwner'          => $is_owner,
+			'isGuest'          => ! $is_logged_in,
 		];
 	}
 
@@ -791,5 +916,86 @@ class Capabilities {
 	 */
 	public static function current_user_can_send_steering_notifications(): bool {
 		return current_user_can( 'manage_options' ) || current_user_can( self::SEND_STEERING_NOTIFICATIONS );
+	}
+
+	/**
+	 * Чи може користувач переглядати модуль особистого кабінету.
+	 */
+	public static function current_user_can_view_personal_cabinet(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_PERSONAL_CABINET );
+	}
+
+	/**
+	 * Чи може користувач керувати даними особистого кабінету.
+	 */
+	public static function current_user_can_manage_personal_cabinet(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_PERSONAL_CABINET );
+	}
+
+	/**
+	 * Чи може користувач переглядати протокол особистого кабінету.
+	 */
+	public static function current_user_can_view_personal_cabinet_protocol(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_PERSONAL_CABINET_PROTOCOL );
+	}
+
+	public static function current_user_can_view_own_personal_private(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_OWN_PERSONAL_PRIVATE );
+	}
+
+	public static function current_user_can_view_personal_service(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_PERSONAL_SERVICE );
+	}
+
+	public static function current_user_can_manage_personal_profile(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_PERSONAL_PROFILE );
+	}
+
+	public static function current_user_can_manage_personal_clubs(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_PERSONAL_CLUBS );
+	}
+
+	public static function current_user_can_manage_personal_cities(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_PERSONAL_CITIES );
+	}
+
+	public static function current_user_can_manage_personal_units(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_PERSONAL_UNITS );
+	}
+
+	public static function current_user_can_manage_personal_tourism_types(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_PERSONAL_TOURISM_TYPES );
+	}
+
+	public static function current_user_can_manage_personal_experience(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_PERSONAL_EXPERIENCE );
+	}
+
+	public static function current_user_can_manage_personal_ranks(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_PERSONAL_RANKS );
+	}
+
+	public static function current_user_can_manage_personal_judging(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_PERSONAL_JUDGING );
+	}
+
+	public static function current_user_can_manage_personal_dues(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_PERSONAL_DUES );
+	}
+
+	public static function current_user_can_pay_personal_dues_online(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::PAY_PERSONAL_DUES_ONLINE );
+	}
+
+	public static function current_user_can_manage_personal_sailing(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_PERSONAL_SAILING );
+	}
+
+	public static function current_user_can_manage_personal_sail_dues(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_PERSONAL_SAIL_DUES );
+	}
+
+	public static function current_user_can_view_personal_sail_dues(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_PERSONAL_SAIL_DUES );
 	}
 }

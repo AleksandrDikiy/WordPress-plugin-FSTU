@@ -11,8 +11,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Контролер відображення модуля "Судновий реєстр ФСТУ".
  * Реєструє шорткод [fstu_sailboats], підключає assets та передає локалізовані дані у JS.
  *
- * Version:     1.7.0
- * Date_update: 2026-04-07
+ * Version:     1.8.0
+ * Date_update: 2026-04-09
  *
  * @package FSTU\Modules\Registry\Sailboats
  */
@@ -20,6 +20,10 @@ class Sailboats_List {
 
 	private const ASSET_HANDLE = 'fstu-sailboats';
 	private const ROUTE_OPTION = 'fstu_sailboats_page_url';
+	private const INTENT_QUERY_KEY = 'fstu_intent';
+	private const INTENT_VALUE     = 'personal_sailing';
+	private const PROFILE_USER_QUERY_KEY = 'pc_user_id';
+	private const RETURN_URL_QUERY_KEY   = 'pc_return';
 
 	public const SHORTCODE    = 'fstu_sailboats';
 	public const NONCE_ACTION = 'fstu_sailboats_nonce';
@@ -44,7 +48,10 @@ class Sailboats_List {
 		if ( ! empty( $permissions['canView'] ) ) {
 			$this->enqueue_script( $permissions );
 		}
-
+		// --- ДОДАНО ДЛЯ МЕРИЛОК ---
+		wp_enqueue_style( 'fstu-merilkas-style' );
+		wp_enqueue_script( 'fstu-merilkas-script' );
+		// --------------------------
 		extract( $view_data, EXTR_SKIP );
 
 		ob_start();
@@ -91,6 +98,7 @@ class Sailboats_List {
 		$module_url    = self::get_module_url( 'login' );
 		$login_url     = wp_login_url( '' !== $module_url ? $module_url : home_url( '/' ) );
 		$current_user  = $this->get_current_user_form_defaults();
+		$bootstrap     = $this->get_bootstrap_payload( $permissions );
 
 		wp_enqueue_script(
 			self::ASSET_HANDLE,
@@ -107,6 +115,7 @@ class Sailboats_List {
 				'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
 				'nonce'       => wp_create_nonce( self::NONCE_ACTION ),
 				'loginUrl'    => $login_url,
+				'bootstrap'   => $bootstrap,
 				'permissions' => $permissions,
 				'currentUser' => $current_user,
 				'defaults'    => [
@@ -175,6 +184,7 @@ class Sailboats_List {
 
 		if ( ! ( $user instanceof \WP_User ) || $user->ID <= 0 ) {
 			return [
+				'userId'      => 0,
 				'lastName'   => '',
 				'firstName'  => '',
 				'patronymic' => '',
@@ -186,6 +196,7 @@ class Sailboats_List {
 		$patronymic  = get_user_meta( $user->ID, 'Patronymic', true );
 
 		return [
+			'userId'      => $user->ID,
 			'lastName'   => is_string( $last_name ) ? $last_name : '',
 			'firstName'  => is_string( $first_name ) ? $first_name : '',
 			'patronymic' => is_string( $patronymic ) ? $patronymic : '',
@@ -204,12 +215,15 @@ class Sailboats_List {
 		$can_view        = ! empty( $permissions['canView'] );
 		$guest_mode      = ! $is_logged_in && ! $can_view;
 		$no_access_mode  = $is_logged_in && ! $can_view;
+		$bootstrap       = $this->get_bootstrap_payload( $permissions );
 
 		return [
 			'permissions'     => $permissions,
 			'guest_mode'      => $guest_mode,
 			'no_access_mode'  => $no_access_mode,
 			'guest_login_url' => wp_login_url( '' !== $module_url ? $module_url : home_url( '/' ) ),
+			'bootstrap_notice' => isset( $bootstrap['notice'] ) ? (string) $bootstrap['notice'] : '',
+			'bootstrap_return_url' => isset( $bootstrap['returnUrl'] ) ? (string) $bootstrap['returnUrl'] : '',
 		];
 	}
 
@@ -271,6 +285,39 @@ class Sailboats_List {
 		$permalink = get_permalink( $page_id );
 
 		return is_string( $permalink ) ? $permalink : '';
+	}
+
+	/**
+	 * @param array<string,bool> $permissions
+	 * @return array<string,mixed>
+	 */
+	private function get_bootstrap_payload( array $permissions ): array {
+		$intent = sanitize_key( wp_unslash( $_GET[ self::INTENT_QUERY_KEY ] ?? '' ) );
+
+		if ( self::INTENT_VALUE !== $intent ) {
+			return [
+				'autoOpenCreate' => false,
+				'userId'         => 0,
+				'notice'         => '',
+				'returnUrl'      => '',
+			];
+		}
+
+		$user_id = absint( $_GET[ self::PROFILE_USER_QUERY_KEY ] ?? 0 );
+		$current_user_id = get_current_user_id();
+		$return_url = sanitize_text_field( wp_unslash( $_GET[ self::RETURN_URL_QUERY_KEY ] ?? '' ) );
+		$return_url = wp_http_validate_url( $return_url ) ? $return_url : '';
+
+		$can_auto_open_create = ( ! empty( $permissions['canManage'] ) || ! empty( $permissions['canSubmit'] ) ) && $user_id > 0 && $user_id === $current_user_id;
+
+		return [
+			'autoOpenCreate' => $can_auto_open_create,
+			'userId'         => $user_id,
+			'notice'         => $can_auto_open_create
+				? __( 'Форму суднового реєстру відкрито з Особистого кабінету для подання нової заявки.', 'fstu' )
+				: '',
+			'returnUrl'      => $return_url,
+		];
 	}
 }
 

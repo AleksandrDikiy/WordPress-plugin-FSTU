@@ -1,8 +1,8 @@
 /**
  * JS модуля «Реєстр стернових ФСТУ».
 	 *
-	 * Version:     1.10.0
- * Date_update: 2026-04-08
+	 * Version:     1.11.0
+	 * Date_update: 2026-04-09
  *
  * @package FSTU
  */
@@ -56,6 +56,9 @@ jQuery( document ).ready( function ( $ ) {
 	const formState = {
 		mode: 'create',
 		steeringId: 0,
+	};
+	const bootstrapState = {
+		applied: false,
 	};
 
 	bindEvents();
@@ -841,11 +844,48 @@ jQuery( document ).ready( function ( $ ) {
 	}
 
 	function applyInitialDeepLink() {
+		applyBootstrapIntent();
+
 		const params = new window.URLSearchParams( window.location.search );
 		const steeringId = parseInt( params.get( 'steering_id' ), 10 ) || 0;
 
 		if ( steeringId > 0 ) {
 			openViewModal( steeringId );
+		}
+	}
+
+	function applyBootstrapIntent() {
+		const bootstrap = l10n.bootstrap || {};
+
+		if ( bootstrapState.applied || ! bootstrap.autoOpen ) {
+			return;
+		}
+
+		bootstrapState.applied = true;
+
+		if ( bootstrap.mode === 'edit' && parseInt( bootstrap.steeringId, 10 ) > 0 ) {
+			openEditForm( parseInt( bootstrap.steeringId, 10 ) || 0 );
+			return;
+		}
+
+		openFormModal();
+		prefillBootstrapUser( parseInt( bootstrap.userId, 10 ) || 0, bootstrap.userFio || '' );
+	}
+
+	function prefillBootstrapUser( userId, fio ) {
+		if ( userId <= 0 ) {
+			return;
+		}
+
+		$( '#fstu-steering-form-user-id' ).val( userId );
+
+		const $select = $( '#fstu-steering-form-user-select' );
+		if ( $select.length ) {
+			if ( ! $select.find( 'option[value="' + userId + '"]' ).length ) {
+				$select.append( '<option value="' + escAttr( userId ) + '">' + escHtml( fio || ( 'User #' + userId ) ) + '</option>' );
+			}
+
+			$select.val( String( userId ) );
 		}
 	}
 

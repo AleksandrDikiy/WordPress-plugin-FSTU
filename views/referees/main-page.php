@@ -2,8 +2,8 @@
 /**
  * Основний шаблон модуля «Реєстр суддів ФСТУ».
  *
- * Version:     1.0.0
- * Date_update: 2026-04-08
+ * Version:     1.1.0
+ * Date_update: 2026-04-09
  *
  * @package FSTU\Modules\Registry\Referees
  */
@@ -18,11 +18,16 @@ $no_access_mode  = ! empty( $no_access_mode );
 $guest_login_url = isset( $guest_login_url ) ? (string) $guest_login_url : wp_login_url( home_url( '/' ) );
 $can_manage      = ! empty( $permissions['canManage'] );
 $can_protocol    = ! empty( $permissions['canProtocol'] );
+$bootstrap_notice = isset( $bootstrap_notice ) ? (string) $bootstrap_notice : '';
+$bootstrap_return_url = isset( $bootstrap_return_url ) ? (string) $bootstrap_return_url : '';
 ?>
 
 <div id="fstu-referees" class="fstu-referees-wrap">
 	<h2 class="fstu-referees-title"><?php esc_html_e( 'Реєстр суддів ФСТУ', 'fstu' ); ?></h2>
 	<div id="fstu-referees-notice" class="fstu-page-notice fstu-hidden" aria-live="polite"></div>
+	<?php if ( '' !== $bootstrap_notice ) : ?>
+		<div class="fstu-page-notice fstu-page-notice--success" aria-live="polite"><?php echo esc_html( $bootstrap_notice ); ?></div>
+	<?php endif; ?>
 
 	<?php if ( $guest_mode ) : ?>
 		<div class="fstu-referees-access-state fstu-referees-access-state--guest">
@@ -51,6 +56,12 @@ $can_protocol    = ! empty( $permissions['canProtocol'] );
 
 	<div class="fstu-action-bar fstu-action-bar--referees">
 		<div class="fstu-action-bar__group fstu-action-bar__group--buttons">
+			<?php if ( '' !== $bootstrap_return_url ) : ?>
+				<a class="fstu-btn fstu-btn--secondary" href="<?php echo esc_url( $bootstrap_return_url ); ?>">
+					<span class="fstu-btn__icon">↩</span>
+					<?php esc_html_e( 'ПОВЕРНУТИСЬ ДО КАБІНЕТУ', 'fstu' ); ?>
+				</a>
+			<?php endif; ?>
 			<?php if ( $can_manage ) : ?>
 				<button type="button" class="fstu-btn fstu-btn--secondary" id="fstu-referees-add-btn">
 					<span class="fstu-btn__icon">➕</span>

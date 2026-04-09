@@ -2,8 +2,8 @@
  * JS модуля "Реєстр суден".
  * Робочий список, фільтри, протокол, dropdown дій, перегляд, форма та службові операції.
  *
- * Version:     1.12.0
- * Date_update: 2026-04-08
+ * Version:     1.13.0
+ * Date_update: 2026-04-09
  *
  * @package FSTU
  */
@@ -59,14 +59,9 @@ jQuery( document ).ready( function ( $ ) {
 	bindFormEvents();
 	loadDictionaries();
 	loadList();
+	applyInitialDeepLink();
 
 	function bindGlobalEvents() {
-		$( document ).on( 'click', function ( event ) {
-			if ( ! $( event.target ).closest( '.fstu-sailboats-dropdown' ).length ) {
-				closeAllDropdowns();
-			}
-		} );
-
 		// Перемикання табів у модалці перегляду
 		$( document ).on( 'click', '.fstu-tab-btn', function () {
 			const tabId = $( this ).data( 'tab' );
@@ -77,7 +72,37 @@ jQuery( document ).ready( function ( $ ) {
 			
 			$wrapper.find( '.fstu-tab-content' ).removeClass( 'is-active' );
 			$wrapper.find( '#tab-' + tabId ).addClass( 'is-active' );
-		} );
+
+			// --- ДОДАНО ДЛЯ МЕРИЛОК (Lazy Loading) ---
+			if ( tabId === 'merilka' ) {
+				const $container = $( '#fstu-merilkas-tab-container' );
+				const sailboatId = $container.data( 'sailboat-id' );
+
+				// Завантажуємо тільки якщо ще не завантажено
+				if ( sailboatId && ! $container.hasClass( 'is-loaded' ) ) {
+					$container.html( '<div class="fstu-placeholder-box" style="text-align: center; padding: 40px;">Завантаження історії мерилок...</div>' );
+
+					$.ajax({
+						url: fstuSailboatsL10n.ajaxUrl,
+						method: 'POST',
+						data: {
+							action: 'fstu_merilkas_get_list_by_sailboat',
+							nonce: fstuSailboatsL10n.nonce, // ЗМІНЕНО: Використовуємо рідний nonce суднового реєстру
+							sailboat_id: sailboatId
+						}
+					}).done(function( response ) {
+						if ( response.success && response.data && response.data.html ) {
+							$container.html( response.data.html ).addClass( 'is-loaded' );
+						} else {
+							$container.html( '<div class="fstu-no-results">' + (response.data?.message || 'Помилка завантаження.') + '</div>' );
+						}
+					}).fail(function() {
+						$container.html( '<div class="fstu-no-results">Помилка з\'єднання з сервером.</div>' );
+					});
+				}
+			}
+			// -----------------------------------------
+		} );	
 	}
 
 	function bindListEvents() {
@@ -458,6 +483,21 @@ jQuery( document ).ready( function ( $ ) {
 			$( '#fstu-sailboats-create-mode' ).prop( 'disabled', false );
 			applyCurrentUserDefaultsToForm();
 			toggleCreateModeFields( 'new' );
+		}
+	}
+
+	function applyInitialDeepLink() {
+		const params = new window.URLSearchParams( window.location.search );
+		const sailboatId = parseInt( params.get( 'sailboat_id' ), 10 ) || 0;
+		const bootstrap = fstuSailboatsL10n.bootstrap || {};
+
+		if ( bootstrap.autoOpenCreate ) {
+			openFormModal( 0 );
+			return;
+		}
+
+		if ( sailboatId > 0 ) {
+			openViewModal( sailboatId );
 		}
 	}
 
@@ -1219,7 +1259,9 @@ jQuery( document ).ready( function ( $ ) {
 
 		// ТАБ 3: МЕРИЛКИ
 		html += '<div class="fstu-tab-content" id="tab-merilka">';
-		html += '<div class="fstu-placeholder-box" style="text-align: center; padding: 40px; border-radius: 6px;">Тут буде перелік мерилок (модуль у розробці)</div>';
+		html += '<div id="fstu-merilkas-tab-container" data-sailboat-id="' + escapeHtml( item.sailboat_id || 0 ) + '">';
+		html += '<div class="fstu-placeholder-box" style="text-align: center; padding: 40px;">Завантаження мерилок...</div>';
+		html += '</div>';
 		html += '</div>';
 
 		html += '</div>'; // end container

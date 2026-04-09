@@ -11,8 +11,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  * AJAX-обробники модуля "Судновий реєстр ФСТУ".
  * Список, картка, протокол, create/update та службові операції модуля.
  *
- * Version:     1.10.0
- * Date_update: 2026-04-07
+ * Version:     1.10.1
+ * Date_update: 2026-04-09
  *
  * @package FSTU\Modules\Registry\Sailboats
  */
@@ -47,6 +47,7 @@ class Sailboats_Ajax {
 		add_action( 'wp_ajax_fstu_sailboats_get_protocol', [ $this, 'handle_get_protocol' ] );
 		add_action( 'wp_ajax_fstu_sailboats_get_dictionaries', [ $this, 'handle_get_dictionaries' ] );
 		add_action( 'wp_ajax_fstu_sailboats_search_existing', [ $this, 'handle_search_existing' ] );
+		add_action( 'wp_ajax_fstu_merilkas_get_list_by_sailboat', [ $this, 'handle_get_list_by_sailboat' ] );
 	}
 
 	/**
@@ -1231,6 +1232,39 @@ class Sailboats_Ajax {
 		$permissions['canHardDeleteAdmin'] = $this->current_user_can_hard_delete_admin_only();
 
 		return $permissions;
+	}
+	/**
+	 * Повертає готову HTML-таблицю історії мерилок для вкладення у вкладку Суднового реєстру.
+	 */
+	public function handle_get_list_by_sailboat(): void {
+		check_ajax_referer( 'fstu_merilkas_nonce', 'nonce' );
+
+		$sailboat_id = absint( $_POST['sailboat_id'] ?? 0 );
+		if ( $sailboat_id <= 0 ) {
+			wp_send_json_error( [ 'message' => 'Невірний ідентифікатор судна.' ] );
+		}
+
+		// Перевіряємо базові права на перегляд Суднового реєстру
+		$permissions = \FSTU\Core\Capabilities::get_sailboats_permissions();
+		if ( empty( $permissions['canView'] ) ) {
+			wp_send_json_error( [ 'message' => 'Немає прав для перегляду.' ] );
+		}
+
+		// Отримуємо дані
+		$items      = $this->get_repository()->get_list_by_sailboat( $sailboat_id );
+		$can_manage = $this->current_user_can_manage_merilka( $sailboat_id );
+
+		// Генеруємо HTML (змінні $items та $can_manage будуть доступні всередині tab-list.php)
+		ob_start();
+		$template_path = FSTU_PLUGIN_DIR . 'views/merilkas/tab-list.php';
+		if ( file_exists( $template_path ) ) {
+			include $template_path;
+		} else {
+			echo '<div class="fstu-no-results">Шаблон таблиці не знайдено.</div>';
+		}
+		$html = ob_get_clean();
+
+		wp_send_json_success( [ 'html' => $html ] );
 	}
 }
 

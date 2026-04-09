@@ -2,8 +2,8 @@
 /**
  * View: Головна сторінка плагіна в адмінці.
  *
- * Version:     1.8.0
- * Date_update: 2026-04-08
+ * Version:     1.9.0
+ * Date_update: 2026-04-09
  */
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -21,6 +21,7 @@ $eventtype_page_url = isset( $eventtype_page_url ) ? (string) $eventtype_page_ur
 $tourismtype_page_url = isset( $tourismtype_page_url ) ? (string) $tourismtype_page_url : '';
 $referees_page_url = isset( $referees_page_url ) ? (string) $referees_page_url : '';
 $steering_page_url = isset( $steering_page_url ) ? (string) $steering_page_url : '';
+$personal_cabinet_page_url = isset( $personal_cabinet_page_url ) ? (string) $personal_cabinet_page_url : '';
 ?>
 
 <div class="wrap">
@@ -77,6 +78,23 @@ $steering_page_url = isset( $steering_page_url ) ? (string) $steering_page_url :
                                     Публічний реєстр посвідчень стернових із пошуком, compact-пагінацією, карткою запису, verify-flow, службовими статусами заявки та розділом «ПРОТОКОЛ». Для ролей administrator і sailadministrator передбачене повне керування, для userfstu — подання лише власної заявки за відсутності попереднього запису/заявки, а для гостей — публічний перегляд актуальних посвідчень.
                                     <?php if ( '' !== $steering_page_url ) : ?>
                                         <br><a href="<?php echo esc_url( $steering_page_url ); ?>">Відкрити сторінку реєстру →</a>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_merilkas]</code></th>
+                                <td>
+                                    <strong>Реєстр обмірних свідоцтв (Мерилок)</strong><br>
+                                    Новий незалежний модуль для розрахунку гоночного бала (ГБ) та керування фізичними параметрами вітрильних суден. Має подвійну серверну валідацію за формулою Герона, live-калькулятор на фронтенді, автоматичне блокування видалення свідоцтв, що брали участь у змаганнях, та генерацію друкованого свідоцтва (HTML/PDF) формату А4.
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_personal_cabinet]</code></th>
+                                <td>
+                                    <strong>Особистий кабінет ФСТУ</strong><br>
+                                    Виводить модуль «Особистий кабінет ФСТУ» з вкладками профілю, секцією «ПРОТОКОЛ», інтеграціями `Referees`, `PaymentDocs`, `Steering`, `Sailboats`, контрольованим Portmone-flow та централізованою capability-моделлю.
+                                    <?php if ( '' !== $personal_cabinet_page_url ) : ?>
+                                        <br><a href="<?php echo esc_url( $personal_cabinet_page_url ); ?>">Відкрити сторінку кабінету →</a>
                                     <?php endif; ?>
                                 </td>
                             </tr>

@@ -3,7 +3,7 @@
  * Plugin Name:  FSTU Portal
  * Plugin URI:   https://www.fstu.com.ua/
  * Description:  Офіційний плагін Федерації спортивного туризму України. Enterprise ERP/CRM система управління реєстрами, структурою та фінансами федерації.
- * Version:      1.11.0
+ * Version:      1.12.0
  * Author:       Oleksandr Dykyi
  * Author URI:   https://www.fstu.com.ua/
  * Text Domain:  fstu
@@ -11,7 +11,7 @@
  * Requires PHP: 8.0
  * Requires at least: 6.0
  *
- * Date_update: 2026-04-08
+ * Date_update: 2026-04-09
  *
  * @package FSTU
  */
@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // ─── Константи плагіна ────────────────────────────────────────────────────────
 
-define( 'FSTU_VERSION',      '1.11.0' );
+define( 'FSTU_VERSION',      '1.12.0' );
 define( 'FSTU_DB_VERSION',   '1.0.0' );
 define( 'FSTU_PLUGIN_FILE',  __FILE__ );
 define( 'FSTU_PLUGIN_DIR',   plugin_dir_path( __FILE__ ) );
@@ -198,6 +198,41 @@ if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Steering/class-st
 if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Steering/class-steering-ajax.php' ) ) {
 	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Steering/class-steering-ajax.php';
 }
+// Merilkas — Реєстр мерилок ФСТУ (2026-04-09)
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Merilkas/class-merilkas-repository.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Merilkas/class-merilkas-repository.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Merilkas/class-merilkas-list.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Merilkas/class-merilkas-list.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Merilkas/class-merilkas-ajax.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Merilkas/class-merilkas-ajax.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Merilkas/class-merilkas-service.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Merilkas/class-merilkas-service.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Merilkas/class-merilkas-protocol-service.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Merilkas/class-merilkas-protocol-service.php';
+}
+// PersonalCabinet — Особистий кабінет ФСТУ (2026-04-09)
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/PersonalCabinet/class-personal-cabinet-repository.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/PersonalCabinet/class-personal-cabinet-repository.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/PersonalCabinet/class-personal-cabinet-protocol-service.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/PersonalCabinet/class-personal-cabinet-protocol-service.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/PersonalCabinet/class-personal-cabinet-payments-service.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/PersonalCabinet/class-personal-cabinet-payments-service.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/PersonalCabinet/class-personal-cabinet-service.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/PersonalCabinet/class-personal-cabinet-service.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/PersonalCabinet/class-personal-cabinet-list.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/PersonalCabinet/class-personal-cabinet-list.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/PersonalCabinet/class-personal-cabinet-ajax.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/PersonalCabinet/class-personal-cabinet-ajax.php';
+}
 // ── Довідники (Хаб) ──────────────────────────────────────────────────────
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/class-dictionaries-hub.php';
 ( new FSTU\Modules\Dictionaries\Dictionaries_Hub() )->init();
@@ -310,5 +345,20 @@ function fstu_init(): void {
 	}
 	if ( class_exists( 'FSTU\\Modules\\Registry\\Steering\\Steering_Ajax' ) ) {
 		( new FSTU\Modules\Registry\Steering\Steering_Ajax() )->init();
+	}
+
+	// ── Особистий кабінет ФСТУ ───────────────────────────────────────────────
+	if ( class_exists( 'FSTU\\Modules\\PersonalCabinet\\Personal_Cabinet_List' ) ) {
+		( new FSTU\Modules\PersonalCabinet\Personal_Cabinet_List() )->init();
+	}
+	if ( class_exists( 'FSTU\\Modules\\PersonalCabinet\\Personal_Cabinet_Ajax' ) ) {
+		( new FSTU\Modules\PersonalCabinet\Personal_Cabinet_Ajax() )->init();
+	}
+	// ── Реєстр мерилок ФСТУ ────────────────────────────────────────────────────
+	if ( class_exists( 'FSTU\\Modules\\Registry\\Merilkas\\Merilkas_List' ) ) {
+		( new FSTU\Modules\Registry\Merilkas\Merilkas_List() )->init();
+	}
+	if ( class_exists( 'FSTU\\Modules\\Registry\\Merilkas\\Merilkas_Ajax' ) ) {
+		( new FSTU\Modules\Registry\Merilkas\Merilkas_Ajax() )->init();
 	}
 }

@@ -11,8 +11,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Контролер відображення модуля «Реєстр суддів ФСТУ».
  * Реєструє shortcode, підключає assets та локалізує фронтенд-дані.
  *
- * Version:     1.0.0
- * Date_update: 2026-04-08
+ * Version:     1.1.0
+ * Date_update: 2026-04-09
  *
  * @package FSTU\Modules\Registry\Referees
  */
@@ -20,6 +20,10 @@ class Referees_List {
 
 	private const ASSET_HANDLE = 'fstu-referees';
 	private const ROUTE_OPTION = 'fstu_referees_page_url';
+	private const INTENT_QUERY_KEY = 'fstu_intent';
+	private const INTENT_VALUE = 'personal_judging';
+	private const PROFILE_USER_QUERY_KEY = 'pc_user_id';
+	private const RETURN_URL_QUERY_KEY = 'pc_return';
 
 	public const SHORTCODE    = 'fstu_referees';
 	public const NONCE_ACTION = 'fstu_referees_nonce';
@@ -86,6 +90,7 @@ class Referees_List {
 	private function enqueue_script( array $permissions ): void {
 		$module_url = self::get_module_url( 'login' );
 		$login_url  = wp_login_url( '' !== $module_url ? $module_url : home_url( '/' ) );
+		$bootstrap  = $this->get_bootstrap_payload( $permissions );
 
 		wp_enqueue_script(
 			self::ASSET_HANDLE,
@@ -102,6 +107,7 @@ class Referees_List {
 				'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
 				'nonce'       => wp_create_nonce( self::NONCE_ACTION ),
 				'loginUrl'    => $login_url,
+				'bootstrap'   => $bootstrap,
 				'permissions' => $permissions,
 				'defaults'    => [
 					'perPage'         => 10,
@@ -163,12 +169,15 @@ class Referees_List {
 		$can_view       = ! empty( $permissions['canView'] );
 		$guest_mode     = ! $is_logged_in && ! $can_view;
 		$no_access_mode = $is_logged_in && ! $can_view;
+		$bootstrap      = $this->get_bootstrap_payload( $permissions );
 
 		return [
 			'permissions'     => $permissions,
 			'guest_mode'      => $guest_mode,
 			'no_access_mode'  => $no_access_mode,
 			'guest_login_url' => wp_login_url( '' !== $module_url ? $module_url : home_url( '/' ) ),
+			'bootstrap_notice' => isset( $bootstrap['notice'] ) ? (string) $bootstrap['notice'] : '',
+			'bootstrap_return_url' => isset( $bootstrap['returnUrl'] ) ? (string) $bootstrap['returnUrl'] : '',
 		];
 	}
 
@@ -231,6 +240,51 @@ class Referees_List {
 		$permalink = get_permalink( $page_id );
 
 		return is_string( $permalink ) ? $permalink : '';
+	}
+
+	/**
+	 * @param array<string,bool> $permissions
+	 * @return array<string,mixed>
+	 */
+	private function get_bootstrap_payload( array $permissions ): array {
+		$intent = sanitize_key( wp_unslash( $_GET[ self::INTENT_QUERY_KEY ] ?? '' ) );
+
+		if ( self::INTENT_VALUE !== $intent || empty( $permissions['canManage'] ) ) {
+			return [
+				'autoOpen'  => false,
+				'mode'      => '',
+				'userId'    => 0,
+				'userFio'   => '',
+				'refereeId' => 0,
+				'notice'    => '',
+				'returnUrl' => '',
+			];
+		}
+
+		$user_id = absint( $_GET[ self::PROFILE_USER_QUERY_KEY ] ?? 0 );
+		if ( $user_id <= 0 ) {
+			return [ 'autoOpen' => false, 'mode' => '', 'userId' => 0, 'userFio' => '', 'refereeId' => 0, 'notice' => '', 'returnUrl' => '' ];
+		}
+
+		$repository = new Referees_Repository();
+		if ( ! $repository->user_exists( $user_id ) ) {
+			return [ 'autoOpen' => false, 'mode' => '', 'userId' => 0, 'userFio' => '', 'refereeId' => 0, 'notice' => '', 'returnUrl' => '' ];
+		}
+
+		$referee   = $repository->get_referee_by_user_id( $user_id );
+		$user_fio  = $repository->get_user_fio( $user_id );
+		$return_url = sanitize_text_field( wp_unslash( $_GET[ self::RETURN_URL_QUERY_KEY ] ?? '' ) );
+		$return_url = wp_http_validate_url( $return_url ) ? $return_url : '';
+
+		return [
+			'autoOpen'  => true,
+			'mode'      => is_array( $referee ) && ! empty( $referee['Referee_ID'] ) ? 'edit' : 'create',
+			'userId'    => $user_id,
+			'userFio'   => $user_fio,
+			'refereeId' => is_array( $referee ) ? (int) ( $referee['Referee_ID'] ?? 0 ) : 0,
+			'notice'    => sprintf( __( 'Форму суддівства відкрито з Особистого кабінету для користувача: %s', 'fstu' ), '' !== $user_fio ? $user_fio : '#' . $user_id ),
+			'returnUrl' => $return_url,
+		];
 	}
 }
 

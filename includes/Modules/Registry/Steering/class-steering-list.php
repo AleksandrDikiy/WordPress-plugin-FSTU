@@ -11,8 +11,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Контролер відображення модуля «Реєстр стернових ФСТУ».
  * Реєструє shortcode, підключає assets та локалізує фронтенд-дані.
  *
-	 * Version:     1.9.0
- * Date_update: 2026-04-08
+	 * Version:     1.10.0
+	 * Date_update: 2026-04-09
  *
  * @package FSTU\Modules\Registry\Steering
  */
@@ -21,6 +21,10 @@ class Steering_List {
 	private const ASSET_HANDLE = 'fstu-steering';
 	private const ROUTE_OPTION = 'fstu_steering_page_url';
 	private const POLICY_URL   = 'https://www.fstu.com.ua/wp-content/uploads/2015/06/%D0%9F%D1%80%D0%BE%D1%82%D0%BE%D0%BA%D0%BE%D0%BB-%D0%92%D0%B8%D0%BA%D0%BE%D0%BD%D0%BA%D0%BE%D0%BC%D1%83-%D0%BE%D0%BF%D0%B8%D1%82%D1%83%D0%B2%D0%B0%D0%BD%D0%BD%D1%8F-%D0%B2%D1%96%D0%B4-15-%D0%B0%D0%B2%D0%B3%D1%83%D1%81%D1%822015.pdf';
+	private const INTENT_QUERY_KEY = 'fstu_intent';
+	private const INTENT_VALUE     = 'personal_steering';
+	private const PROFILE_USER_QUERY_KEY = 'pc_user_id';
+	private const RETURN_URL_QUERY_KEY   = 'pc_return';
 
 	public const SHORTCODE    = 'fstu_steering';
 	public const NONCE_ACTION = 'fstu_steering_nonce';
@@ -85,6 +89,7 @@ class Steering_List {
 		$table_colspan = ! empty( $permissions['canSeeFinance'] ) ? 12 : 5;
 		$current_user_defaults = $this->get_current_user_defaults();
 		$submit_blocked        = $this->is_current_user_submit_blocked( $permissions );
+		$bootstrap             = $this->get_bootstrap_payload( $permissions );
 
 		wp_enqueue_script(
 			self::ASSET_HANDLE,
@@ -102,6 +107,7 @@ class Steering_List {
 				'nonce'       => wp_create_nonce( self::NONCE_ACTION ),
 				'moduleUrl'   => self::get_module_url(),
 				'policyUrl'   => self::POLICY_URL,
+				'bootstrap'   => $bootstrap,
 				'permissions' => $permissions,
 				'currentUser' => $current_user_defaults,
 				'submitBlocked' => $submit_blocked,
@@ -171,6 +177,7 @@ class Steering_List {
 	 */
 	private function get_view_data( array $permissions ): array {
 		$submit_blocked = $this->is_current_user_submit_blocked( $permissions );
+		$bootstrap      = $this->get_bootstrap_payload( $permissions );
 
 		return [
 			'permissions'    => $permissions,
@@ -178,6 +185,8 @@ class Steering_List {
 			'type_options'   => $this->get_type_options(),
 			'status_options' => ( ! empty( $permissions['canManage'] ) || ! empty( $permissions['canManageStatus'] ) ) ? ( new Steering_Repository() )->get_status_options() : [],
 			'policy_url'     => self::POLICY_URL,
+			'bootstrap_notice' => isset( $bootstrap['notice'] ) ? (string) $bootstrap['notice'] : '',
+			'bootstrap_return_url' => isset( $bootstrap['returnUrl'] ) ? (string) $bootstrap['returnUrl'] : '',
 		];
 	}
 
@@ -308,6 +317,51 @@ class Steering_List {
 		$permalink = get_permalink( $page_id );
 
 		return is_string( $permalink ) ? $permalink : '';
+	}
+
+	/**
+	 * @param array<string,bool> $permissions
+	 * @return array<string,mixed>
+	 */
+	private function get_bootstrap_payload( array $permissions ): array {
+		$intent = sanitize_key( wp_unslash( $_GET[ self::INTENT_QUERY_KEY ] ?? '' ) );
+
+		if ( self::INTENT_VALUE !== $intent || empty( $permissions['canManage'] ) ) {
+			return [
+				'autoOpen'  => false,
+				'mode'      => '',
+				'userId'    => 0,
+				'userFio'   => '',
+				'steeringId'=> 0,
+				'notice'    => '',
+				'returnUrl' => '',
+			];
+		}
+
+		$user_id = absint( $_GET[ self::PROFILE_USER_QUERY_KEY ] ?? 0 );
+		if ( $user_id <= 0 ) {
+			return [ 'autoOpen' => false, 'mode' => '', 'userId' => 0, 'userFio' => '', 'steeringId' => 0, 'notice' => '', 'returnUrl' => '' ];
+		}
+
+		$repository = new Steering_Repository();
+		if ( ! $repository->user_exists( $user_id ) ) {
+			return [ 'autoOpen' => false, 'mode' => '', 'userId' => 0, 'userFio' => '', 'steeringId' => 0, 'notice' => '', 'returnUrl' => '' ];
+		}
+
+		$user_fio    = $repository->get_user_fio( $user_id );
+		$steering_id = $repository->get_steering_id_by_user_id( $user_id );
+		$return_url  = sanitize_text_field( wp_unslash( $_GET[ self::RETURN_URL_QUERY_KEY ] ?? '' ) );
+		$return_url  = wp_http_validate_url( $return_url ) ? $return_url : '';
+
+		return [
+			'autoOpen'   => true,
+			'mode'       => $steering_id > 0 ? 'edit' : 'create',
+			'userId'     => $user_id,
+			'userFio'    => $user_fio,
+			'steeringId' => $steering_id,
+			'notice'     => sprintf( __( 'Форму реєстру стернових відкрито з Особистого кабінету для користувача: %s', 'fstu' ), '' !== $user_fio ? $user_fio : '#' . $user_id ),
+			'returnUrl'  => $return_url,
+		];
 	}
 }
 
