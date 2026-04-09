@@ -2,7 +2,7 @@
 /**
  * View: Головна сторінка плагіна в адмінці.
  *
- * Version:     1.7.0
+ * Version:     1.8.0
  * Date_update: 2026-04-08
  */
 if ( ! defined( 'ABSPATH' ) ) {
@@ -20,6 +20,7 @@ $city_page_url = isset( $city_page_url ) ? (string) $city_page_url : '';
 $eventtype_page_url = isset( $eventtype_page_url ) ? (string) $eventtype_page_url : '';
 $tourismtype_page_url = isset( $tourismtype_page_url ) ? (string) $tourismtype_page_url : '';
 $referees_page_url = isset( $referees_page_url ) ? (string) $referees_page_url : '';
+$steering_page_url = isset( $steering_page_url ) ? (string) $steering_page_url : '';
 ?>
 
 <div class="wrap">
@@ -66,6 +67,16 @@ $referees_page_url = isset( $referees_page_url ) ? (string) $referees_page_url :
                                     Виводить реєстр суддів з пошуком по ПІБ, фільтрами за областю і категорією, compact-пагінацією, карткою судді, довідками за суддівство та розділом «ПРОТОКОЛ». Для ролей administrator і referee доступне повне керування, для userregistrar і userfstu — лише перегляд.
                                     <?php if ( '' !== $referees_page_url ) : ?>
                                         <br><a href="<?php echo esc_url( $referees_page_url ); ?>">Відкрити сторінку реєстру →</a>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_steering]</code></th>
+                                <td>
+                                    <strong>Реєстр стернових ФСТУ</strong><br>
+                                    Публічний реєстр посвідчень стернових із пошуком, compact-пагінацією, карткою запису, verify-flow, службовими статусами заявки та розділом «ПРОТОКОЛ». Для ролей administrator і sailadministrator передбачене повне керування, для userfstu — подання лише власної заявки за відсутності попереднього запису/заявки, а для гостей — публічний перегляд актуальних посвідчень.
+                                    <?php if ( '' !== $steering_page_url ) : ?>
+                                        <br><a href="<?php echo esc_url( $steering_page_url ); ?>">Відкрити сторінку реєстру →</a>
                                     <?php endif; ?>
                                 </td>
                             </tr>

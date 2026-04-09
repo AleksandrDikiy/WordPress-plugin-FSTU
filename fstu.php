@@ -3,7 +3,7 @@
  * Plugin Name:  FSTU Portal
  * Plugin URI:   https://www.fstu.com.ua/
  * Description:  Офіційний плагін Федерації спортивного туризму України. Enterprise ERP/CRM система управління реєстрами, структурою та фінансами федерації.
- * Version:      1.10.7
+ * Version:      1.11.0
  * Author:       Oleksandr Dykyi
  * Author URI:   https://www.fstu.com.ua/
  * Text Domain:  fstu
@@ -11,7 +11,7 @@
  * Requires PHP: 8.0
  * Requires at least: 6.0
  *
- * Date_update: 2026-04-07
+ * Date_update: 2026-04-08
  *
  * @package FSTU
  */
@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // ─── Константи плагіна ────────────────────────────────────────────────────────
 
-define( 'FSTU_VERSION',      '1.10.7' );
+define( 'FSTU_VERSION',      '1.11.0' );
 define( 'FSTU_DB_VERSION',   '1.0.0' );
 define( 'FSTU_PLUGIN_FILE',  __FILE__ );
 define( 'FSTU_PLUGIN_DIR',   plugin_dir_path( __FILE__ ) );
@@ -175,6 +175,29 @@ if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Referees/class-re
 if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Referees/class-referees-ajax.php' ) ) {
 	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Referees/class-referees-ajax.php';
 }
+
+// Steering — Реєстр стернових ФСТУ (2026-04-08)
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Steering/class-steering-repository.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Steering/class-steering-repository.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Steering/class-steering-protocol-service.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Steering/class-steering-protocol-service.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Steering/class-steering-notification-service.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Steering/class-steering-notification-service.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Steering/class-steering-upload-service.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Steering/class-steering-upload-service.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Steering/class-steering-service.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Steering/class-steering-service.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Steering/class-steering-list.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Steering/class-steering-list.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Steering/class-steering-ajax.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Steering/class-steering-ajax.php';
+}
 // ── Довідники (Хаб) ──────────────────────────────────────────────────────
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/class-dictionaries-hub.php';
 ( new FSTU\Modules\Dictionaries\Dictionaries_Hub() )->init();
@@ -279,5 +302,13 @@ function fstu_init(): void {
 	}
 	if ( class_exists( 'FSTU\\Modules\\Registry\\Referees\\Referees_Ajax' ) ) {
 		( new FSTU\Modules\Registry\Referees\Referees_Ajax() )->init();
+	}
+
+	// ── Реєстр стернових ФСТУ ─────────────────────────────────────────────────
+	if ( class_exists( 'FSTU\\Modules\\Registry\\Steering\\Steering_List' ) ) {
+		( new FSTU\Modules\Registry\Steering\Steering_List() )->init();
+	}
+	if ( class_exists( 'FSTU\\Modules\\Registry\\Steering\\Steering_Ajax' ) ) {
+		( new FSTU\Modules\Registry\Steering\Steering_Ajax() )->init();
 	}
 }

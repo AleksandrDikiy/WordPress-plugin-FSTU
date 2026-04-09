@@ -2,7 +2,7 @@
 /**
  * Клас централізованого керування capability-моделлю ФСТУ.
  *
- * Version:     1.9.0
+ * Version:     1.10.0
  * Date_update: 2026-04-08
  *
  * @package FSTU\Core
@@ -60,6 +60,15 @@ class Capabilities {
 	public const VIEW_REFEREES_PROTOCOL        = 'fstu_view_referees_protocol';
 	public const MANAGE_REFEREE_CERTIFICATES   = 'fstu_manage_referee_certificates';
 	public const UNBIND_REFEREE_CERTIFICATES   = 'fstu_unbind_referee_certificates';
+	public const VIEW_STEERING                 = 'fstu_view_steering';
+	public const SUBMIT_STEERING_APPLICATIONS  = 'fstu_submit_steering_applications';
+	public const MANAGE_STEERING               = 'fstu_manage_steering';
+	public const DELETE_STEERING               = 'fstu_delete_steering';
+	public const VIEW_STEERING_PROTOCOL        = 'fstu_view_steering_protocol';
+	public const VERIFY_STEERING_QUALIFICATION = 'fstu_verify_steering_qualification';
+	public const MANAGE_STEERING_STATUS        = 'fstu_manage_steering_status';
+	public const VIEW_STEERING_FINANCE_COLUMNS = 'fstu_view_steering_finance_columns';
+	public const SEND_STEERING_NOTIFICATIONS   = 'fstu_send_steering_notifications';
 
 	/**
 	 * Ініціалізує capability-модель для поточного запиту.
@@ -126,6 +135,15 @@ class Capabilities {
 				self::VIEW_REFEREES_PROTOCOL        => true,
 				self::MANAGE_REFEREE_CERTIFICATES   => true,
 				self::UNBIND_REFEREE_CERTIFICATES   => true,
+				self::VIEW_STEERING                 => true,
+				self::SUBMIT_STEERING_APPLICATIONS  => true,
+				self::MANAGE_STEERING               => true,
+				self::DELETE_STEERING               => true,
+				self::VIEW_STEERING_PROTOCOL        => true,
+				self::VERIFY_STEERING_QUALIFICATION => true,
+				self::MANAGE_STEERING_STATUS        => true,
+				self::VIEW_STEERING_FINANCE_COLUMNS => true,
+				self::SEND_STEERING_NOTIFICATIONS   => true,
 			],
 			'sailadministrator' => [
 				self::ACCESS_ADMIN                  => true,
@@ -137,6 +155,15 @@ class Capabilities {
 				self::MANAGE_SAILBOATS_STATUS       => true,
 				self::SEND_SAILBOATS_NOTIFICATIONS  => true,
 				self::VIEW_SAILBOATS_FINANCE_COLUMNS => true,
+				self::VIEW_STEERING                 => true,
+				self::SUBMIT_STEERING_APPLICATIONS  => true,
+				self::MANAGE_STEERING               => true,
+				self::DELETE_STEERING               => true,
+				self::VIEW_STEERING_PROTOCOL        => true,
+				self::VERIFY_STEERING_QUALIFICATION => true,
+				self::MANAGE_STEERING_STATUS        => true,
+				self::VIEW_STEERING_FINANCE_COLUMNS => true,
+				self::SEND_STEERING_NOTIFICATIONS   => true,
 			],
 			'userregistrar' => [
 				self::ACCESS_ADMIN             => true,
@@ -166,6 +193,8 @@ class Capabilities {
 				self::VIEW_SAILBOATS => true,
 				self::SUBMIT_SAILBOATS_APPLICATIONS => true,
 				self::VIEW_REFEREES => true,
+				self::VIEW_STEERING => true,
+				self::SUBMIT_STEERING_APPLICATIONS => true,
 			],
 			'referee' => [
 				self::VIEW_REFEREES               => true,
@@ -368,6 +397,26 @@ class Capabilities {
 			'canProtocol'           => self::current_user_can_view_referees_protocol(),
 			'canManageCertificates' => self::current_user_can_manage_referee_certificates(),
 			'canUnbindCertificates' => self::current_user_can_unbind_referee_certificates(),
+		];
+	}
+
+	/**
+	 * Повертає прапорці прав для модуля реєстру стернових.
+	 *
+	 * @return array<string,bool>
+	 */
+	public static function get_steering_permissions(): array {
+		return [
+			'canView'              => self::current_user_can_view_steering(),
+			'canSubmit'            => self::current_user_can_submit_steering_applications(),
+			'canManage'            => self::current_user_can_manage_steering(),
+			'canDelete'            => self::current_user_can_delete_steering(),
+			'canProtocol'          => self::current_user_can_view_steering_protocol(),
+			'canVerify'            => self::current_user_can_verify_steering_qualification(),
+			'canManageStatus'      => self::current_user_can_manage_steering_status(),
+			'canSeeFinance'        => self::current_user_can_view_steering_finance_columns(),
+			'canNotify'            => self::current_user_can_send_steering_notifications(),
+			'canViewHiddenExpired' => self::current_user_can_view_steering_finance_columns(),
 		];
 	}
 
@@ -677,5 +726,70 @@ class Capabilities {
 	 */
 	public static function current_user_can_unbind_referee_certificates(): bool {
 		return current_user_can( 'manage_options' ) || current_user_can( self::UNBIND_REFEREE_CERTIFICATES );
+	}
+
+	/**
+	 * Чи може користувач переглядати реєстр стернових.
+	 */
+	public static function current_user_can_view_steering(): bool {
+		return true;
+	}
+
+	/**
+	 * Чи може користувач подавати заявку до реєстру стернових.
+	 */
+	public static function current_user_can_submit_steering_applications(): bool {
+		return current_user_can( 'manage_options' )
+			|| current_user_can( self::SUBMIT_STEERING_APPLICATIONS )
+			|| current_user_can( self::MANAGE_STEERING );
+	}
+
+	/**
+	 * Чи може користувач керувати реєстром стернових.
+	 */
+	public static function current_user_can_manage_steering(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_STEERING );
+	}
+
+	/**
+	 * Чи може користувач видаляти записи реєстру стернових.
+	 */
+	public static function current_user_can_delete_steering(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::DELETE_STEERING );
+	}
+
+	/**
+	 * Чи може користувач переглядати протокол реєстру стернових.
+	 */
+	public static function current_user_can_view_steering_protocol(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_STEERING_PROTOCOL );
+	}
+
+	/**
+	 * Чи може користувач підтверджувати кваліфікацію в реєстрі стернових.
+	 */
+	public static function current_user_can_verify_steering_qualification(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::VERIFY_STEERING_QUALIFICATION );
+	}
+
+	/**
+	 * Чи може користувач змінювати статуси реєстру стернових.
+	 */
+	public static function current_user_can_manage_steering_status(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_STEERING_STATUS );
+	}
+
+	/**
+	 * Чи може користувач бачити фінансові колонки реєстру стернових.
+	 */
+	public static function current_user_can_view_steering_finance_columns(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_STEERING_FINANCE_COLUMNS );
+	}
+
+	/**
+	 * Чи може користувач надсилати сповіщення модуля реєстру стернових.
+	 */
+	public static function current_user_can_send_steering_notifications(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::SEND_STEERING_NOTIFICATIONS );
 	}
 }
