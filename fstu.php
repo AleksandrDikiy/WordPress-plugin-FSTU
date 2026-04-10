@@ -3,7 +3,7 @@
  * Plugin Name:  FSTU Portal
  * Plugin URI:   https://www.fstu.com.ua/
  * Description:  Офіційний плагін Федерації спортивного туризму України. Enterprise ERP/CRM система управління реєстрами, структурою та фінансами федерації.
- * Version:      1.12.0
+ * Version:      1.13.0
  * Author:       Oleksandr Dykyi
  * Author URI:   https://www.fstu.com.ua/
  * Text Domain:  fstu
@@ -11,7 +11,7 @@
  * Requires PHP: 8.0
  * Requires at least: 6.0
  *
- * Date_update: 2026-04-09
+ * Date_update: 2026-04-10
  *
  * @package FSTU
  */
@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // ─── Константи плагіна ────────────────────────────────────────────────────────
 
-define( 'FSTU_VERSION',      '1.12.0' );
+define( 'FSTU_VERSION',      '1.13.0' );
 define( 'FSTU_DB_VERSION',   '1.0.0' );
 define( 'FSTU_PLUGIN_FILE',  __FILE__ );
 define( 'FSTU_PLUGIN_DIR',   plugin_dir_path( __FILE__ ) );
@@ -63,6 +63,8 @@ require_once FSTU_PLUGIN_DIR . 'includes/Clubs/class-clubs-list.php';
 require_once FSTU_PLUGIN_DIR . 'includes/Clubs/class-clubs-ajax.php';
 
 // Units — Довідник осередків ФСТУ (2026-04-06)
+require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/Units/class-units-repository.php';
+require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/Units/class-units-service.php';
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/Units/class-units-list.php';
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/Units/class-units-ajax.php';
 
@@ -197,6 +199,25 @@ if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Steering/class-st
 }
 if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Steering/class-steering-ajax.php' ) ) {
 	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Steering/class-steering-ajax.php';
+}
+// MemberCardApplications — Посвідчення членів ФСТУ (2026-04-10)
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/MemberCardApplications/class-member-card-applications-repository.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/MemberCardApplications/class-member-card-applications-repository.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/MemberCardApplications/class-member-card-applications-protocol-service.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/MemberCardApplications/class-member-card-applications-protocol-service.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/MemberCardApplications/class-member-card-applications-upload-service.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/MemberCardApplications/class-member-card-applications-upload-service.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/MemberCardApplications/class-member-card-applications-service.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/MemberCardApplications/class-member-card-applications-service.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/MemberCardApplications/class-member-card-applications-list.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/MemberCardApplications/class-member-card-applications-list.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/MemberCardApplications/class-member-card-applications-ajax.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/MemberCardApplications/class-member-card-applications-ajax.php';
 }
 // Merilkas — Реєстр мерилок ФСТУ (2026-04-09)
 if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Merilkas/class-merilkas-repository.php' ) ) {
@@ -345,6 +366,14 @@ function fstu_init(): void {
 	}
 	if ( class_exists( 'FSTU\\Modules\\Registry\\Steering\\Steering_Ajax' ) ) {
 		( new FSTU\Modules\Registry\Steering\Steering_Ajax() )->init();
+	}
+
+	// ── Посвідчення членів ФСТУ ──────────────────────────────────────────────
+	if ( class_exists( 'FSTU\\Modules\\Registry\\MemberCardApplications\\Member_Card_Applications_List' ) ) {
+		( new FSTU\Modules\Registry\MemberCardApplications\Member_Card_Applications_List() )->init();
+	}
+	if ( class_exists( 'FSTU\\Modules\\Registry\\MemberCardApplications\\Member_Card_Applications_Ajax' ) ) {
+		( new FSTU\Modules\Registry\MemberCardApplications\Member_Card_Applications_Ajax() )->init();
 	}
 
 	// ── Особистий кабінет ФСТУ ───────────────────────────────────────────────

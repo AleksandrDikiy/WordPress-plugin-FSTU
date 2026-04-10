@@ -2,8 +2,8 @@
 /**
  * Клас централізованого керування capability-моделлю ФСТУ.
  *
- * Version:     1.13.0
- * Date_update: 2026-04-09
+ * Version:     1.14.0
+ * Date_update: 2026-04-10
  *
  * @package FSTU\Core
  */
@@ -72,6 +72,14 @@ class Capabilities {
 	public const VIEW_PERSONAL_CABINET         = 'fstu_view_personal_cabinet';
 	public const MANAGE_PERSONAL_CABINET       = 'fstu_manage_personal_cabinet';
 	public const VIEW_PERSONAL_CABINET_PROTOCOL = 'fstu_view_personal_cabinet_protocol';
+	public const VIEW_MEMBER_CARD_APPLICATIONS = 'fstu_view_member_card_applications';
+	public const MANAGE_MEMBER_CARD_APPLICATIONS = 'fstu_manage_member_card_applications';
+	public const DELETE_MEMBER_CARD_APPLICATIONS = 'fstu_delete_member_card_applications';
+	public const VIEW_MEMBER_CARD_APPLICATIONS_PROTOCOL = 'fstu_view_member_card_applications_protocol';
+	public const SELF_MANAGE_MEMBER_CARD_APPLICATIONS = 'fstu_self_manage_member_card_applications';
+	public const REISSUE_MEMBER_CARD_APPLICATIONS = 'fstu_reissue_member_card_applications';
+	public const UPDATE_MEMBER_CARD_APPLICATIONS_PHOTO = 'fstu_update_member_card_applications_photo';
+	public const MANAGE_MEMBER_CARD_NUMBER = 'fstu_manage_member_card_number';
 	public const VIEW_OWN_PERSONAL_PRIVATE     = 'fstu_view_own_personal_private';
 	public const VIEW_PERSONAL_SERVICE         = 'fstu_view_personal_service';
 	public const MANAGE_PERSONAL_PROFILE       = 'fstu_manage_personal_profile';
@@ -165,6 +173,14 @@ class Capabilities {
 				self::VIEW_PERSONAL_CABINET         => true,
 				self::MANAGE_PERSONAL_CABINET       => true,
 				self::VIEW_PERSONAL_CABINET_PROTOCOL => true,
+				self::VIEW_MEMBER_CARD_APPLICATIONS => true,
+				self::MANAGE_MEMBER_CARD_APPLICATIONS => true,
+				self::DELETE_MEMBER_CARD_APPLICATIONS => true,
+				self::VIEW_MEMBER_CARD_APPLICATIONS_PROTOCOL => true,
+				self::SELF_MANAGE_MEMBER_CARD_APPLICATIONS => true,
+				self::REISSUE_MEMBER_CARD_APPLICATIONS => true,
+				self::UPDATE_MEMBER_CARD_APPLICATIONS_PHOTO => true,
+				self::MANAGE_MEMBER_CARD_NUMBER => true,
 				self::VIEW_OWN_PERSONAL_PRIVATE     => true,
 				self::VIEW_PERSONAL_SERVICE         => true,
 				self::MANAGE_PERSONAL_PROFILE       => true,
@@ -206,6 +222,11 @@ class Capabilities {
 			],
 			'globalregistrar' => [
 				self::ACCESS_ADMIN                  => true,
+				self::VIEW_MEMBER_CARD_APPLICATIONS => true,
+				self::MANAGE_MEMBER_CARD_APPLICATIONS => true,
+				self::VIEW_MEMBER_CARD_APPLICATIONS_PROTOCOL => true,
+				self::REISSUE_MEMBER_CARD_APPLICATIONS => true,
+				self::UPDATE_MEMBER_CARD_APPLICATIONS_PHOTO => true,
 				self::VIEW_PERSONAL_CABINET         => true,
 				self::MANAGE_PERSONAL_CABINET       => true,
 				self::VIEW_PERSONAL_CABINET_PROTOCOL => true,
@@ -220,6 +241,11 @@ class Capabilities {
 			],
 			'userregistrar' => [
 				self::ACCESS_ADMIN             => true,
+				self::VIEW_MEMBER_CARD_APPLICATIONS => true,
+				self::MANAGE_MEMBER_CARD_APPLICATIONS => true,
+				self::VIEW_MEMBER_CARD_APPLICATIONS_PROTOCOL => true,
+				self::REISSUE_MEMBER_CARD_APPLICATIONS => true,
+				self::UPDATE_MEMBER_CARD_APPLICATIONS_PHOTO => true,
 				self::MANAGE_COMMISSION        => true,
 				self::VIEW_COMMISSION_PROTOCOL => true,
 				self::VIEW_MEMBER_REGIONAL     => true,
@@ -252,6 +278,9 @@ class Capabilities {
 				self::MANAGE_PERSONAL_RANKS      => true,
 			],
 			'userfstu' => [
+				self::SELF_MANAGE_MEMBER_CARD_APPLICATIONS => true,
+				self::REISSUE_MEMBER_CARD_APPLICATIONS => true,
+				self::UPDATE_MEMBER_CARD_APPLICATIONS_PHOTO => true,
 				self::VIEW_TYPEGUIDANCE => true,
 				self::VIEW_MEMBER_GUIDANCE => true,
 				self::VIEW_SAILBOATS => true,
@@ -497,6 +526,26 @@ class Capabilities {
 	}
 
 	/**
+	 * Повертає прапорці прав для модуля посвідчень членів ФСТУ.
+	 *
+	 * @return array<string,bool>
+	 */
+	public static function get_member_card_applications_permissions(): array {
+		$can_self = self::current_user_can_self_manage_member_card_applications();
+
+		return [
+			'canView'             => self::current_user_can_view_member_card_applications(),
+			'canManage'           => self::current_user_can_manage_member_card_applications(),
+			'canDelete'           => self::current_user_can_delete_member_card_applications(),
+			'canProtocol'         => self::current_user_can_view_member_card_applications_protocol(),
+			'canSelfService'      => $can_self,
+			'canReissue'          => self::current_user_can_reissue_member_card_applications(),
+			'canUpdatePhoto'      => self::current_user_can_update_member_card_applications_photo(),
+			'canManageCardNumber' => self::current_user_can_manage_member_card_number(),
+		];
+	}
+
+	/**
 	 * Повертає прапорці прав для модуля особистого кабінету.
 	 *
 	 * @return array<string,bool>
@@ -543,6 +592,62 @@ class Capabilities {
 			'isOwner'          => $is_owner,
 			'isGuest'          => ! $is_logged_in,
 		];
+	}
+
+	/**
+	 * Чи може користувач переглядати модуль посвідчень членів ФСТУ.
+	 */
+	public static function current_user_can_view_member_card_applications(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_MEMBER_CARD_APPLICATIONS );
+	}
+
+	/**
+	 * Чи може користувач керувати посвідченнями членів ФСТУ.
+	 */
+	public static function current_user_can_manage_member_card_applications(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_MEMBER_CARD_APPLICATIONS );
+	}
+
+	/**
+	 * Чи може користувач видаляти посвідчення членів ФСТУ.
+	 */
+	public static function current_user_can_delete_member_card_applications(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::DELETE_MEMBER_CARD_APPLICATIONS );
+	}
+
+	/**
+	 * Чи може користувач переглядати протокол посвідчень членів ФСТУ.
+	 */
+	public static function current_user_can_view_member_card_applications_protocol(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_MEMBER_CARD_APPLICATIONS_PROTOCOL );
+	}
+
+	/**
+	 * Чи може користувач працювати зі своїм посвідченням у self-service режимі.
+	 */
+	public static function current_user_can_self_manage_member_card_applications(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::SELF_MANAGE_MEMBER_CARD_APPLICATIONS );
+	}
+
+	/**
+	 * Чи може користувач виконувати перевипуск посвідчення.
+	 */
+	public static function current_user_can_reissue_member_card_applications(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::REISSUE_MEMBER_CARD_APPLICATIONS );
+	}
+
+	/**
+	 * Чи може користувач оновлювати фото посвідчення.
+	 */
+	public static function current_user_can_update_member_card_applications_photo(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::UPDATE_MEMBER_CARD_APPLICATIONS_PHOTO );
+	}
+
+	/**
+	 * Чи може користувач змінювати номер картки вручну.
+	 */
+	public static function current_user_can_manage_member_card_number(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_MEMBER_CARD_NUMBER );
 	}
 
 	/**

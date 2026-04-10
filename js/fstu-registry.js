@@ -3,12 +3,10 @@
  * Обробка: фільтри, пагінація, модальні вікна, форма заявки.
  * Жодних inline-скриптів у PHP!
  *
- * Version:     1.3.0
- * Date_update: 2026-04-07
+ * Version:     1.4.0
+ * Date_update: 2026-04-10
  *
  * @package FSTU
- * @requires jQuery
- * @requires fstuRegistry (wp_localize_script)
  */
 
 /* global fstuRegistry, turnstile */
@@ -51,15 +49,12 @@ jQuery( document ).ready( function ( $ ) {
 	// ─── DOM-елементи ─────────────────────────────────────────────────────────
 	const $tbody        = $( '#fstu-registry-tbody' );
 	const $loader       = $( '#fstu-loader' );
-	const $pagination   = $( '#fstu-pagination' );
 	const $paginInfo    = $( '#fstu-pagination-info' );
 	const $paginPages   = $( '#fstu-page-numbers' );
 	const $btnFirst     = $( '#fstu-page-first' );
 	const $btnPrev      = $( '#fstu-page-prev' );
 	const $btnNext      = $( '#fstu-page-next' );
 	const $btnLast      = $( '#fstu-page-last' );
-	const $searchInput  = $( '#fstu-filter-search' );
-	const $searchClear  = $( '#fstu-search-clear' );
 
 	// ─── Ініціалізація ────────────────────────────────────────────────────────
 
@@ -265,7 +260,6 @@ jQuery( document ).ready( function ( $ ) {
 
 		// Кнопка деталей рядка ▾
 		$( document ).on( 'click', '.fstu-btn--details', function () {
-			const userId = $( this ).data( 'user-id' );
 			$( this ).toggleClass( 'fstu-btn--details-open' );
 			// Додаткову логіку розгортання рядка можна додати тут
 		} );
@@ -280,6 +274,13 @@ jQuery( document ).ready( function ( $ ) {
 			e.preventDefault();
 			const userId = $( this ).data( 'id' );
 			openEditUserModal( userId ); // Цю функцію ми створили в попередньому кроці
+		} );
+		// Пункт меню: модуль посвідчень ФСТУ
+		$( document ).on( 'click', '.fstu-action-member-card', function ( e ) {
+			e.preventDefault();
+			const userId = parseInt( $( this ).data( 'id' ), 10 ) || 0;
+			const action = String( $( this ).data( 'member-card-action' ) || '' );
+			openMemberCardModule( userId, action );
 		} );
 		// Кнопка ВИДАЛЕННЯ (Soft Delete)
 		$( document ).on( 'click', '.fstu-action-delete', function ( e ) {
@@ -445,14 +446,15 @@ jQuery( document ).ready( function ( $ ) {
 		$( document ).on( 'click', '.fstu-action-dues', function ( e ) {
 			e.preventDefault();
 			const userId = $( this ).data( 'id' );
+			const $duesForm = $( '#fstu-add-dues-form' );
 
 			// Ховаємо меню
 			$( '.fstu-opts' ).removeClass( 'fstu-opts--open' ).removeClass( 'fstu-dropup' );
 
 			// Готуємо модалку
 			$( '#add_dues_user_id' ).val( userId );
-			$( '#fstu-add-dues-form' ).addClass( 'fstu-hidden' );
-			$( '#fstu-add-dues-form' )[0].reset();
+			$duesForm.addClass( 'fstu-hidden' );
+			$duesForm[0].reset();
 			$( '#fstu-dues-alert' ).addClass( 'fstu-hidden' );
 			$( '#fstu-dues-loader' ).removeClass( 'fstu-hidden' );
 			$( '#fstu-dues-submit' ).prop( 'disabled', false ).find( '.fstu-btn__text' ).text( '💾 Зберегти квитанцію' );
@@ -821,6 +823,29 @@ jQuery( document ).ready( function ( $ ) {
 				$alert.text( fstuRegistry.strings.errorGeneric ).removeClass( 'fstu-hidden' );
 			}
 		} );
+	}
+
+	function openMemberCardModule( userId, action ) {
+		const moduleUrl = String( fstuRegistry.memberCardModuleUrl || '' );
+
+		if ( ! moduleUrl ) {
+			alert( fstuRegistry.strings.memberCardModuleUnavailable || 'Сторінка модуля посвідчень поки не визначена.' );
+			return;
+		}
+
+		if ( ! userId ) {
+			return;
+		}
+
+		const url = new URL( moduleUrl, window.location.origin );
+		const safeAction = [ 'create', 'view', 'reissue', 'photo' ].includes( action ) ? action : 'create';
+
+		url.searchParams.set( 'fstu_intent', 'registry_member_card' );
+		url.searchParams.set( 'fstu_user_id', String( userId ) );
+		url.searchParams.set( 'fstu_member_card_action', safeAction );
+		url.searchParams.set( 'pc_return', window.location.href );
+
+		window.location.href = url.toString();
 	}
 
 	// ─── Обробники подій: Вкладки (Tabs) ──────────────────────────────────────
@@ -1432,8 +1457,9 @@ jQuery( document ).ready( function ( $ ) {
 	}
 
 	function resetApplicationForm() {
-		$( '#fstu-application-form' )[ 0 ].reset();
-		$( '#fstu-application-form' ).addClass( 'fstu-hidden' );
+		const $applicationForm = $( '#fstu-application-form' );
+		$applicationForm[ 0 ].reset();
+		$applicationForm.addClass( 'fstu-hidden' );
 		$( '#fstu-terms-agree-top' ).prop( 'checked', false );
 		$( '#fstu-terms-agree-bottom' ).prop( 'checked', false );
 		$( '#fstu-app-message' ).addClass( 'fstu-hidden' );

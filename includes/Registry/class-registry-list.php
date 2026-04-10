@@ -4,8 +4,8 @@
  * Реєструє шорткод [fstu_registry], підключає скрипти/стилі,
  * передає локалізовані змінні у JS.
  *
- * Version:     1.0.0
- * Date_update: 2026-04-03
+ * Version:     1.1.0
+ * Date_update: 2026-04-10
  *
  * @package FSTU\Registry
  */
@@ -72,6 +72,9 @@ class Registry_List {
 	private function enqueue_assets(): void {
 		//$ver = FSTU_VERSION;
         $ver = time(); // Тимчасово для скидання кешу!
+		$member_card_module_url = class_exists( '\\FSTU\\Modules\\Registry\\MemberCardApplications\\Member_Card_Applications_List' )
+			? \FSTU\Modules\Registry\MemberCardApplications\Member_Card_Applications_List::get_module_url( 'registry' )
+			: '';
 
 		wp_enqueue_style(
 			self::ASSET_HANDLE,
@@ -98,6 +101,7 @@ class Registry_List {
 				'isAdmin'        => current_user_can( 'manage_options' ) ? '1' : '0',
 				'isLoggedIn'     => is_user_logged_in() ? '1' : '0',
 				'currentUserId'  => get_current_user_id(),
+				'memberCardModuleUrl' => is_string( $member_card_module_url ) ? $member_card_module_url : '',
 				'turnstileSiteKey' => defined( 'FSTU_TURNSTILE_SITE_KEY' ) ? FSTU_TURNSTILE_SITE_KEY : '',
 				'currentYear'    => (int) date( 'Y' ),
 				'strings'        => [
@@ -105,6 +109,7 @@ class Registry_List {
 					'noResults'    => 'Записів не знайдено.',
 					'errorGeneric' => 'Сталася помилка. Спробуйте ще раз.',
 					'confirmReset' => 'Скинути всі фільтри?',
+					'memberCardModuleUnavailable' => 'Сторінка модуля посвідчень поки не визначена. Додайте shortcode [fstu_member_card_applications] або налаштуйте URL сторінки модуля.',
 				],
 			]
 		);

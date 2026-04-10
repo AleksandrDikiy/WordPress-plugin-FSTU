@@ -1,0 +1,638 @@
+/**
+ * CSS модуля «Посвідчення членів ФСТУ».
+ *
+ * Version:     1.4.0
+ * Date_update: 2026-04-10
+ *
+ * @package FSTU
+ */
+
+body.fstu-modal-open {
+	overflow: hidden;
+}
+
+.fstu-hidden {
+	display: none;
+}
+
+.fstu-modal.fstu-hidden {
+	display: none !important;
+}
+
+.fstu-member-card-applications-wrap {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+	font-size: 13px;
+	color: #2c3e50;
+	width: 100%;
+}
+
+.fstu-member-card-applications-title {
+	font-size: 24px;
+	font-weight: 700;
+	margin: 0 0 12px;
+	color: #1f2d3d;
+}
+
+.fstu-member-card-applications-notice {
+	margin: 0 0 12px;
+	padding: 10px 12px;
+	border: 1px solid #d1d5db;
+	border-radius: 4px;
+	background: #f8f9fa;
+	color: #374151;
+}
+
+.fstu-member-card-applications-notice--success {
+	background: #ecfdf5;
+	border-color: #a7f3d0;
+	color: #065f46;
+}
+
+.fstu-member-card-applications-notice--error {
+	background: #fef2f2;
+	border-color: #fecaca;
+	color: #991b1b;
+}
+
+.fstu-member-card-applications-self-service {
+	margin: 0 0 14px;
+	padding: 14px 16px;
+	border: 1px solid #d1d5db;
+	border-radius: 6px;
+	background: #fff;
+}
+
+.fstu-member-card-applications-self-service__title {
+	margin: 0 0 8px;
+	font-size: 18px;
+	color: #1f2d3d;
+}
+
+.fstu-member-card-applications-self-service__text {
+	margin: 0 0 12px;
+	color: #4b5563;
+}
+
+.fstu-member-card-applications-self-service__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.fstu-action-bar--member-card-applications {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	flex-wrap: nowrap;
+	padding: 10px 12px;
+	margin-bottom: 12px;
+	background: #f8f9fa;
+	border: 1px solid #d1d5db;
+	border-radius: 4px;
+	overflow-x: auto;
+}
+
+.fstu-action-bar__group {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	white-space: nowrap;
+}
+
+.fstu-action-bar__group--filters {
+	gap: 10px;
+}
+
+.fstu-btn,
+.fstu-btn--page,
+.fstu-select,
+.fstu-input,
+.fstu-input--in-header {
+	font-size: 13px;
+	border: 1px solid #d1d5db;
+	border-radius: 4px;
+	box-sizing: border-box;
+}
+
+.fstu-btn,
+.fstu-btn--page {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: 34px;
+	padding: 0 14px;
+	background: #f8f9fa;
+	color: #374151;
+	cursor: pointer;
+	transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+	text-decoration: none;
+}
+
+.fstu-btn:hover,
+.fstu-btn--page:hover,
+.fstu-btn--page-active,
+.fstu-btn--page-active:hover {
+	background: #c65b41;
+	border-color: #c65b41;
+	color: #fff;
+}
+
+.fstu-btn--page {
+	min-width: 32px;
+	height: 32px;
+	padding: 0 10px;
+}
+
+.fstu-btn[disabled],
+.fstu-btn--page[disabled] {
+	opacity: .6;
+	cursor: not-allowed;
+	pointer-events: none;
+}
+
+.fstu-link-button {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 0;
+	border: none;
+	background: transparent;
+	color: #9f3a2a;
+	text-decoration: underline;
+	text-underline-offset: 2px;
+	cursor: pointer;
+	font: inherit;
+	box-shadow: none;
+}
+
+.fstu-link-button:hover {
+	color: #c65b41;
+}
+
+.fstu-select,
+.fstu-input {
+	height: 34px;
+	padding: 0 10px;
+	background: #fff;
+	color: #374151;
+}
+
+.fstu-select--compact,
+.fstu-pagination__per-page-label,
+.fstu-label {
+	font-size: 12px;
+}
+
+.fstu-select--compact {
+	height: 26px;
+	padding: 2px 6px;
+	width: 70px !important;
+}
+
+.fstu-member-card-applications-filter-select {
+	width: 105px !important;
+	min-width: 105px;
+}
+
+.fstu-label {
+	color: #374151;
+}
+
+.fstu-table-wrap {
+	margin: 0 0 12px;
+	border: 1px solid #c8d8c0;
+	border-radius: 4px;
+	background: #fff;
+	overflow-x: auto;
+}
+
+.fstu-table {
+	width: 100%;
+	border-collapse: collapse;
+	min-width: 860px;
+}
+
+.fstu-thead .fstu-th {
+	background: #dcead6;
+	padding: 10px 8px;
+	text-align: left;
+	font-weight: 600;
+	border: 1px solid #c8d8c0;
+	vertical-align: middle;
+	color: #2c3328;
+}
+
+.fstu-td,
+.fstu-no-results {
+	padding: 10px 8px;
+	border: 1px solid #e5e7eb;
+	vertical-align: middle;
+	background: #fff;
+}
+
+.fstu-tbody .fstu-row:nth-child(even) .fstu-td {
+	background: #f8faf6;
+}
+
+.fstu-no-results {
+	text-align: center;
+	color: #6b7280;
+}
+
+.fstu-th--num,
+.fstu-td--num {
+	width: 60px;
+	text-align: center;
+}
+
+.fstu-th--wide-name,
+.fstu-td--name {
+	min-width: 220px;
+}
+
+.fstu-th--actions,
+.fstu-td--actions {
+	width: 64px;
+	text-align: center;
+	white-space: nowrap;
+}
+
+.fstu-td--actions {
+	padding: 8px;
+}
+
+.fstu-td--actions .fstu-member-card-applications-dropdown {
+	justify-content: center;
+}
+
+.fstu-th--date,
+.fstu-td--date {
+	width: 140px;
+}
+
+.fstu-th--type,
+.fstu-td--type,
+.fstu-th--status,
+.fstu-td--status {
+	width: 80px;
+	text-align: center;
+}
+
+.fstu-th--message,
+.fstu-td--message {
+	min-width: 200px;
+}
+
+.fstu-th--user,
+.fstu-td--user {
+	width: 120px;
+}
+
+.fstu-th-with-search {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	white-space: nowrap;
+}
+
+.fstu-th-with-search--vertical {
+	flex-direction: column;
+	align-items: stretch;
+	white-space: normal;
+}
+
+.fstu-input--in-header {
+	height: 24px;
+	padding: 2px 6px;
+	font-size: 12px;
+	background: rgba(255,255,255,0.85);
+	width: 160px;
+}
+
+.fstu-member-card-applications-search-input {
+	width: 118px;
+	height: 22px;
+	padding: 1px 6px;
+	line-height: 1.2;
+}
+
+.fstu-pagination {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 8px 0;
+}
+
+.fstu-pagination--compact > div {
+	flex: 1;
+	display: flex;
+	align-items: center;
+}
+
+.fstu-pagination__left {
+	justify-content: flex-start;
+	gap: 6px;
+}
+
+.fstu-pagination__controls {
+	justify-content: center;
+	gap: 6px;
+	flex-wrap: wrap;
+}
+
+.fstu-pagination__info {
+	justify-content: flex-end;
+	font-size: 12px;
+	color: #6b7280;
+}
+
+.fstu-member-card-applications-dropdown {
+	position: relative;
+	display: inline-flex;
+}
+
+.fstu-member-card-applications-dropdown__toggle {
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	width: 28px !important;
+	height: 28px !important;
+	min-width: 28px !important;
+	min-height: 28px !important;
+	padding: 0 !important;
+	border: 1px solid #d1d5db !important;
+	background: #f8f9fa !important;
+	color: #374151 !important;
+	border-radius: 4px !important;
+	box-shadow: none !important;
+	line-height: 1 !important;
+	font-size: 12px;
+	cursor: pointer;
+}
+
+.fstu-dropdown--open .fstu-member-card-applications-dropdown__toggle,
+.fstu-member-card-applications-dropdown__toggle:hover {
+	background: #c65b41 !important;
+	border-color: #c65b41 !important;
+	color: #fff !important;
+}
+
+.fstu-member-card-applications-dropdown__menu {
+	display: none;
+	position: fixed;
+	min-width: 190px;
+	background: #fff;
+	border: 1px solid #d1d5db;
+	border-radius: 4px;
+	box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+	z-index: 100001;
+	padding: 4px;
+}
+
+.fstu-dropdown--open .fstu-member-card-applications-dropdown__menu {
+	display: block;
+}
+
+.fstu-member-card-applications-dropdown__item {
+	display: block;
+	width: 100%;
+	text-align: left;
+	padding: 8px 10px;
+	border: 0;
+	background: transparent;
+	color: #374151;
+	border-radius: 4px;
+	box-shadow: none;
+	cursor: pointer;
+}
+
+.fstu-member-card-applications-dropdown__item:hover {
+	background: #f3f4f6;
+}
+
+.fstu-member-card-applications-dropdown__item--danger {
+	color: #b91c1c;
+}
+
+.fstu-member-card-applications-dropdown__item--danger:hover {
+	background: #fef2f2;
+}
+
+.fstu-member-card-applications-dropdown__item[disabled] {
+	cursor: not-allowed;
+	opacity: .6;
+}
+
+.fstu-modal {
+	position: fixed;
+	inset: 0;
+	z-index: 9999;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 20px;
+}
+
+.fstu-modal__overlay {
+	position: absolute;
+	inset: 0;
+	background: rgba(17, 24, 39, 0.55);
+}
+
+.fstu-modal__dialog {
+	position: relative;
+	z-index: 1;
+	width: min(860px, 100%);
+	max-height: calc(100vh - 40px);
+	overflow: auto;
+	background: #fff;
+	border-radius: 8px;
+	border: 1px solid #d1d5db;
+	padding: 18px;
+}
+
+.fstu-modal__close {
+	position: absolute;
+	top: 10px;
+	right: 10px;
+	width: 24px;
+	height: 24px;
+	border: 1px solid #d1d5db;
+	background: #f8f9fa;
+	border-radius: 4px;
+	cursor: pointer;
+}
+
+.fstu-modal__close:hover {
+	background: #c65b41;
+	border-color: #c65b41;
+	color: #fff;
+}
+
+.fstu-modal__title {
+	margin: 0 0 14px;
+	font-size: 20px;
+}
+
+.fstu-form__note {
+	margin: 0 0 12px;
+	padding: 10px 12px;
+	background: #fff7ed;
+	border: 1px solid #fdba74;
+	border-radius: 4px;
+	color: #9a3412;
+}
+
+.fstu-member-card-applications-photo-panel {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin: 0 0 12px;
+	padding: 12px;
+	border: 1px solid #d1d5db;
+	border-radius: 6px;
+	background: #f8fafc;
+}
+
+.fstu-member-card-applications-photo-panel.is-empty {
+	background: #f8f9fa;
+}
+
+.fstu-member-card-applications-photo-panel__preview {
+	width: 96px;
+	height: 96px;
+	border-radius: 8px;
+	overflow: hidden;
+	flex: 0 0 96px;
+	background: #e5e7eb;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.fstu-member-card-applications-photo-panel__image,
+.fstu-member-card-applications-photo-view__image {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.fstu-member-card-applications-photo-panel__meta,
+.fstu-member-card-applications-photo-view {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.fstu-member-card-applications-photo-panel__status,
+.fstu-member-card-applications-photo-empty {
+	font-size: 12px;
+	color: #4b5563;
+}
+
+.fstu-member-card-applications-photo-view__preview {
+	display: block;
+	width: 140px;
+	height: 140px;
+	border-radius: 8px;
+	overflow: hidden;
+	border: 1px solid #d1d5db;
+	background: #f3f4f6;
+}
+
+.fstu-member-card-applications-photo-view__link,
+.fstu-member-card-applications-photo-panel__link {
+	justify-content: flex-start;
+	width: fit-content;
+}
+
+.fstu-form__grid,
+.fstu-view-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 12px;
+}
+
+.fstu-form__field,
+.fstu-view-grid__row {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.fstu-form__actions {
+	display: flex;
+	justify-content: flex-end;
+	margin-top: 14px;
+}
+
+.fstu-form.is-photo-mode .fstu-form__actions {
+	margin-top: 6px;
+}
+
+.fstu-view-grid__label {
+	font-size: 12px;
+	font-weight: 600;
+	color: #6b7280;
+}
+
+.fstu-view-grid__value {
+	font-size: 13px;
+	color: #111827;
+	word-break: break-word;
+}
+
+.fstu-badge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 2px 6px;
+	border-radius: 999px;
+	font-size: 11px;
+	font-weight: 600;
+}
+
+.fstu-badge--default {
+	background: #e5e7eb;
+	color: #374151;
+}
+
+.fstu-badge--insert {
+	background: #dcfce7;
+	color: #166534;
+}
+
+.fstu-badge--update {
+	background: #dbeafe;
+	color: #1d4ed8;
+}
+
+.fstu-badge--delete {
+	background: #fee2e2;
+	color: #b91c1c;
+}
+
+@media (max-width: 900px) {
+	.fstu-action-bar--member-card-applications {
+		flex-wrap: wrap;
+	}
+
+	.fstu-form__grid,
+	.fstu-view-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.fstu-member-card-applications-photo-panel {
+		align-items: flex-start;
+		flex-direction: column;
+	}
+
+	.fstu-member-card-applications-self-service__actions {
+		flex-direction: column;
+		align-items: stretch;
+	}
+}
+

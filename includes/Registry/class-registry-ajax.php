@@ -3,13 +3,15 @@
  * AJAX-обробники модуля "Реєстр членів ФСТУ".
  * Всі запити до БД виконуються виключно через $wpdb->prepare().
  *
- * Version:     1.2.0
- * Date_update: 2026-04-07
+ * Version:     1.3.0
+ * Date_update: 2026-04-10
  *
  * @package FSTU\Registry
  */
 
 namespace FSTU\Registry;
+
+use FSTU\Core\Capabilities;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -642,6 +644,8 @@ class Registry_Ajax {
 
 		$is_admin     = current_user_can( 'manage_options' );
 		$is_logged_in = is_user_logged_in();
+		$member_card_permissions = Capabilities::get_member_card_applications_permissions();
+		$current_user_id = get_current_user_id();
 
 		$html = '';
 		$num  = ( $page - 1 ) * $per_page;
@@ -649,6 +653,17 @@ class Registry_Ajax {
 		foreach ( $rows as $row ) {
 			$num++;
 			$uid = (int) $row['user_id'];
+			$has_member_card = ! empty( $row['card_number'] );
+			$can_create_member_card = ! empty( $member_card_permissions['canManage'] ) || ( ! empty( $member_card_permissions['canSelfService'] ) && $current_user_id === $uid );
+			$can_view_member_card = $has_member_card && (
+				! empty( $member_card_permissions['canView'] )
+				|| ! empty( $member_card_permissions['canManage'] )
+				|| ( ! empty( $member_card_permissions['canSelfService'] ) && $current_user_id === $uid )
+			);
+			$can_open_member_card = $is_logged_in && (
+				$can_create_member_card
+				|| $can_view_member_card
+			);
 
 			// ПІБ
 			$fio = trim(
@@ -737,6 +752,16 @@ class Registry_Ajax {
 						<li><hr class="fstu-opts-divider"></li>
 						<li><a href="#" class="fstu-action-delete" data-id="'.$uid.'" style="color:#c0392b !important;">❌ Видалення</a></li>';
                 }
+
+				if ( $can_open_member_card ) {
+					$member_card_label = $current_user_id === $uid && ! empty( $member_card_permissions['canSelfService'] )
+						? ( $has_member_card ? '🪪 Моє посвідчення' : '🪪 Оформити посвідчення' )
+						: '🪪 Посвідчення ФСТУ';
+					$member_card_action = $can_view_member_card ? 'view' : 'create';
+
+					$btn_html .= '
+						<li><a href="#" class="fstu-action-member-card" data-id="'.$uid.'" data-member-card-action="'.$member_card_action.'">'.$member_card_label.'</a></li>';
+				}
 
                 $btn_html .= '
 					</ul>

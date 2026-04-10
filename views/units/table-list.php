@@ -1,58 +1,54 @@
 <?php
 /**
- * Таблиця списку осередків.
- *
- * Version:     1.1.0
- * Date_update: 2026-04-06
- *
- * @package FSTU\Dictionaries\Units
+ * Шаблон таблиці осередків.
+ * * Version: 1.0.0
+ * Date_update: 2026-04-10
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
-
-$permissions  = isset( $permissions ) && is_array( $permissions ) ? $permissions : [];
-$show_actions = ! empty( $permissions['canView'] );
-$colspan      = $show_actions ? 9 : 8;
 ?>
-
-<div class="fstu-table-wrap">
-	<table class="fstu-table">
-		<thead class="fstu-thead">
+<div class="fstu-table-responsive">
+	<table class="fstu-table fstu-table--striped">
+		<thead>
 			<tr>
-				<th class="fstu-th fstu-th--num">#</th>
+				<th class="fstu-th fstu-th--num">№</th>
 				<th class="fstu-th fstu-th--wide-name">
 					<div class="fstu-th-with-search">
-						<span><?php esc_html_e( 'Найменування', 'fstu' ); ?></span>
-						<input
-							type="text"
-							id="fstu-units-search"
-							class="fstu-input--in-header"
-							placeholder="<?php esc_attr_e( '🔍 Пошук...', 'fstu' ); ?>"
-							aria-label="<?php esc_attr_e( 'Пошук за найменуванням осередка', 'fstu' ); ?>"
-							autocomplete="off"
-						>
+						<span>Найменування повне</span>
+						<input type="text" id="fstu-units-search" class="fstu-input--in-header" placeholder="🔍 Пошук...">
 					</div>
 				</th>
-				<th class="fstu-th"><?php esc_html_e( 'Короткo', 'fstu' ); ?></th>
-				<th class="fstu-th"><?php esc_html_e( 'ОПФ', 'fstu' ); ?></th>
-				<th class="fstu-th"><?php esc_html_e( 'Тип', 'fstu' ); ?></th>
-				<th class="fstu-th"><?php esc_html_e( 'Регіон', 'fstu' ); ?></th>
-				<th class="fstu-th"><?php esc_html_e( 'Місто', 'fstu' ); ?></th>
-				<th class="fstu-th"><?php esc_html_e( 'Річний внесок', 'fstu' ); ?></th>
-				<?php if ( $show_actions ) : ?>
-					<th class="fstu-th fstu-th--actions"><?php esc_html_e( 'Дії', 'fstu' ); ?></th>
-				<?php endif; ?>
+				<th class="fstu-th">Скорочене</th>
+				<th class="fstu-th">ОПФ</th>
+				<th class="fstu-th">Ранг</th>
+				<th class="fstu-th">Область</th>
+				<th class="fstu-th">Місто</th>
+				<th class="fstu-th fstu-th--actions" title="Дії" style="width: 40px; text-align: center;">
+					ДІЇ
+				</th>
+				</th>
 			</tr>
 		</thead>
-		<tbody class="fstu-tbody" id="fstu-units-tbody">
-			<tr class="fstu-row">
-				<td colspan="<?php echo esc_attr( (string) $colspan ); ?>" class="fstu-no-results">
-					<?php esc_html_e( 'Завантаження...', 'fstu' ); ?>
-				</td>
-			</tr>
+		<tbody id="fstu-units-tbody">
+			<tr><td colspan="8" style="text-align:center;">Завантаження...</td></tr>
 		</tbody>
 	</table>
 </div>
 
+<div class="fstu-pagination fstu-pagination--compact">
+	<div class="fstu-pagination__left">
+		<label class="fstu-pagination__per-page-label" for="fstu-units-per-page">Показувати по:</label>
+		<select id="fstu-units-per-page" class="fstu-select fstu-select--compact" style="width: 70px !important;">
+			<option value="10" selected>10</option>
+			<option value="15">15</option>
+			<option value="25">25</option>
+			<option value="50">50</option>
+		</select>
+	</div>
+	<div class="fstu-pagination__controls" id="fstu-units-pagination-controls">
+		</div>
+	<div class="fstu-pagination__info" id="fstu-units-pagination-info">
+		</div>
+</div>

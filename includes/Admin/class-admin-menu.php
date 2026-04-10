@@ -2,8 +2,8 @@
 /**
  * Реєстрація меню плагіна в адмін-панелі WordPress.
  *
- * Version:     1.11.0
- * Date_update: 2026-04-09
+ * Version:     1.12.0
+ * Date_update: 2026-04-10
  *
  * @package FSTU\Admin
  */
@@ -85,6 +85,7 @@ class Admin_Menu {
         $eventtype_list_class = 'FSTU\\Dictionaries\\EventType\\EventType_List';
         $tourismtype_list_class = 'FSTU\\Dictionaries\\TourismType\\TourismType_List';
         $referees_list_class = 'FSTU\\Modules\\Registry\\Referees\\Referees_List';
+            $member_card_applications_list_class = 'FSTU\\Modules\\Registry\\MemberCardApplications\\Member_Card_Applications_List';
             $steering_list_class = 'FSTU\\Modules\\Registry\\Steering\\Steering_List';
             $personal_cabinet_list_class = 'FSTU\\Modules\\PersonalCabinet\\Personal_Cabinet_List';
         $plugin_data = get_plugin_data( WP_PLUGIN_DIR . '/fstu_new/fstu.php' );
@@ -119,6 +120,9 @@ class Admin_Menu {
         $referees_page_url = class_exists( $referees_list_class )
           ? $referees_list_class::get_module_url( 'admin' )
           : '';
+            $member_card_applications_page_url = class_exists( $member_card_applications_list_class )
+              ? $member_card_applications_list_class::get_module_url( 'admin' )
+              : '';
             $steering_page_url = class_exists( $steering_list_class )
               ? $steering_list_class::get_module_url( 'admin' )
               : '';

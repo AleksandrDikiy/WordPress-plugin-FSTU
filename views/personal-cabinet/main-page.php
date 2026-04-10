@@ -2,8 +2,8 @@
 /**
  * View: Головна сторінка модуля «Особистий кабінет ФСТУ».
  *
- * Version:     1.5.0
- * Date_update: 2026-04-09
+ * Version:     1.6.0
+ * Date_update: 2026-04-10
  */
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -29,7 +29,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 		<div class="fstu-personal-cabinet__action-bar">
 			<div class="fstu-personal-cabinet__action-bar-left">
 				<h2 class="fstu-personal-cabinet__title">Особистий кабінет ФСТУ</h2>
-				<p class="fstu-personal-cabinet__subtitle">Окремий модульний кабінет ФСТУ з вкладками профілю, інтеграціями суміжних доменів, секцією «ПРОТОКОЛ» та контрольованими mutation-flow.</p>
 			</div>
 			<div class="fstu-personal-cabinet__action-bar-right">
 				<button type="button" class="fstu-btn fstu-btn--secondary fstu-hidden" id="fstu-personal-show-main">ДОВІДНИК</button>
@@ -47,21 +46,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 			<?php endif; ?>
 
 			<div class="fstu-personal-cabinet__summary">
-				<div class="fstu-personal-cabinet__summary-card">
-					<div class="fstu-personal-cabinet__summary-name" id="fstu-personal-name"><?php echo esc_html( (string) ( $profile_summary['displayName'] ?? '' ) ); ?></div>
-					<div class="fstu-personal-cabinet__summary-meta">
-						<span id="fstu-personal-email"><?php echo esc_html( (string) ( $profile_summary['email'] ?? '' ) ); ?></span>
-						<span id="fstu-personal-roles"><?php echo esc_html( (string) ( $profile_summary['roles'] ?? '' ) ); ?></span>
-						<span id="fstu-personal-scope"><?php echo ! empty( $is_own_profile ) ? esc_html__( 'Власний профіль', 'fstu' ) : esc_html__( 'Публічний перегляд профілю', 'fstu' ); ?></span>
-					</div>
-				</div>
-				<div class="fstu-alert fstu-alert--info" id="fstu-personal-alert">
-					<?php if ( ! empty( $is_own_profile ) ) : ?>
-						Стартовий етап реалізації: модуль уже підключено в плагін, працює для власного профілю й має секцію протоколу.
-					<?php else : ?>
-						Відкрито публічний перегляд профілю користувача. Приватні та службові вкладки залишаються прихованими згідно з матрицею прав.
-					<?php endif; ?>
-				</div>
+				<div class="fstu-alert fstu-hidden" id="fstu-personal-alert"></div>
 			</div>
 
 			<div class="fstu-personal-tabs">
@@ -103,6 +88,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 		<?php endif; ?>
 
 		<?php include FSTU_PLUGIN_DIR . 'views/personal-cabinet/modal-dues.php'; ?>
+		<?php include FSTU_PLUGIN_DIR . 'views/personal-cabinet/modal-photo.php'; ?>
 	<?php endif; ?>
 </div>
-

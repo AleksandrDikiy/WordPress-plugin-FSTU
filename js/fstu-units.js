@@ -1,806 +1,506 @@
 /**
- * JavaScript модуля "Довідник осередків ФСТУ".
- * AJAX-запити, фільтри, модальні вікна, CRUD-операції.
- *
- * Version:     1.1.0
- * Date_update: 2026-04-06
- *
- * @package FSTU
+ * Клієнтська логіка модуля "Довідник осередків ФСТУ".
+ * * Version: 1.1.0
+ * Date_update: 2026-04-10
  */
 
 jQuery(document).ready(function($) {
-	'use strict';
-
-	const $root = $('#fstu-units');
-	if (!$root.length || typeof fstuUnitsL10n === 'undefined') {
-		return;
-	}
-
-	const $mainSection = $('#fstu-units-main');
-	const $protocolSection = $('#fstu-units-protocol');
-	const $protocolOpenBtn = $('#fstu-units-protocol-btn');
-	const $protocolBackBtn = $('#fstu-units-protocol-back-btn');
-	const $perPage = $('#fstu-units-per-page');
-	const $protocolPerPage = $('#fstu-units-protocol-per-page');
-	const $protocolFilterName = $('#fstu-units-protocol-filter-name');
-
-	const state = {
-		currentPage: 1,
-		perPage: parseInt($perPage.val(), 10) || 10,
-		totalPages: 1,
-		isLoading: false,
-	};
-
-	const protocolState = {
-		currentPage: 1,
-		perPage: parseInt($protocolPerPage.val(), 10) || 10,
-		totalPages: 1,
-		isLoading: false,
-	};
-
-	const permissions = fstuUnitsL10n.permissions || {
-		canView: true,
-		canManage: false,
-		canDelete: false,
-	};
-
-	bindEvents();
-	loadUnits();
-
-	function bindEvents() {
-		$('#fstu-units-add-btn').on('click', openAddForm);
-		$('#fstu-units-refresh-btn').on('click', function() {
-			loadUnits();
-		});
-		$protocolOpenBtn.on('click', handleOpenProtocol);
-		$protocolBackBtn.on('click', handleCloseProtocol);
-
-		$('#fstu-units-search').on('input', debounce(function() {
-			state.currentPage = 1;
-			loadUnits();
-		}, 300));
-
-		$('#fstu-units-filter-region, #fstu-units-filter-type').on('change', function() {
-			state.currentPage = 1;
-			loadUnits();
-		});
-
-		$perPage.on('change', function() {
-			state.perPage = parseInt($(this).val(), 10) || 10;
-			state.currentPage = 1;
-			loadUnits();
-		});
-
-		$protocolPerPage.on('change', function() {
-			protocolState.perPage = parseInt($(this).val(), 10) || 10;
-			protocolState.currentPage = 1;
-			loadProtocol();
-		});
-
-		$protocolFilterName.on('input', debounce(function() {
-			protocolState.currentPage = 1;
-			loadProtocol();
-		}, 300));
-
-		$('#fstu-units-prev-page').on('click', function() {
-			if (state.currentPage > 1) {
-				state.currentPage -= 1;
-				loadUnits();
-			}
-		});
-
-		$('#fstu-units-next-page').on('click', function() {
-			if (state.currentPage < state.totalPages) {
-				state.currentPage += 1;
-				loadUnits();
-			}
-		});
-
-		$('#fstu-units-protocol-prev-page').on('click', function() {
-			if (protocolState.currentPage > 1) {
-				protocolState.currentPage -= 1;
-				loadProtocol();
-			}
-		});
-
-		$('#fstu-units-protocol-next-page').on('click', function() {
-			if (protocolState.currentPage < protocolState.totalPages) {
-				protocolState.currentPage += 1;
-				loadProtocol();
-			}
-		});
-
-		$(document).on('click', '.fstu-opts-btn', function(e) {
-			e.preventDefault();
-			e.stopPropagation();
-
-			const $parent = $(this).parent();
-			$('.fstu-opts').not($parent).removeClass('fstu-opts--open fstu-dropup');
-
-			const menuHeight = 220;
-			const windowHeight = $(window).height();
-			const rect = this.getBoundingClientRect();
-
-			if (rect.bottom + menuHeight > windowHeight && rect.top > menuHeight) {
-				$parent.addClass('fstu-dropup');
-			} else {
-				$parent.removeClass('fstu-dropup');
-			}
-
-			$parent.toggleClass('fstu-opts--open');
-		});
-
-		$(document).on('click', '.fstu-opts-list', function(e) {
-			e.stopPropagation();
-		});
-
-		$(document).on('click', function() {
-			$('.fstu-opts').removeClass('fstu-opts--open fstu-dropup');
-		});
-
-		$(document).on('click', '.fstu-btn-action--view', handleViewUnit);
-		$(document).on('click', '.fstu-btn-action--edit', handleEditUnit);
-		$(document).on('click', '.fstu-btn-action--delete', handleDeleteUnit);
-
-		$('#fstu-units-modal-view-close').on('click', closeViewModal);
-		$('#fstu-units-modal-form-close, #fstu-units-form-cancel').on('click', closeFormModal);
-
-		$('#fstu-units-modal-view').on('click', function(event) {
-			if (event.target === this) {
-				closeViewModal();
-			}
-		});
-
-		$('#fstu-units-modal-form').on('click', function(event) {
-			if (event.target === this) {
-				closeFormModal();
-			}
-		});
-
-		$('#fstu-units-form').on('submit', handleFormSubmit);
-		$('#fstu-units-region').on('change', function() {
-			loadCitiesByRegion($(this).val());
-		});
-	}
-
-	function loadUnits() {
-		if (state.isLoading) {
-			return;
-		}
-
-		state.isLoading = true;
-		setTableLoading();
-
-		$.ajax({
-			type: 'POST',
-			url: fstuUnitsL10n.ajaxUrl,
-			dataType: 'json',
-			data: {
-				action: 'fstu_get_units',
-				nonce: fstuUnitsL10n.nonce,
-				search: $('#fstu-units-search').val(),
-				region_id: $('#fstu-units-filter-region').val(),
-				unit_type: $('#fstu-units-filter-type').val(),
-				page: state.currentPage,
-				per_page: state.perPage,
-			},
-			success: function(response) {
-				if (!response || !response.success || !response.data) {
-					showTableError(fstuUnitsL10n.messages.error);
-					return;
-				}
-
-				state.totalPages = Math.max(parseInt(response.data.total_pages, 10) || 1, 1);
-				state.currentPage = parseInt(response.data.page, 10) || 1;
-				state.perPage = parseInt(response.data.per_page, 10) || state.perPage;
-				$perPage.val(String(state.perPage));
-				renderTable(response.data.units || []);
-				updatePagination(response.data);
-			},
-			error: function() {
-				showTableError(fstuUnitsL10n.messages.error);
-			},
-			complete: function() {
-				state.isLoading = false;
-			},
-		});
-	}
-
-	function renderTable(units) {
-		const $tbody = $('#fstu-units-tbody');
-		const colspan = getTableColspan();
-
-		if (!units.length) {
-			$tbody.html(
-				'<tr class="fstu-row">' +
-					'<td colspan="' + colspan + '" class="fstu-no-results">' + escapeHtml(fstuUnitsL10n.messages.noResults) + '</td>' +
-				'</tr>'
-			);
-			return;
-		}
-
-		let html = '';
-
-		units.forEach(function(unit, index) {
-			const rowNumber = ((state.currentPage - 1) * state.perPage) + index + 1;
-			const annualFee = normalizeMoney(unit.Unit_AnnualFee);
-
-			html += '<tr class="fstu-row">';
-			html += '<td class="fstu-td fstu-td--num">' + rowNumber + '</td>';
-			html += '<td class="fstu-td fstu-td--name"><strong>' + escapeHtml(unit.Unit_Name || '') + '</strong></td>';
-			html += '<td class="fstu-td">' + escapeHtml(unit.Unit_ShortName || '') + '</td>';
-			html += '<td class="fstu-td">' + escapeHtml(unit.OPF_NameShort || '') + '</td>';
-			html += '<td class="fstu-td">' + escapeHtml(unit.UnitType_Name || '') + '</td>';
-			html += '<td class="fstu-td">' + escapeHtml(unit.Region_Name || '') + '</td>';
-			html += '<td class="fstu-td">' + escapeHtml(unit.City_Name || '') + '</td>';
-			html += '<td class="fstu-td">' + annualFee + '</td>';
-
-			if (permissions.canView) {
-				html += '<td class="fstu-td fstu-td--actions">';
-				html += '<div class="fstu-opts">';
-				html += '<button type="button" class="fstu-opts-btn" title="Дії" aria-label="Дії">▼</button>';
-				html += '<ul class="fstu-opts-list">';
-				html += '<li><a href="#" class="fstu-btn-action--view" data-unit-id="' + absint(unit.Unit_ID) + '">🔎 Перегляд</a></li>';
-
-				if (permissions.canManage) {
-					html += '<li><a href="#" class="fstu-btn-action--edit" data-unit-id="' + absint(unit.Unit_ID) + '">📝 Редагування</a></li>';
-				}
-
-				if (permissions.canDelete) {
-					html += '<li><hr class="fstu-opts-divider"></li>';
-					html += '<li><a href="#" class="fstu-btn-action--delete" data-unit-id="' + absint(unit.Unit_ID) + '">❌ Видалення</a></li>';
-				}
-
-				html += '</ul>';
-				html += '</div>';
-				html += '</td>';
-			}
-
-			html += '</tr>';
-		});
-
-		$tbody.html(html);
-	}
-
-	function updatePagination(data) {
-		state.totalPages = Math.max(parseInt(data.total_pages, 10) || 1, 1);
-		state.currentPage = parseInt(data.page, 10) || 1;
-
-		$('#fstu-units-pagination-info').text(
-			'Записів: ' + (parseInt(data.total, 10) || 0) + ' | Сторінка ' + state.currentPage + ' з ' + state.totalPages
-		);
-
-		$('#fstu-units-prev-page').prop('disabled', state.currentPage <= 1);
-		$('#fstu-units-next-page').prop('disabled', state.currentPage >= state.totalPages);
-
-		const $pages = $('#fstu-units-pagination-pages');
-		let html = '';
-		const start = Math.max(1, state.currentPage - 2);
-		const end = Math.min(state.totalPages, state.currentPage + 2);
-
-		if (start > 1) {
-			html += buildPageButton(1, false);
-			if (start > 2) {
-				html += '<span class="fstu-pagination__ellipsis">…</span>';
-			}
-		}
-
-		for (let page = start; page <= end; page += 1) {
-			html += buildPageButton(page, page === state.currentPage);
-		}
-
-		if (end < state.totalPages) {
-			if (end < state.totalPages - 1) {
-				html += '<span class="fstu-pagination__ellipsis">…</span>';
-			}
-			html += buildPageButton(state.totalPages, false);
-		}
-
-		$pages.html(html);
-		$pages.find('.fstu-btn--page').on('click', function() {
-			state.currentPage = parseInt($(this).data('page'), 10) || 1;
-			loadUnits();
-		});
-	}
-
-	function handleOpenProtocol(event) {
-		if (event) {
-			event.preventDefault();
-		}
-		$mainSection.addClass('fstu-units-hidden');
-		$protocolSection.removeClass('fstu-units-hidden');
-		$protocolOpenBtn.addClass('fstu-units-hidden');
-		$protocolBackBtn.removeClass('fstu-units-hidden');
-		protocolState.currentPage = 1;
-		loadProtocol();
-	}
-
-	function handleCloseProtocol(event) {
-		if (event) {
-			event.preventDefault();
-		}
-		$protocolSection.addClass('fstu-units-hidden');
-		$mainSection.removeClass('fstu-units-hidden');
-		$protocolBackBtn.addClass('fstu-units-hidden');
-		$protocolOpenBtn.removeClass('fstu-units-hidden');
-	}
-
-	function loadProtocol() {
-		if (protocolState.isLoading) {
-			return;
-		}
-
-		protocolState.isLoading = true;
-		setProtocolLoading();
-
-		$.ajax({
-			type: 'POST',
-			url: fstuUnitsL10n.ajaxUrl,
-			dataType: 'json',
-			data: {
-				action: 'fstu_get_units_protocol',
-				nonce: fstuUnitsL10n.nonce,
-				page: protocolState.currentPage,
-				per_page: protocolState.perPage,
-				filter_name: $protocolFilterName.val(),
-			},
-			success: function(response) {
-				if (!response || !response.success || !response.data) {
-					showProtocolError(fstuUnitsL10n.messages.protocolError || fstuUnitsL10n.messages.error);
-					return;
-				}
-
-				protocolState.totalPages = Math.max(parseInt(response.data.total_pages, 10) || 1, 1);
-				protocolState.currentPage = parseInt(response.data.page, 10) || 1;
-				protocolState.perPage = parseInt(response.data.per_page, 10) || protocolState.perPage;
-				$protocolPerPage.val(String(protocolState.perPage));
-				renderProtocolTable(response.data.items || []);
-				updateProtocolPagination(response.data);
-			},
-			error: function() {
-				showProtocolError(fstuUnitsL10n.messages.protocolError || fstuUnitsL10n.messages.error);
-			},
-			complete: function() {
-				protocolState.isLoading = false;
-			},
-		});
-	}
-
-	function renderProtocolTable(items) {
-		const $tbody = $('#fstu-units-protocol-tbody');
-
-		if (!items.length) {
-			$tbody.html(
-				'<tr class="fstu-row"><td colspan="6" class="fstu-no-results">' + escapeHtml(fstuUnitsL10n.messages.protocolEmpty || fstuUnitsL10n.messages.noResults) + '</td></tr>'
-			);
-			return;
-		}
-
-		let html = '';
-
-		items.forEach(function(item) {
-			html += '<tr class="fstu-row">';
-			html += '<td class="fstu-td fstu-td--date">' + escapeHtml(item.Logs_DateCreate || '') + '</td>';
-			html += '<td class="fstu-td fstu-td--type">' + escapeHtml(item.Logs_Type || '') + '</td>';
-			html += '<td class="fstu-td fstu-td--operation">' + escapeHtml(item.Logs_Name || '') + '</td>';
-			html += '<td class="fstu-td fstu-td--message">' + escapeHtml(item.Logs_Text || '') + '</td>';
-			html += '<td class="fstu-td fstu-td--status">' + escapeHtml(item.Logs_Error || '✓') + '</td>';
-			html += '<td class="fstu-td fstu-td--user">' + escapeHtml(item.FIO || '—') + '</td>';
-			html += '</tr>';
-		});
-
-		$tbody.html(html);
-	}
-
-	function updateProtocolPagination(data) {
-		protocolState.totalPages = Math.max(parseInt(data.total_pages, 10) || 1, 1);
-		protocolState.currentPage = parseInt(data.page, 10) || 1;
-
-		$('#fstu-units-protocol-pagination-info').text(
-			'Записів: ' + (parseInt(data.total, 10) || 0) + ' | Сторінка ' + protocolState.currentPage + ' з ' + protocolState.totalPages
-		);
-
-		$('#fstu-units-protocol-prev-page').prop('disabled', protocolState.currentPage <= 1);
-		$('#fstu-units-protocol-next-page').prop('disabled', protocolState.currentPage >= protocolState.totalPages);
-
-		const $pages = $('#fstu-units-protocol-pagination-pages');
-		let html = '';
-		const start = Math.max(1, protocolState.currentPage - 2);
-		const end = Math.min(protocolState.totalPages, protocolState.currentPage + 2);
-
-		if (start > 1) {
-			html += buildProtocolPageButton(1, false);
-			if (start > 2) {
-				html += '<span class="fstu-pagination__ellipsis">…</span>';
-			}
-		}
-
-		for (let page = start; page <= end; page += 1) {
-			html += buildProtocolPageButton(page, page === protocolState.currentPage);
-		}
-
-		if (end < protocolState.totalPages) {
-			if (end < protocolState.totalPages - 1) {
-				html += '<span class="fstu-pagination__ellipsis">…</span>';
-			}
-			html += buildProtocolPageButton(protocolState.totalPages, false);
-		}
-
-		$pages.html(html);
-		$pages.find('.fstu-btn--page').on('click', function() {
-			protocolState.currentPage = parseInt($(this).data('page'), 10) || 1;
-			loadProtocol();
-		});
-	}
-
-	function handleViewUnit(event) {
-		event.preventDefault();
-		const unitId = absint($(this).data('unit-id'));
-		const $modal = $('#fstu-units-modal-view');
-		const $body = $('#fstu-units-modal-body');
-
-		$body.html('<div class="fstu-loader-inline">' + escapeHtml(fstuUnitsL10n.messages.loading) + '</div>');
-		openModal($modal);
-
-		fetchUnitDetail(unitId)
-			.done(function(response) {
-				if (!response.success || !response.data || !response.data.unit) {
-					$body.html('<div class="fstu-alert">' + escapeHtml(getResponseMessage(response, fstuUnitsL10n.messages.error)) + '</div>');
-					return;
-				}
-
-				$body.html(renderUnitDetailHtml(response.data.unit));
-			})
-			.fail(function() {
-				$body.html('<div class="fstu-alert">' + escapeHtml(fstuUnitsL10n.messages.error) + '</div>');
-			});
-	}
-
-	function handleEditUnit(event) {
-		event.preventDefault();
-
-		const unitId = absint($(this).data('unit-id'));
-		if (!permissions.canManage) {
-			return;
-		}
-
-		fetchUnitDetail(unitId)
-			.done(function(response) {
-				if (!response.success || !response.data || !response.data.unit) {
-					window.alert(getResponseMessage(response, fstuUnitsL10n.messages.error));
-					return;
-				}
-
-				populateForm(response.data.unit);
-				$('#fstu-units-form-title').text('Редагування осередка');
-				openModal($('#fstu-units-modal-form'));
-			})
-			.fail(function() {
-				window.alert(fstuUnitsL10n.messages.error);
-			});
-	}
-
-	function handleDeleteUnit(event) {
-		event.preventDefault();
-
-		if (!permissions.canDelete) {
-			return;
-		}
-
-		const unitId = absint($(this).data('unit-id'));
-		const unitName = $.trim($(this).closest('tr').find('td:nth-child(2)').text());
-
-		if (!window.confirm(fstuUnitsL10n.messages.confirmDelete + '\n\n' + unitName)) {
-			return;
-		}
-
-		$.ajax({
-			type: 'POST',
-			url: fstuUnitsL10n.ajaxUrl,
-			dataType: 'json',
-			data: {
-				action: 'fstu_delete_unit',
-				nonce: fstuUnitsL10n.nonce,
-				unit_id: unitId,
-			},
-			success: function(response) {
-				if (!response || !response.success) {
-					window.alert(getResponseMessage(response, fstuUnitsL10n.messages.deleteError));
-					return;
-				}
-
-				window.alert(getResponseMessage(response, fstuUnitsL10n.messages.deleteSuccess));
-				state.currentPage = 1;
-				loadUnits();
-			},
-			error: function() {
-				window.alert(fstuUnitsL10n.messages.deleteError);
-			},
-		});
-	}
-
-	function handleFormSubmit(event) {
-		event.preventDefault();
-
-		const $submit = $('#fstu-units-form-submit');
-		const $icon = $submit.find('.fstu-btn__icon');
-		const unitId = absint($('#fstu-units-edit-id').val());
-		const action = unitId ? 'fstu_edit_unit' : 'fstu_add_unit';
-
-		hideFormMessage();
-		$submit.prop('disabled', true);
-		$icon.text('⏳');
-
-		const payload = {
-			action: action,
-			nonce: fstuUnitsL10n.nonce,
-			unit_id: unitId,
-			unit_name: $('#fstu-units-unit-name').val(),
-			unit_short_name: $('#fstu-units-unit-short').val(),
-			opf_id: $('#fstu-units-opf').val(),
-			unit_type_id: $('#fstu-units-type').val(),
-			unit_parent: $('#fstu-units-parent').val(),
-			region_id: $('#fstu-units-region').val(),
-			city_id: $('#fstu-units-city').val(),
-			unit_adr: $('#fstu-units-address').val(),
-			unit_okpo: $('#fstu-units-okpo').val(),
-			entrance_fee: $('#fstu-units-entrance-fee').val(),
-			annual_fee: $('#fstu-units-annual-fee').val(),
-			url_pay: $('#fstu-units-url-pay').val(),
-			payment_card: $('#fstu-units-payment-card').val(),
-			fstu_website: $('#fstu-units-form').find('input[name="fstu_website"]').val(),
-		};
-
-		$.ajax({
-			type: 'POST',
-			url: fstuUnitsL10n.ajaxUrl,
-			dataType: 'json',
-			data: payload,
-			success: function(response) {
-				if (!response || !response.success) {
-					showFormMessage(getResponseMessage(response, fstuUnitsL10n.messages.saveError), 'error');
-					return;
-				}
-
-				showFormMessage(getResponseMessage(response, fstuUnitsL10n.messages.saveSuccess), 'success');
-				window.setTimeout(function() {
-					closeFormModal();
-					loadUnits();
-				}, 700);
-			},
-			error: function() {
-				showFormMessage(fstuUnitsL10n.messages.saveError, 'error');
-			},
-			complete: function() {
-				$submit.prop('disabled', false);
-				$icon.text('💾');
-			},
-		});
-	}
-
-	function openAddForm() {
-		if (!permissions.canManage) {
-			return;
-		}
-
-		resetForm();
-		$('#fstu-units-form-title').text('Додавання осередка');
-		openModal($('#fstu-units-modal-form'));
-		$('#fstu-units-unit-name').trigger('focus');
-	}
-
-	function populateForm(unit) {
-		resetForm();
-		$('#fstu-units-edit-id').val(absint(unit.Unit_ID));
-		$('#fstu-units-unit-name').val(unit.Unit_Name || '');
-		$('#fstu-units-unit-short').val(unit.Unit_ShortName || '');
-		$('#fstu-units-opf').val(absint(unit.OPF_ID) || '');
-		$('#fstu-units-type').val(absint(unit.UnitType_ID) || '');
-		$('#fstu-units-parent').val(absint(unit.Unit_Parent) || 0);
-		$('#fstu-units-address').val(unit.Unit_Adr || '');
-		$('#fstu-units-okpo').val(unit.Unit_OKPO || '');
-		$('#fstu-units-entrance-fee').val(unit.Unit_EntranceFee || '');
-		$('#fstu-units-annual-fee').val(unit.Unit_AnnualFee || '');
-		$('#fstu-units-url-pay').val(unit.Unit_UrlPay || '');
-		$('#fstu-units-payment-card').val(unit.Unit_PaymentCard || '');
-		$('#fstu-units-region').val(absint(unit.Region_ID) || '');
-
-		return loadCitiesByRegion(unit.Region_ID, unit.City_ID)
-			.fail(function() {
-				showFormMessage('Не вдалося завантажити список міст для вибраного регіону.', 'error');
-			});
-	}
-
-	function loadCitiesByRegion(regionId, selectedCityId) {
-		const $city = $('#fstu-units-city');
-		const normalizedRegionId = absint(regionId);
-		const normalizedSelectedCityId = absint(selectedCityId);
-
-		if (!normalizedRegionId) {
-			$city.html('<option value="">Виберіть місто</option>');
-			return $.Deferred().resolve().promise();
-		}
-
-		$city.html('<option value="">' + escapeHtml(fstuUnitsL10n.messages.loading) + '</option>');
-
-		return $.ajax({
-			type: 'POST',
-			url: fstuUnitsL10n.ajaxUrl,
-			dataType: 'json',
-			data: {
-				action: 'fstu_units_get_cities_by_region',
-				nonce: fstuUnitsL10n.nonce,
-				region_id: normalizedRegionId,
-			},
-			success: function(response) {
-				if (!response || !response.success || !response.data || !response.data.cities) {
-					$city.html('<option value="">Помилка завантаження</option>');
-					return;
-				}
-
-				let options = '<option value="">Виберіть місто</option>';
-				response.data.cities.forEach(function(city) {
-					const cityId = absint(city.City_ID);
-					const selected = normalizedSelectedCityId && normalizedSelectedCityId === cityId ? ' selected' : '';
-					options += '<option value="' + cityId + '"' + selected + '>' + escapeHtml(city.City_Name || '') + '</option>';
-				});
-				$city.html(options);
-			},
-			error: function() {
-				$city.html('<option value="">Помилка завантаження</option>');
-			},
-		});
-	}
-
-	function fetchUnitDetail(unitId) {
-		return $.ajax({
-			type: 'POST',
-			url: fstuUnitsL10n.ajaxUrl,
-			dataType: 'json',
-			data: {
-				action: 'fstu_get_unit_detail',
-				nonce: fstuUnitsL10n.nonce,
-				unit_id: unitId,
-			},
-		});
-	}
-
-	function renderUnitDetailHtml(unit) {
-		let html = '<table class="fstu-info-table">';
-		html += rowHtml('Найменування', '<strong>' + escapeHtml(unit.Unit_Name || '') + '</strong>');
-		html += rowHtml('Скорочено', escapeHtml(unit.Unit_ShortName || '—'));
-		html += rowHtml('ОПФ', escapeHtml(unit.OPF_Name || '—'));
-		html += rowHtml('Тип', escapeHtml(unit.UnitType_Name || '—'));
-		html += rowHtml('Вищий осередок', escapeHtml(unit.Parent_Unit_Name || '—'));
-		html += rowHtml('Регіон', escapeHtml(unit.Region_Name || '—'));
-		html += rowHtml('Місто', escapeHtml(unit.City_Name || '—'));
-		html += rowHtml('Адреса', escapeHtml(unit.Unit_Adr || '—'));
-		html += rowHtml('Код ЄДРПОУ', escapeHtml(unit.Unit_OKPO || '—'));
-		html += rowHtml('Вступний внесок', escapeHtml(normalizeMoney(unit.Unit_EntranceFee)) + ' грн');
-		html += rowHtml('Річний внесок', escapeHtml(normalizeMoney(unit.Unit_AnnualFee)) + ' грн');
-		html += rowHtml('Форма оплати', unit.Unit_UrlPay ? '<a href="' + escapeAttr(unit.Unit_UrlPay) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(unit.Unit_UrlPay) + '</a>' : '—');
-		html += rowHtml('Платіжна картка', escapeHtml(unit.Unit_PaymentCard || '—'));
-		html += '</table>';
-		return html;
-	}
-
-	function rowHtml(label, value) {
-		return '<tr><th>' + escapeHtml(label) + ':</th><td>' + value + '</td></tr>';
-	}
-
-	function setTableLoading() {
-		$('#fstu-units-tbody').html(
-			'<tr class="fstu-row">' +
-				'<td colspan="' + getTableColspan() + '" class="fstu-no-results">' + escapeHtml(fstuUnitsL10n.messages.loading) + '</td>' +
-			'</tr>'
-		);
-	}
-
-	function showTableError(message) {
-		$('#fstu-units-tbody').html(
-			'<tr class="fstu-row">' +
-				'<td colspan="' + getTableColspan() + '" class="fstu-no-results fstu-no-results--error">' + escapeHtml(message) + '</td>' +
-			'</tr>'
-		);
-	}
-
-	function showFormMessage(message, type) {
-		const $box = $('#fstu-units-form-message');
-		$box.removeClass('fstu-units-hidden fstu-message--error fstu-message--success');
-		$box.addClass(type === 'success' ? 'fstu-message--success' : 'fstu-message--error');
-		$box.text(message);
-	}
-
-	function hideFormMessage() {
-		$('#fstu-units-form-message')
-			.addClass('fstu-units-hidden')
-			.removeClass('fstu-message--error fstu-message--success')
-			.text('');
-	}
-
-	function resetForm() {
-		$('#fstu-units-form')[0].reset();
-		$('#fstu-units-edit-id').val('');
-		$('#fstu-units-city').html('<option value="">Виберіть місто</option>');
-		hideFormMessage();
-	}
-
-	function openModal($modal) {
-		$modal.removeClass('fstu-units-hidden').attr('aria-hidden', 'false');
-		$('body').addClass('fstu-units-modal-open');
-	}
-
-	function closeViewModal() {
-		$('#fstu-units-modal-view').addClass('fstu-units-hidden').attr('aria-hidden', 'true');
-		if ($('#fstu-units-modal-form').hasClass('fstu-units-hidden')) {
-			$('body').removeClass('fstu-units-modal-open');
-		}
-	}
-
-	function closeFormModal() {
-		$('#fstu-units-modal-form').addClass('fstu-units-hidden').attr('aria-hidden', 'true');
-		resetForm();
-		if ($('#fstu-units-modal-view').hasClass('fstu-units-hidden')) {
-			$('body').removeClass('fstu-units-modal-open');
-		}
-	}
-
-	function getTableColspan() {
-		return permissions.canView ? 9 : 8;
-	}
-
-	function buildPageButton(page, isActive) {
-		return '<button type="button" class="fstu-btn--page' + (isActive ? ' fstu-btn--page-active' : '') + '" data-page="' + page + '">' + page + '</button>';
-	}
-
-	function buildProtocolPageButton(page, isActive) {
-		return '<button type="button" class="fstu-btn--page' + (isActive ? ' fstu-btn--page-active' : '') + '" data-page="' + page + '">' + page + '</button>';
-	}
-
-	function setProtocolLoading() {
-		$('#fstu-units-protocol-tbody').html(
-			'<tr class="fstu-row"><td colspan="6" class="fstu-no-results">' + escapeHtml(fstuUnitsL10n.messages.loading) + '</td></tr>'
-		);
-	}
-
-	function showProtocolError(message) {
-		$('#fstu-units-protocol-tbody').html(
-			'<tr class="fstu-row"><td colspan="6" class="fstu-no-results fstu-no-results--error">' + escapeHtml(message) + '</td></tr>'
-		);
-	}
-
-	function getResponseMessage(response, fallback) {
-		return response && response.data && response.data.message ? response.data.message : fallback;
-	}
-
-	function normalizeMoney(value) {
-		const number = parseFloat(value);
-		return Number.isFinite(number) ? number.toFixed(2) : '0.00';
-	}
-
-	function absint(value) {
-		const parsed = parseInt(value, 10);
-		return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
-	}
-
-	function escapeHtml(value) {
-		return $('<div>').text(value == null ? '' : String(value)).html();
-	}
-
-	function escapeAttr(value) {
-		return escapeHtml(value).replace(/"/g, '&quot;');
-	}
-
-	function debounce(callback, wait) {
-		let timeoutId;
-		return function() {
-			const context = this;
-			const args = arguments;
-			window.clearTimeout(timeoutId);
-			timeoutId = window.setTimeout(function() {
-				callback.apply(context, args);
-			}, wait);
-		};
-	}
+    'use strict';
+
+    // Стан таблиці Довідника
+    let listState = { page: 1, perPage: 10, search: '' };
+    // Стан таблиці Протоколу
+    let protocolState = { page: 1, perPage: 10, search: '' };
+
+	// Ініціалізація
+    loadDictionaries();
+    loadUnits();
+
+    // ==========================================
+    // 1. ДОВІДНИК: Завантаження та рендер
+    // ==========================================
+    function loadUnits() {
+        $('#fstu-units-tbody').html('<tr><td colspan="8" style="text-align:center;">Завантаження...</td></tr>');
+        
+        $.post(fstuUnitsData.ajax_url, {
+            action: 'fstu_units_get_list',
+            nonce: fstuUnitsData.nonce,
+            page: listState.page,
+            per_page: listState.perPage,
+            search: listState.search
+        }, function(response) {
+            if (response.success) {
+                renderUnitsTable(response.data);
+            } else {
+                // Безпечне отримання повідомлення навіть якщо data не існує
+                let errorMsg = (response && response.data && response.data.message) ? response.data.message : fstuUnitsData.i18n.error;
+                alert(errorMsg);
+                $('#fstu-units-tbody').html(`<tr><td colspan="8" style="text-align:center; color:red;">${escapeHtml(errorMsg)}</td></tr>`);
+            }
+        }).fail(function() {
+            alert(fstuUnitsData.i18n.error);
+            $('#fstu-units-tbody').html('<tr><td colspan="8" style="text-align:center; color:red;">Помилка з\'єднання з сервером</td></tr>');
+        });
+    }
+	// ==========================================
+    // ЗАВАНТАЖЕННЯ ДОВІДНИКІВ ДЛЯ ФОРМ
+    // ==========================================
+    function loadDictionaries() {
+        // Завантажуємо лише для тих, хто має доступ до редагування (якщо є форма на сторінці)
+        if ($('#fstu-unit-form').length === 0) return;
+
+        $.post(fstuUnitsData.ajax_url, {
+            action: 'fstu_units_get_dictionaries',
+            nonce: fstuUnitsData.nonce
+        }, function(response) {
+            if (response.success) {
+                let d = response.data;
+                
+                let opfHtml = '<option value="">-- Оберіть ОПФ --</option>';
+                d.opf.forEach(i => opfHtml += `<option value="${i.OPF_ID}">${escapeHtml(i.OPF_Name)}</option>`);
+                $('#OPF_ID').html(opfHtml);
+
+                let typeHtml = '<option value="">-- Оберіть ранг --</option>';
+                d.types.forEach(i => typeHtml += `<option value="${i.UnitType_ID}">${escapeHtml(i.UnitType_Name)}</option>`);
+                $('#UnitType_ID').html(typeHtml);
+
+                let regionHtml = '<option value="">-- Оберіть регіон --</option>';
+                d.regions.forEach(i => regionHtml += `<option value="${i.Region_ID}">${escapeHtml(i.Region_Name)}</option>`);
+                $('#Region_ID').html(regionHtml);
+
+                let parentHtml = '<option value="0">-- Немає --</option>';
+                d.parents.forEach(i => parentHtml += `<option value="${i.Unit_ID}">${escapeHtml(i.Unit_Name)}</option>`);
+                $('#Unit_Parent').html(parentHtml);
+            }
+        });
+    }
+
+    function renderUnitsTable(data) {
+        let html = '';
+        if (data.items.length === 0) {
+            html = '<tr><td colspan="8" style="text-align:center;">Немає записів</td></tr>';
+        } else {
+            let num = (listState.page - 1) * listState.perPage + 1;
+            data.items.forEach(function(item) {
+                let rowClass = parseFloat(item.Unit_AnnualFee) > 0 ? 'fstu-row-highlight' : '';
+                // Безпечне кодування JSON для атрибутів (захист від одинарних лапок у назвах)
+                let jsonStr = escapeHtml(JSON.stringify(item));
+                
+                html += `<tr class="${rowClass}">
+                    <td>${num++}</td>
+                    <td><a href="#" class="fstu-action-view" data-id="${item.Unit_ID}" data-json="${jsonStr}" style="font-weight:bold;">${escapeHtml(item.Unit_Name)}</a></td>
+                    <td title="ЄДРПОУ: ${escapeHtml(item.Unit_OKPO)}">${escapeHtml(item.Unit_ShortName)}</td>
+                    <td title="${escapeHtml(item.OPF_Name)}">${escapeHtml(item.OPF_NameShort)}</td>
+                    <td>${escapeHtml(item.UnitType_Name)}</td>
+                    <td>${escapeHtml(item.Region_Name)}</td>
+                    <td>${escapeHtml(item.City_Name)}</td>
+                    <td style="text-align:center; position:relative;">
+                        <button type="button" class="fstu-dropdown-toggle" data-id="${item.Unit_ID}" title="Дії" aria-label="Дії">▼</button>
+                        <ul class="fstu-dropdown-menu" id="dropdown-${item.Unit_ID}">
+                            <li><a href="#" class="fstu-action-view" data-id="${item.Unit_ID}" data-json="${jsonStr}">Перегляд</a></li>
+                            <li><a href="#" class="fstu-action-edit" data-id="${item.Unit_ID}">Редагувати</a></li>
+                            <li><a href="#" class="fstu-action-delete" data-id="${item.Unit_ID}" style="color:red;">Видалити</a></li>
+                        </ul>
+                    </td>
+                </tr>`;
+            });
+        }
+        $('#fstu-units-tbody').html(html);
+        renderPagination('list', data, '#fstu-units-pagination-controls', '#fstu-units-pagination-info');
+    }
+
+    // ==========================================
+    // 2. ПРОТОКОЛ: Завантаження та рендер
+    // ==========================================
+    // ==========================================
+    // 2. ПРОТОКОЛ: Завантаження та рендер
+    // ==========================================
+    function loadProtocol() {
+        $('#fstu-units-protocol-tbody').html('<tr><td colspan="5" style="text-align:center;">Завантаження...</td></tr>');
+        
+        $.post(fstuUnitsData.ajax_url, {
+            action: 'fstu_units_get_protocol',
+            nonce: fstuUnitsData.nonce,
+            page: protocolState.page,
+            per_page: protocolState.perPage,
+            search: protocolState.search
+        }, function(response) {
+            if (response.success) {
+                renderProtocolTable(response.data);
+            } else {
+                // Безпечне отримання повідомлення навіть якщо data не існує
+                let errorMsg = (response && response.data && response.data.message) ? response.data.message : fstuUnitsData.i18n.error;
+                alert(errorMsg);
+                $('#fstu-units-tbody').html(`<tr><td colspan="8" style="text-align:center; color:red;">${escapeHtml(errorMsg)}</td></tr>`);
+            }
+        }).fail(function() {
+            // Обробка крашу сервера або мережі (500, 502, timeout)
+            alert(fstuUnitsData.i18n.error);
+            $('#fstu-units-protocol-tbody').html('<tr><td colspan="5" style="text-align:center; color:red;">Помилка з\'єднання з сервером</td></tr>');
+        });
+    }
+
+    function renderProtocolTable(data) {
+        let html = '';
+        if (data.items.length === 0) {
+            html = '<tr><td colspan="5" style="text-align:center;">Немає логів</td></tr>';
+        } else {
+            data.items.forEach(function(item) {
+                html += `<tr>
+                    <td>${escapeHtml(item.Logs_DateCreate)}</td>
+                    <td style="text-align:center;">${buildTypeBadge(item.Logs_Type)}</td>
+                    <td>${escapeHtml(item.Logs_Text)}</td>
+                    <td style="text-align:center;">${escapeHtml(item.Logs_Error)}</td>
+                    <td>${escapeHtml(item.FIO || 'Система')}</td>
+                </tr>`;
+            });
+        }
+        $('#fstu-units-protocol-tbody').html(html);
+        renderPagination('protocol', data, '#fstu-protocol-pagination-controls', '#fstu-protocol-pagination-info');
+    }
+
+    function buildTypeBadge(type) {
+        let cls = 'fstu-badge--default', label = type || '—';
+        if (type === 'I') { cls = 'fstu-badge--insert'; label = 'INSERT'; }
+        if (type === 'U') { cls = 'fstu-badge--update'; label = 'UPDATE'; }
+        if (type === 'D') { cls = 'fstu-badge--delete'; label = 'DELETE'; }
+        return `<span class="fstu-badge ${cls}">${escapeHtml(label)}</span>`;
+    }
+
+    // ==========================================
+    // 3. ПОДІЇ ТА UI (Пошук, Пагінація, Вкладки)
+    // ==========================================
+    
+    $(document).on('click', '#fstu-units-btn-protocol', function() {
+        $('#fstu-units-directory-section').hide();
+        $('#fstu-units-protocol-section').show();
+        loadProtocol();
+    });
+
+    $(document).on('click', '#fstu-units-btn-back-directory', function() {
+        $('#fstu-units-protocol-section').hide();
+        $('#fstu-units-directory-section').show();
+        loadUnits();
+    });
+
+    // ==========================================
+    // 3. ПОДІЇ ТА UI (Пошук, Пагінація, Вкладки)
+    // ==========================================
+
+    // Фікс випадаючого меню (щоб не обрізалося таблицею)
+    $(document).on('click', '.fstu-dropdown-toggle', function(e) {
+        e.stopPropagation();
+        $('.fstu-dropdown-menu').removeClass('fstu-dropdown--open');
+
+        let $menu = $(this).siblings('.fstu-dropdown-menu');
+        $menu.toggleClass('fstu-dropdown--open');
+
+        if ($menu.hasClass('fstu-dropdown--open')) {
+            // Отримуємо координати кнопки на екрані
+            let rect = this.getBoundingClientRect();
+            $menu.css({
+                'position': 'fixed',
+                'top': rect.bottom + 'px',
+                'left': 'auto',
+                'right': ($(window).width() - rect.right) + 'px',
+                'z-index': 999999 // Поверх усього
+            });
+        }
+    });
+
+    // Закриття меню при кліку поза ним
+    $(document).on('click', function() {
+        $('.fstu-dropdown-menu').removeClass('fstu-dropdown--open');
+    });
+
+    // Закриття меню при скролі (щоб меню не "літало" окремо від таблиці)
+    window.addEventListener('scroll', function() {
+        $('.fstu-dropdown-menu').removeClass('fstu-dropdown--open');
+    }, true);
+
+    $(document).on('click', function() {
+        $('.fstu-dropdown-menu').removeClass('fstu-dropdown--open');
+    });
+
+    $(document).on('change', '#Region_ID', function() {
+        let regionId = $(this).val();
+        let $citySelect = $('#City_ID');
+        $citySelect.html('<option value="">Завантаження...</option>');
+
+        $.post(fstuUnitsData.ajax_url, {
+            action: 'fstu_units_get_cities',
+            nonce: fstuUnitsData.nonce,
+            region_id: regionId
+        }, function(response) {
+            if (response.success) {
+                let options = '<option value="">-- Оберіть місто --</option>';
+                response.data.cities.forEach(function(city) {
+                    options += `<option value="${city.City_ID}">${escapeHtml(city.City_Name)}</option>`;
+                });
+                $citySelect.html(options);
+            }
+        });
+    });
+
+    // ==========================================
+    // ЖИВИЙ ПОШУК (Debounce 400ms)
+    // ==========================================
+    
+    // Пошук для Довідника
+    let searchTimeout;
+    $(document).on('input', '#fstu-units-search', function() {
+        clearTimeout(searchTimeout);
+        let val = $(this).val();
+        
+        searchTimeout = setTimeout(function() {
+            if (listState.search !== val) {
+                listState.search = val;
+                listState.page = 1;
+                loadUnits();
+            }
+        }, 400); // Чекаємо 400мс після останнього натискання клавіші
+    });
+
+    // Пошук для Протоколу (щоб там також працювало автоматично)
+    let protocolSearchTimeout;
+    $(document).on('input', '#fstu-protocol-search', function() {
+        clearTimeout(protocolSearchTimeout);
+        let val = $(this).val();
+        
+        protocolSearchTimeout = setTimeout(function() {
+            if (protocolState.search !== val) {
+                protocolState.search = val;
+                protocolState.page = 1;
+                loadProtocol();
+            }
+        }, 400);
+    });
+
+    $(document).on('change', '#fstu-units-per-page', function() {
+        listState.perPage = parseInt($(this).val());
+        listState.page = 1;
+        loadUnits();
+    });
+
+    // ==========================================
+    // 4. CRUD ОПЕРАЦІЇ ТА ПЕРЕГЛЯД
+    // ==========================================
+
+    const $modalEdit = $('#fstu-modal-unit-edit');
+    const $modalView = $('#fstu-modal-unit-view');
+    const $formEdit = $('#fstu-unit-form');
+
+    // 4.1. Закриття всіх модалок
+    $(document).on('click', '.fstu-modal-close', function() {
+        $('.fstu-modal').hide();
+    });
+
+    // 4.2. ПЕРЕГЛЯД картки (Оновлений з історією оплат)
+    $(document).on('click', '.fstu-action-view', function(e) {
+        e.preventDefault();
+        $('.fstu-dropdown-menu').removeClass('fstu-dropdown--open');
+        
+        let unitId = $(this).data('id');
+        let data = $(this).data('json');
+
+        // Заповнення базових даних
+        $('#view-Unit_Name').text(data.Unit_Name || '');
+        $('#view-Unit_ShortName').text(data.Unit_ShortName || '');
+        $('#view-OPF_Name').text(data.OPF_Name || data.OPF_NameShort || '');
+        $('#view-UnitType_Name').text(data.UnitType_Name || '');
+        $('#view-Region_Name').text(data.Region_Name || '');
+        $('#view-City_Name').text(data.City_Name || '');
+        $('#view-Unit_Adr').text(data.Unit_Adr || '');
+        $('#view-Unit_OKPO').text(data.Unit_OKPO || '');
+        $('#view-Unit_EntranceFee').text(data.Unit_EntranceFee || '0.00');
+        $('#view-Unit_AnnualFee').text(data.Unit_AnnualFee || '0.00');
+        $('#view-Unit_UrlPay').text(data.Unit_UrlPay || '');
+        $('#view-Unit_PaymentCard').text(data.Unit_PaymentCard || '');
+
+        // Завантаження історії оплат (тільки для адмінів/реєстраторів)
+        $('#view-dues-tbody').html('<tr><td colspan="4" style="text-align:center;">Завантаження...</td></tr>');
+        $('#fstu-view-dues-wrapper').show();
+
+        $.post(fstuUnitsData.ajax_url, {
+            action: 'fstu_units_get_dues',
+            nonce: fstuUnitsData.nonce,
+            Unit_ID: unitId
+        }, function(response) {
+            if (response.success) {
+                let html = '';
+                response.data.history.forEach(function(item) {
+                    html += `<tr>
+                        <td><b>${item.year}</b></td>`;
+                    
+                    if (item.status === 'paid') {
+                        html += `
+                        <td>${item.summa}</td>
+                        <td>${escapeHtml(item.date)}</td>
+                        <td><span class="fstu-badge fstu-badge--insert">Сплачено</span></td>`;
+                    } else {
+                        // Якщо не сплачено — створюємо кнопку, яка сабмітить приховану форму Portmone
+                        html += `
+                        <td>—</td>
+                        <td>—</td>
+                        <td>
+                            <button type="button" class="fstu-btn fstu-btn--action fstu-btn-pay" data-portmone='${JSON.stringify(item.portmone_data)}' style="background-color:#d9534f; color:#fff; padding:3px 8px; font-size:11px;">
+                                Сплатити ${item.bill_amount} грн
+                            </button>
+                        </td>`;
+                    }
+                    html += `</tr>`;
+                });
+                $('#view-dues-tbody').html(html);
+            } else {
+                $('#view-dues-tbody').html(`<tr><td colspan="4" style="text-align:center; color:red;">${escapeHtml(response.data.message)}</td></tr>`);
+            }
+        });
+
+        $modalView.show();
+    });
+
+    // Обробка кліку на "Сплатити" (Генерація та відправка форми Portmone)
+    $(document).on('click', '.fstu-btn-pay', function() {
+        let pData = $(this).data('portmone');
+        
+        // Створюємо тимчасову форму в пам'яті браузера
+        let $form = $('<form>', {
+            action: 'https://www.portmone.com.ua/gateway/',
+            method: 'POST',
+            target: '_blank' // Відкриваємо в новій вкладці
+        });
+
+        // Додаємо всі параметри як приховані поля
+        $.each(pData, function(key, value) {
+            $form.append($('<input>', { type: 'hidden', name: key, value: value }));
+        });
+
+        // Додаємо форму в DOM, відправляємо і видаляємо
+        $('body').append($form);
+        $form.submit();
+        $form.remove();
+    });
+
+    // 4.3. Відкриття модалки ДОДАТИ
+    $(document).on('click', '#fstu-units-btn-add', function() {
+        $formEdit[0].reset();
+        $('#Unit_ID').val('0'); 
+        $('#City_ID').html('<option value="">-- Оберіть регіон --</option>');
+        $('#fstu-modal-title').text('Додати осередок');
+        $modalEdit.show();
+    });
+
+    // 4.4. Відкриття модалки РЕДАГУВАТИ (через AJAX запит)
+    $(document).on('click', '.fstu-action-edit', function(e) {
+        e.preventDefault();
+        let unitId = $(this).data('id');
+        $('.fstu-dropdown-menu').removeClass('fstu-dropdown--open');
+
+        $.post(fstuUnitsData.ajax_url, {
+            action: 'fstu_units_get_item',
+            nonce: fstuUnitsData.nonce,
+            Unit_ID: unitId
+        }, function(response) {
+            if (response.success) {
+                let data = response.data.item;
+                
+                $('#Unit_ID').val(data.Unit_ID);
+                $('#Unit_Name').val(data.Unit_Name);
+                $('#Unit_ShortName').val(data.Unit_ShortName);
+                $('#Unit_Adr').val(data.Unit_Adr);
+                $('#Unit_OKPO').val(data.Unit_OKPO);
+                $('#Unit_EntranceFee').val(data.Unit_EntranceFee);
+                $('#Unit_AnnualFee').val(data.Unit_AnnualFee);
+                $('#Unit_PaymentCard').val(data.Unit_PaymentCard);
+                
+                $('#OPF_ID').val(data.OPF_ID);
+                $('#UnitType_ID').val(data.UnitType_ID);
+                $('#Unit_Parent').val(data.Unit_Parent);
+                $('#Region_ID').val(data.Region_ID);
+                
+                let cityOptions = '<option value="">-- Оберіть місто --</option>';
+                response.data.cities.forEach(function(city) {
+                    let selected = (city.City_ID == data.City_ID) ? 'selected' : '';
+                    cityOptions += `<option value="${city.City_ID}" ${selected}>${escapeHtml(city.City_Name)}</option>`;
+                });
+                $('#City_ID').html(cityOptions);
+
+                $('#fstu-modal-title').text('Редагувати осередок');
+                $modalEdit.show();
+            } else {
+                alert(response.data.message || fstuUnitsData.i18n.error);
+            }
+        });
+    });
+
+    // 4.5. Збереження форми (Insert / Update) з Honeypot
+    $(document).on('submit', '#fstu-unit-form', function(e) {
+        e.preventDefault();
+        
+        let formData = $(this).serialize() + '&nonce=' + fstuUnitsData.nonce;
+        let $btn = $(this).find('.fstu-btn--save');
+        let originalText = $btn.text();
+        $btn.prop('disabled', true).text('Збереження...');
+
+        $.post(fstuUnitsData.ajax_url, formData, function(response) {
+            $btn.prop('disabled', false).text(originalText);
+            
+            if (response.success) {
+                $modalEdit.hide();
+                loadUnits();
+            } else {
+                alert(response.data.message || fstuUnitsData.i18n.error);
+            }
+        }).fail(function() {
+            $btn.prop('disabled', false).text(originalText);
+            alert(fstuUnitsData.i18n.error);
+        });
+    });
+
+    // 4.6. М'яке Видалення (Soft Delete)
+    $(document).on('click', '.fstu-action-delete', function(e) {
+        e.preventDefault();
+        let unitId = $(this).data('id');
+        $('.fstu-dropdown-menu').removeClass('fstu-dropdown--open');
+
+        if (confirm(fstuUnitsData.i18n.confirm)) {
+            $.post(fstuUnitsData.ajax_url, {
+                action: 'fstu_units_delete',
+                nonce: fstuUnitsData.nonce,
+                Unit_ID: unitId
+            }, function(response) {
+                if (response.success) {
+                    loadUnits();
+                } else {
+                    alert(response.data.message || fstuUnitsData.i18n.error);
+                }
+            });
+        }
+    });
+
+    // Загальні хелпери для форматування
+    function escapeHtml(text) {
+        if (!text) return '';
+        let map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+        return text.toString().replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
+
+    function renderPagination(type, data, controlsSelector, infoSelector) {
+        let state = type === 'list' ? listState : protocolState;
+        let fn = type === 'list' ? loadUnits : loadProtocol;
+        
+        let info = `Записів: ${data.total} | Сторінка ${data.page} з ${data.total_pages || 1}`;
+        $(infoSelector).text(info);
+
+        let btns = '';
+        if (data.page > 1) btns += `<button class="fstu-btn fstu-btn--page" data-page="${data.page - 1}">◀</button>`;
+        if (data.page < data.total_pages) btns += `<button class="fstu-btn fstu-btn--page" data-page="${data.page + 1}">▶</button>`;
+        
+        $(controlsSelector).html(btns);
+
+        $(controlsSelector + ' .fstu-btn--page').off('click').on('click', function() {
+            state.page = parseInt($(this).data('page'));
+            fn();
+        });
+    }
 });
-

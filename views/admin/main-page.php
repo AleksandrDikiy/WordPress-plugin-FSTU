@@ -2,8 +2,8 @@
 /**
  * View: Головна сторінка плагіна в адмінці.
  *
- * Version:     1.9.0
- * Date_update: 2026-04-09
+ * Version:     1.10.0
+ * Date_update: 2026-04-10
  */
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -20,6 +20,7 @@ $city_page_url = isset( $city_page_url ) ? (string) $city_page_url : '';
 $eventtype_page_url = isset( $eventtype_page_url ) ? (string) $eventtype_page_url : '';
 $tourismtype_page_url = isset( $tourismtype_page_url ) ? (string) $tourismtype_page_url : '';
 $referees_page_url = isset( $referees_page_url ) ? (string) $referees_page_url : '';
+$member_card_applications_page_url = isset( $member_card_applications_page_url ) ? (string) $member_card_applications_page_url : '';
 $steering_page_url = isset( $steering_page_url ) ? (string) $steering_page_url : '';
 $personal_cabinet_page_url = isset( $personal_cabinet_page_url ) ? (string) $personal_cabinet_page_url : '';
 ?>
@@ -59,6 +60,16 @@ $personal_cabinet_page_url = isset( $personal_cabinet_page_url ) ? (string) $per
                                 <td>
                                     <strong>Заявки в ФСТУ</strong><br>
                                     Службовий модуль для перегляду та обробки заявок на вступ до ФСТУ. Розміщуйте його лише на внутрішній сторінці для адміністраторів і реєстраторів.
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_member_card_applications]</code></th>
+                                <td>
+                                    <strong>Посвідчення членів ФСТУ</strong><br>
+                                    Службовий модуль нового покоління для ведення посвідчень членів ФСТУ: список із фільтрами, картка посвідчення, протокол змін, а також підготовлений owner/self-service flow через особистий кабінет. Для ролі administrator доступне повне керування включно з номером картки і видаленням, для userregistrar та globalregistrar — службове керування без ручної зміни номера картки.
+                                    <?php if ( '' !== $member_card_applications_page_url ) : ?>
+                                        <br><a href="<?php echo esc_url( $member_card_applications_page_url ); ?>">Відкрити сторінку модуля →</a>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                             <tr>

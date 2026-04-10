@@ -100,7 +100,6 @@ jQuery(document).ready(function ($) {
     function buildTabTable(tabSlug, tableConfig) {
         var rows = tableConfig && tableConfig.rows ? tableConfig.rows : [];
         var emptyMessage = tableConfig && tableConfig.emptyMessage ? tableConfig.emptyMessage : 'Записи відсутні.';
-        var tableType = tableConfig && tableConfig.type ? String(tableConfig.type) : '';
         var tableState = getTableState(tabSlug, tableConfig || {});
         var perPage = parseInt(tableState.perPage, 10) || 10;
         var currentPage = parseInt(tableState.page, 10) || 1;
@@ -120,14 +119,14 @@ jQuery(document).ready(function ($) {
 
         html += '<div class="fstu-table-wrap">';
         html += '<table class="fstu-table">';
-        html += buildTabTableHead(tableType);
+        html += buildTabTableHead(tableConfig);
         html += '<tbody class="fstu-tbody">';
 
         if (!pageRows.length) {
-            html += '<tr class="fstu-row"><td colspan="' + getTabTableColspan(tableType) + '" class="fstu-td fstu-td--empty">' + escHtml(emptyMessage) + '</td></tr>';
+            html += '<tr class="fstu-row"><td colspan="' + getTabTableColspan(tableConfig) + '" class="fstu-td fstu-td--empty">' + escHtml(emptyMessage) + '</td></tr>';
         } else {
             $.each(pageRows, function (_, row) {
-                html += buildTabTableRow(tableType, row);
+                html += buildTabTableRow(tableConfig, row);
             });
         }
 
@@ -138,60 +137,37 @@ jQuery(document).ready(function ($) {
         return html;
     }
 
-    function buildTabTableHead(tableType) {
+    function buildTabTableHead(tableConfig) {
         var html = '<thead class="fstu-thead"><tr>';
-
-        if (tableType === 'dues_sail') {
-            html += '<th class="fstu-th">Рік</th>';
-            html += '<th class="fstu-th">Сума</th>';
-            html += '<th class="fstu-th">Дата додавання</th>';
-            html += '<th class="fstu-th">Фінансист</th>';
-        } else {
-            html += '<th class="fstu-th">Рік</th>';
-            html += '<th class="fstu-th">Сума</th>';
-            html += '<th class="fstu-th">Тип</th>';
-            html += '<th class="fstu-th">Дата додавання</th>';
-            html += '<th class="fstu-th">Фінансист</th>';
-            html += '<th class="fstu-th">Статус</th>';
-            html += '<th class="fstu-th">Квитанція</th>';
+        if (tableConfig && tableConfig.columns) {
+            $.each(tableConfig.columns, function (_, col) {
+                html += '<th class="fstu-th">' + escHtml(col.label || '') + '</th>';
+            });
         }
-
         html += '</tr></thead>';
-
         return html;
     }
 
-    function buildTabTableRow(tableType, row) {
+    function buildTabTableRow(tableConfig, row) {
         var html = '<tr class="fstu-row">';
-
-        if (tableType === 'dues_sail') {
-            html += '<td class="fstu-td">' + escHtml(row.year || '—') + '</td>';
-            html += '<td class="fstu-td">' + escHtml(row.sum || '—') + '</td>';
-            html += '<td class="fstu-td">' + escHtml(row.date || '—') + '</td>';
-            html += '<td class="fstu-td">' + escHtml(row.financier || '—') + '</td>';
-        } else {
-            html += '<td class="fstu-td">' + escHtml(row.year || '—') + '</td>';
-            html += '<td class="fstu-td">' + escHtml(row.sum || '—') + '</td>';
-            html += '<td class="fstu-td">' + escHtml(row.type || '—') + '</td>';
-            html += '<td class="fstu-td">' + escHtml(row.date || '—') + '</td>';
-            html += '<td class="fstu-td">' + escHtml(row.financier || '—') + '</td>';
-            html += '<td class="fstu-td">' + escHtml(row.status || '—') + '</td>';
-            html += '<td class="fstu-td">';
-            if (row.receipt_url) {
-                html += '<a href="' + escHtml(row.receipt_url) + '" target="_blank" rel="noopener noreferrer">Відкрити</a>';
-            } else {
-                html += '—';
-            }
-            html += '</td>';
+        if (tableConfig && tableConfig.columns) {
+            $.each(tableConfig.columns, function (_, col) {
+                var val = row[col.key];
+                var cellHtml = escHtml(val || '—');
+                
+                if (col.type === 'link' && val) {
+                    cellHtml = '<a href="' + escHtml(val) + '" target="_blank" rel="noopener noreferrer">Відкрити</a>';
+                }
+                
+                html += '<td class="fstu-td">' + cellHtml + '</td>';
+            });
         }
-
         html += '</tr>';
-
         return html;
     }
 
-    function getTabTableColspan(tableType) {
-        return tableType === 'dues_sail' ? 4 : 7;
+    function getTabTableColspan(tableConfig) {
+        return tableConfig && tableConfig.columns ? tableConfig.columns.length : 1;
     }
 
     function buildTabTablePagination(tabSlug, currentPage, perPage, total, totalPages) {
@@ -291,6 +267,10 @@ jQuery(document).ready(function ($) {
         if (!$alert.length) {
             return;
         }
+        // Додано видалення fstu-hidden
+        $alert.removeClass('fstu-hidden fstu-alert--info fstu-alert--error fstu-alert--warning fstu-alert--success')
+            .addClass('fstu-alert--' + type)
+            .text(message || '');
 
         $alert.removeClass('fstu-alert--info fstu-alert--error fstu-alert--warning fstu-alert--success')
             .addClass('fstu-alert--' + type)
@@ -431,82 +411,231 @@ jQuery(document).ready(function ($) {
         return first;
     }
 
-    function renderTabs(tabs) {
-        var visibleTabs = {};
-
+    function renderTabs(tabs, profile) {
         $.each(tabs || {}, function (slug, tab) {
-            visibleTabs[slug] = !!tab.visible;
-
-            var $pane = $('[data-tab-pane="' + slug + '"]');
             var $content = $('#fstu-personal-tab-' + slug);
-            var $button = $('[data-tab="' + slug + '"]');
-
-            if (!$pane.length || !$content.length || !$button.length) {
-                return;
-            }
-
-            if (!tab.visible) {
-                $pane.addClass('fstu-hidden');
-                $button.addClass('fstu-hidden');
-                return;
-            }
-
-            $pane.removeClass('fstu-hidden');
-            $button.removeClass('fstu-hidden');
+            if (!$content.length || !tab.visible) return;
 
             var html = '';
-
             html += buildAccessNotice(tab.accessNotice || '', !!tab.isReadOnly);
-            html += buildTabActions(tab.actions || []);
 
-            if (tab.sections && tab.sections.length) {
+            // Спеціальний рендеринг для вкладки ЗАГАЛЬНІ (з таблицею)
+            if (slug === 'general') {
+                html += '<div class="fstu-personal-grid-general">';
+                
+                // Ліва колонка: Фото та Перемикач згоди
+                html += '<div class="fstu-personal-grid-general__photo-side">';
+                var photoItem = tab.sections[0].items.find(i => i.type === 'image');
+                html += '<div class="fstu-personal-image-wrap"><img src="' + escHtml(photoItem.value) + '" class="fstu-personal-image"></div>';
+                
+                if (!tab.isReadOnly) {
+                    html += '<button type="button" class="fstu-btn fstu-btn--secondary" id="fstu-open-photo-modal" style="width: 100%;">Змінити фото</button>';
+                }
+                
+                // Перемикач згоди
+                var isConsent = profile.hasConsent;
+                var consentText = isConsent ? '1=показати персональні данні для членів ФСТУ' : '0=заборонити показ персональних даних';
+                html += '<div class="fstu-consent-wrapper">';
+                html += '<label class="fstu-switch">';
+                html += '<input type="checkbox" id="fstu-consent-toggle" ' + (isConsent ? 'checked' : '') + (tab.isReadOnly ? ' disabled' : '') + '>';
+                html += '<span class="fstu-slider"></span>';
+                html += '</label>';
+                html += '<div class="fstu-consent-text" id="fstu-consent-text">' + escHtml(consentText) + '</div>';
+                html += '</div>';
+
+                html += '</div>';
+
+                // Права колонка: Таблиця як у Реєстрі
+                html += '<div class="fstu-personal-grid-general__content-side">';
+                html += '<table class="fstu-personal-general-table"><tbody>';
+                
+                $.each(tab.sections, function(_, section) {
+                    $.each(section.items, function(_, item) {
+                        if (item.type === 'image') return;
+                        
+                        var valHtml = escHtml(item.value || '—');
+                        if (item.type === 'link' && item.value && item.value !== '—') {
+                            valHtml = '<a href="' + escHtml(item.value) + '" target="_blank" rel="noopener noreferrer" style="color: #b5473a; font-weight: 700; text-decoration: underline;">Профіль ' + escHtml(item.label) + '</a>';
+                        }
+                        
+                        html += '<tr>';
+                        html += '<td class="fstu-general-table-label">' + escHtml(item.label) + ':</td>';
+                        html += '<td class="fstu-general-table-value">' + valHtml + '</td>';
+                        html += '</tr>';
+                    });
+                });
+                
+                html += '</tbody></table>';
+                html += '</div></div>';
+            } 
+            // Спеціальний рендеринг для вкладки ПРИВАТНЕ (Адмін-форма)
+            else if (slug === 'private' && !tab.isReadOnly) {
+                html += '<form class="fstu-personal-form fstu-personal-form--compact" id="fstu-admin-private-form">';
+                $.each(tab.sections[0].items, function(_, item) {
+                    html += '<div class="fstu-form-group">';
+                    html += '<label class="fstu-label">' + escHtml(item.label) + '</label>';
+                    html += '<input type="text" name="' + escHtml(item.key) + '" value="' + escHtml(item.value) + '" class="fstu-input">';
+                    html += '</div>';
+                });
+                html += '<button type="submit" class="fstu-btn fstu-btn--primary" style="margin-top:10px;">Зберегти зміни</button>';
+                html += '</form>';
+            }
+            // Спеціальний рендеринг для вкладки ПРИВАТНЕ (Перегляд як у Реєстрі ФСТУ)
+            else if (slug === 'private' && tab.isReadOnly) {
+                html += '<table class="fstu-personal-general-table"><tbody>';
+                $.each(tab.sections, function(_, section) {
+                    $.each(section.items, function(_, item) {
+                        html += '<tr>';
+                        html += '<td class="fstu-general-table-label">' + escHtml(item.label) + ':</td>';
+                        html += '<td class="fstu-general-table-value">' + escHtml(item.value || '—') + '</td>';
+                        html += '</tr>';
+                    });
+                });
+                html += '</tbody></table>';
+            }
+            else if (tab.table) {
+                // Рендеринг таблиці для вкладки з конфігурацією table  
+                html += buildTabTable(slug, tab.table);
+            }
+            else {
+                // Стандартний рендеринг для інших вкладок
                 html += buildSections(tab.sections);
             }
 
-            if (tab.table && tab.table.rows) {
-                html += buildTabTable(slug, tab.table);
-            } else if (!tab.sections || !tab.sections.length) {
-                html += buildInfoList(tab.items || []);
-            }
-
-            if (tab.note) {
-                html += '<div class="fstu-personal-tab-card__note">' + escHtml(tab.note) + '</div>';
-            }
             $content.html(html);
         });
-
-        if (!visibleTabs[state.activeTab]) {
-            state.activeTab = getFirstVisibleTab(visibleTabs);
-        }
-
+        
         switchTab(state.activeTab);
     }
 
+    // Обробка відкриття модалки фото
+    $(document).on('click', '#fstu-open-photo-modal', function() {
+        $('#fstu-personal-photo-modal').removeClass('fstu-hidden');
+    });
+
+    $(document).on('click', '#fstu-personal-photo-modal-close, #fstu-personal-photo-cancel', function() {
+        $('#fstu-personal-photo-modal').addClass('fstu-hidden');
+    });
+    // Рендер профілю після завантаження даних
     function renderProfile(payload) {
         var profile = payload.profile || {};
-        $('#fstu-personal-name').text(profile.displayName || 'Особистий кабінет');
-        $('#fstu-personal-email').text(profile.email || '');
-        $('#fstu-personal-roles').text(profile.roles || '');
-        $('#fstu-personal-scope').text(profile.isOwnProfile ? 'Власний профіль' : 'Публічний перегляд профілю');
 
         if ($('#fstu-personal-alert').length) {
             if (state.flashAlert && state.flashAlert.message) {
                 setMainAlert(state.flashAlert.type || 'info', state.flashAlert.message);
                 state.flashAlert = null;
             } else {
-                setMainAlert(
-                    'info',
-                    profile.isOwnProfile
-                        ? 'Завантажено ваш особистий кабінет. Публічні, приватні та службові вкладки показуються згідно з роллю та правилами доступу.'
-                        : 'Завантажено публічний профіль користувача. Приватні та службові вкладки приховані відповідно до матриці доступу.'
-                );
+                // Просто ховаємо блок, якщо немає повідомлень (наприклад, після перезавантаження)
+                $('#fstu-personal-alert').addClass('fstu-hidden').text('');
             }
         }
 
-        renderTabs(payload.tabs || {});
+        renderTabs(payload.tabs || {}, profile);
     }
+    // Збереження форми Приватні (Адміністратор)
+    $(document).on('submit', '#fstu-admin-private-form', function (e) {
+        e.preventDefault();
+        var $form = $(this);
+        var $btn = $form.find('button[type="submit"]');
+        var formData = $form.serializeArray();
+        
+        var payload = {
+            action: 'fstu_personal_cabinet_update_private_data',
+            nonce: l10n.nonce,
+            profile_user_id: state.profileUserId
+        };
+        
+        $.each(formData, function(_, field) {
+            payload[field.name] = field.value;
+        });
+
+        $btn.prop('disabled', true).text('Збереження...');
+
+        $.post(l10n.ajaxUrl, payload).done(function (response) {
+            if (response.success) {
+                state.flashAlert = { type: 'success', message: response.data.message || 'Збережено' };
+                loadProfile();
+            } else {
+                setMainAlert('error', response.data.message || 'Помилка');
+            }
+        }).fail(function (xhr) {
+            setMainAlert('error', getAjaxErrorMessage(xhr, 'Помилка збереження.'));
+        }).always(function () {
+            $btn.prop('disabled', false).text('Зберегти зміни');
+        });
+    });
+
+    // Завантаження фото
+    $(document).on('submit', '#fstu-personal-photo-form', function (e) {
+        e.preventDefault();
+        var $form = $(this);
+        var $btn = $('#fstu-personal-photo-submit');
+        var $alert = $('#fstu-personal-photo-alert');
+        var fileInput = document.getElementById('fstu-personal-photo-input');
+
+        if (!fileInput.files.length) {
+            $alert.removeClass('fstu-hidden').text('Будь ласка, виберіть файл.');
+            return;
+        }
+
+        var formData = new FormData();
+        formData.append('action', 'fstu_personal_cabinet_upload_photo');
+        formData.append('nonce', l10n.nonce);
+        formData.append('profile_user_id', state.profileUserId);
+        formData.append('fstu_website', ''); // honeypot
+        formData.append('profile_photo', fileInput.files[0]);
+
+        $btn.prop('disabled', true).text('Завантаження...');
+        $alert.addClass('fstu-hidden').text('');
+
+        $.ajax({
+            url: l10n.ajaxUrl,
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (response) {
+                if (response.success) {
+                    $('#fstu-personal-photo-modal').addClass('fstu-hidden');
+                    state.flashAlert = { type: 'success', message: response.data.message || 'Фото оновлено' };
+                    loadProfile();
+                } else {
+                    $alert.removeClass('fstu-hidden').text(response.data.message || 'Помилка');
+                }
+            },
+            error: function (xhr) {
+                $alert.removeClass('fstu-hidden').text(getAjaxErrorMessage(xhr, 'Помилка завантаження.'));
+            },
+            complete: function () {
+                $btn.prop('disabled', false).text('Завантажити');
+                $form[0].reset();
+            }
+        });
+    });
 
     function loadProfile() {
+        // ОНОВЛЕННЯ ДЛЯ ФАЗИ 5: Вставляємо Skeleton Loaders
+        $('.fstu-personal-tab-card__content').each(function() {
+            var tabId = $(this).attr('id');
+            var skeletonHtml = '';
+            
+            if (tabId === 'fstu-personal-tab-general') {
+                skeletonHtml = '<div class="fstu-personal-grid-general">' +
+                               '<div class="fstu-personal-grid-general__photo-side"><div class="fstu-skeleton fstu-skeleton-image"></div></div>' +
+                               '<div class="fstu-personal-grid-general__content-side">' +
+                               '<div><div class="fstu-skeleton fstu-skeleton-text"></div><div class="fstu-skeleton fstu-skeleton-text fstu-skeleton-text--short"></div></div>' +
+                               '<div><div class="fstu-skeleton fstu-skeleton-text"></div><div class="fstu-skeleton fstu-skeleton-text fstu-skeleton-text--short"></div></div>' +
+                               '</div></div>';
+            } else {
+                skeletonHtml = '<div class="fstu-skeleton fstu-skeleton-title"></div>' +
+                               '<div class="fstu-skeleton fstu-skeleton-table-row"></div>' +
+                               '<div class="fstu-skeleton fstu-skeleton-table-row"></div>' +
+                               '<div class="fstu-skeleton fstu-skeleton-table-row"></div>';
+            }
+            
+            $(this).html(skeletonHtml);
+        });
+
         $.post(l10n.ajaxUrl, {
             action: l10n.actions.getProfile,
             nonce: l10n.nonce,
@@ -607,7 +736,11 @@ jQuery(document).ready(function ($) {
     }
 
     function loadProtocol() {
-        $('#fstu-personal-protocol-body').html('<tr><td colspan="' + ((l10n.table && l10n.table.protocolColspan) || 6) + '" class="fstu-td fstu-td--empty">' + escHtml(l10n.messages.loading || 'Завантаження...') + '</td></tr>');
+        // ОНОВЛЕННЯ ДЛЯ ФАЗИ 5: Skeleton для таблиці протоколу
+        var skeletonRow = '<tr><td colspan="' + ((l10n.table && l10n.table.protocolColspan) || 6) + '">' +
+                          '<div class="fstu-skeleton fstu-skeleton-table-row" style="margin-bottom:0;"></div>' +
+                          '</td></tr>';
+        $('#fstu-personal-protocol-body').html(skeletonRow + skeletonRow + skeletonRow);
 
         $.post(l10n.ajaxUrl, {
             action: l10n.actions.getProtocol,
@@ -724,6 +857,20 @@ jQuery(document).ready(function ($) {
     $(document).on('submit', '#fstu-personal-dues-form', function (event) {
         event.preventDefault();
         uploadDuesReceipt();
+    });
+
+    // Обробка перемикача згоди на показ даних
+    $(document).on('change', '#fstu-consent-toggle', function() {
+        var isChecked = $(this).is(':checked');
+        var text = isChecked ? 'показати персональні данні для членів ФСТУ' : 'заборонити показ персональних даних';
+        $('#fstu-consent-text').text(text);
+        
+        $.post(l10n.ajaxUrl, {
+            action: 'fstu_personal_cabinet_update_consent',
+            nonce: l10n.nonce,
+            profile_user_id: state.profileUserId,
+            consent: isChecked ? 1 : 0
+        });
     });
 
     loadProfile();

@@ -8,8 +8,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Бізнес-сервіс модуля «Особистий кабінет ФСТУ».
  *
- * Version:     1.13.0
- * Date_update: 2026-04-09
+ * Version:     1.14.0
+ * Date_update: 2026-04-10
  *
  * @package FSTU\Modules\PersonalCabinet
  */
@@ -22,6 +22,14 @@ class Personal_Cabinet_Service {
 	public function __construct( ?Personal_Cabinet_Protocol_Service $protocol_service = null, ?Personal_Cabinet_Repository $repository = null ) {
 		$this->repository       = $repository ?? new Personal_Cabinet_Repository();
 		$this->protocol_service = $protocol_service ?? new Personal_Cabinet_Protocol_Service();
+	}
+
+	/**
+	 * Геттер для сервісу протоколу.
+	 * Дозволяє іншим класам (наприклад, AJAX) використовувати логування через цей сервіс.
+	 */
+	public function get_protocol_service(): Personal_Cabinet_Protocol_Service {
+		return $this->protocol_service;
 	}
 
 	/**
@@ -293,6 +301,7 @@ class Personal_Cabinet_Service {
 		);
 		$dues_sail_table_rows = $this->build_dues_sail_table_rows( $dues_sail_items_raw );
 		$integration_urls    = $this->get_integration_urls();
+		$member_card_permissions = \FSTU\Core\Capabilities::get_member_card_applications_permissions();
 		$profile_user_id     = isset( $profile['userId'] ) ? (int) $profile['userId'] : 0;
 		$is_owner            = ! empty( $permissions['isOwner'] );
 		$can_edit_profile   = ! empty( $permissions['canEditProfile'] );
@@ -318,26 +327,19 @@ class Personal_Cabinet_Service {
 			$dues_sail_sections = [];
 			$dues_sail_table_rows = [];
 		}
+
 		$general_sections = [
 			[
 				'title' => 'Публічні дані',
 				'items' => [
+					[ 'label' => 'реєстраційний №', 'value' => $this->normalize_value( isset( $member_card['CardNumber'] ) ? (string) $member_card['CardNumber'] : '' ) ],
 					[ 'label' => 'ПІБ', 'value' => (string) ( $profile['displayName'] ?? '' ) ],
 					[ 'label' => 'Місто (область)', 'value' => $this->normalize_value( (string) ( $profile['cityRegion'] ?? '' ) ) ],
 					[ 'label' => 'Осередок ФСТУ', 'value' => $this->normalize_value( (string) ( $profile['ofstName'] ?? '' ) ) ],
 					[ 'label' => 'Стать', 'value' => $this->normalize_sex( (string) ( $profile['sex'] ?? '' ) ) ],
 					[ 'label' => 'Фото', 'value' => (string) ( $profile['photoUrl'] ?? '' ), 'type' => 'image' ],
 				],
-			],
-			[
-				'title' => 'Членський квиток',
-				'items' => [
-					[ 'label' => 'Номер', 'value' => $this->normalize_value( isset( $member_card['CardNumber'] ) ? (string) $member_card['CardNumber'] : '' ) ],
-					[ 'label' => 'Тип картки', 'value' => $this->normalize_value( isset( $member_card['TypeCard_Name'] ) ? (string) $member_card['TypeCard_Name'] : '' ) ],
-					[ 'label' => 'Статус', 'value' => $this->normalize_value( isset( $member_card['StatusCard_Name'] ) ? (string) $member_card['StatusCard_Name'] : '' ) ],
-					[ 'label' => 'Сума', 'value' => $this->normalize_sum( isset( $member_card['UserMemberCard_Summa'] ) ? (string) $member_card['UserMemberCard_Summa'] : '' ) ],
-				],
-			],
+			]
 		];
 
 		if ( $can_view_member_data ) {
@@ -354,11 +356,33 @@ class Personal_Cabinet_Service {
 							[ 'label' => 'Дата народження', 'value' => $this->format_date( (string) ( $profile['birthDate'] ?? '' ) ) ],
 							[ 'label' => 'Skype', 'value' => $this->normalize_value( (string) ( $profile['skype'] ?? '' ) ) ],
 							[ 'label' => 'Facebook', 'value' => $this->normalize_value( (string) ( $profile['facebook'] ?? '' ) ), 'type' => 'link' ],
-							[ 'label' => 'Згода на показ персональних даних', 'value' => ! empty( $profile['hasConsent'] ) ? 'Так' : 'Ні' ],
 						],
 					],
 				]
 			);
+		}
+
+		$general_actions = array_merge(
+			$this->build_member_card_action_items(
+				$member_card,
+				$member_card_permissions,
+				$integration_urls,
+				$profile_user_id,
+				$is_owner
+			),
+			$this->build_tab_actions(
+				[
+					'Редагувати профіль' => $can_edit_profile,
+				],
+				'Функції редагування профілю буде підключено окремим етапом.'
+			)
+		);
+
+		$general_note = 'Розділ «Загальні» вже читає реальні дані користувача, фото, місто, осередок і короткий стан членського квитка.';
+		if ( '' !== ( $integration_urls['member_card_applications'] ?? '' ) ) {
+			$general_note .= ' Подання, перевипуск і оновлення фото посвідчення запускаються через окремий модуль «Посвідчення членів ФСТУ» без дублювання форми у кабінеті.';
+		} else {
+			$general_note .= ' Інтеграція з модулем посвідчень буде активована після визначення сторінки shortcode [fstu_member_card_applications].';
 		}
 
 		return [
@@ -366,15 +390,11 @@ class Personal_Cabinet_Service {
 				'title'   => 'Загальні',
 				'visible' => true,
 				'sections' => $general_sections,
-				'actions' => $this->build_tab_actions(
-					[
-						'Редагувати профіль' => $can_edit_profile,
-					],
-					'Функції редагування профілю буде підключено окремим етапом.'
-				),
-				'accessNotice' => $can_edit_profile ? 'Ви зможете редагувати загальні дані після підключення mutation-flow.' : 'Вкладка доступна у режимі тільки для перегляду.',
+				'actions' => $general_actions,
+				// Текст "Ви зможете редагувати..." прибрано:
+				'accessNotice' => '',
 				'isReadOnly' => ! $can_edit_profile,
-				'note'    => 'Розділ «Загальні» вже читає реальні дані користувача, фото, місто, осередок і короткий стан членського квитка. Подання заявки на новий членський квиток буде підключене окремим етапом.',
+				'note'    => $general_note,
 			],
 			'private' => [
 				'title'   => 'Приватне',
@@ -383,29 +403,33 @@ class Personal_Cabinet_Service {
 					[
 						'title' => 'Додаткова інформація',
 						'items' => [
-							[ 'label' => 'Адреса', 'value' => $this->normalize_value( (string) ( $profile['address'] ?? '' ) ) ],
-							[ 'label' => 'Місце роботи', 'value' => $this->normalize_value( (string) ( $profile['job'] ?? '' ) ) ],
-							[ 'label' => 'Освіта', 'value' => $this->normalize_value( (string) ( $profile['education'] ?? '' ) ) ],
-							[ 'label' => 'Додатковий телефон 1', 'value' => $this->normalize_value( (string) ( $profile['phone2'] ?? '' ) ) ],
-							[ 'label' => 'Додатковий телефон 2', 'value' => $this->normalize_value( (string) ( $profile['phone3'] ?? '' ) ) ],
-							[ 'label' => 'Телефон родичів', 'value' => $this->normalize_value( (string) ( $profile['familyPhone'] ?? '' ) ) ],
+							[ 'label' => 'Адреса', 'value' => (string) ( $profile['address'] ?? '' ), 'key' => 'Adr' ],
+							[ 'label' => 'Місце роботи', 'value' => (string) ( $profile['job'] ?? '' ), 'key' => 'Job' ],
+							[ 'label' => 'Освіта', 'value' => (string) ( $profile['education'] ?? '' ), 'key' => 'Education' ],
+							[ 'label' => 'Додатковий телефон 1', 'value' => (string) ( $profile['phone2'] ?? '' ), 'key' => 'Phone2' ],
+							[ 'label' => 'Додатковий телефон 2', 'value' => (string) ( $profile['phone3'] ?? '' ), 'key' => 'Phone3' ],
+							[ 'label' => 'Телефон родичів', 'value' => (string) ( $profile['familyPhone'] ?? '' ), 'key' => 'PhoneFamily' ],
 						],
 					],
 				],
-				'actions' => $this->build_tab_actions(
-					[
-						'Редагувати приватні дані' => $can_edit_profile,
-					],
-					'Приватні поля будуть доступні для редагування на наступному етапі.'
-				),
-				'accessNotice' => $can_edit_profile ? 'Редагування приватних даних буде відкрито окремим mutation-flow.' : 'Приватні дані показані у режимі лише для перегляду.',
-				'isReadOnly' => ! $can_edit_profile,
-				'note'    => 'Приватні дані доступні лише для власника профілю та дозволених ролей.',
+				'actions' => [],
+				'accessNotice' => current_user_can( 'manage_options' ) ? 'Ви авторизовані як адміністратор: доступне редагування приватних даних.' : 'Приватні дані показані у режимі лише для перегляду.',
+				'isReadOnly' => ! current_user_can( 'manage_options' ), // Доступ до форми тільки адміну
+				'note'    => 'Зміни в цій вкладці логуються у розділі «ПРОТОКОЛ».',
 			],
 			'service' => [
 				'title'   => 'Службове',
-				'visible' => $can_view_service,
+				'visible' => ! empty( $permissions['canViewService'] ),
 				'sections' => [
+					[
+						'title' => 'Профіль користувача',
+						'items' => [
+							[ 'label' => 'Користувач', 'value' => (string) ( $profile['displayName'] ?? '' ) ],
+							[ 'label' => 'Email', 'value' => (string) ( $profile['email'] ?? '' ) ],
+							[ 'label' => 'Ролі', 'value' => implode( ', ', array_map( 'strval', (array) ( $user->roles ?? [] ) ) ) ],
+							[ 'label' => 'Тип профілю', 'value' => ! empty( $permissions['isOwner'] ) ? 'Власний профіль' : 'Публічний перегляд профілю' ],
+						],
+					],
 					[
 						'title' => 'Технічна інформація',
 						'items' => [
@@ -416,6 +440,14 @@ class Personal_Cabinet_Service {
 							[ 'label' => 'Активація Telegram', 'value' => $this->normalize_value( (string) ( $profile['telegramActive'] ?? '' ) ) ],
 							[ 'label' => 'VerificationCode', 'value' => $this->normalize_value( (string) ( $profile['telegramCode'] ?? '' ) ) ],
 							[ 'label' => 'Telegram ID', 'value' => $this->normalize_value( (string) ( $profile['telegramId'] ?? '' ) ) ],
+						],
+					],
+					[
+						'title' => 'Картка',
+						'items' => [
+							[ 'label' => 'Тип картки', 'value' => $this->normalize_value( isset( $member_card['TypeCard_Name'] ) ? (string) $member_card['TypeCard_Name'] : '' ) ],
+							[ 'label' => 'Статус', 'value' => $this->normalize_value( isset( $member_card['StatusCard_Name'] ) ? (string) $member_card['StatusCard_Name'] : '' ) ],
+							[ 'label' => 'Сума за виготовлення', 'value' => $this->normalize_sum( isset( $member_card['UserMemberCard_Summa'] ) ? (string) $member_card['UserMemberCard_Summa'] : '' ) ],
 						],
 					],
 					[
@@ -435,17 +467,28 @@ class Personal_Cabinet_Service {
 			'clubs' => [
 				'title'   => 'Клуби',
 				'visible' => true,
-				'sections' => $club_sections,
-				'actions' => $this->build_tab_actions(
-					[
-						'Додати клуб' => $can_manage_clubs,
-						'Видалити клуб' => $can_manage_clubs,
+				'table'   => [
+					'columns' => [
+						[ 'key' => 'name', 'label' => 'Назва клубу' ],
+						[ 'key' => 'site', 'label' => 'Сайт', 'type' => 'link' ],
+						[ 'key' => 'address', 'label' => 'Адреса' ],
+						[ 'key' => 'date', 'label' => 'Дата додавання' ],
 					],
-					'CRUD клубів буде підключено окремим етапом.'
-				),
+					'rows' => array_map( function( $club ) {
+						return [
+							'name'    => $this->normalize_value( $club['Club_Name'] ?? '' ),
+							'site'    => $this->normalize_value( $club['Club_WWW'] ?? '' ),
+							'address' => $this->normalize_value( $club['Club_Adr'] ?? '' ),
+							'date'    => $this->format_date( $club['UserClub_Date'] ?? '' ),
+						];
+					}, isset( $collections['clubs'] ) && is_array( $collections['clubs'] ) ? $collections['clubs'] : [] ),
+					'defaultPerPage' => 10,
+					'emptyMessage'   => __( 'Користувач поки не прив’язаний до жодного клубу.', 'fstu' ),
+				],
+				'actions' => $this->build_tab_actions( [ 'Додати клуб' => $can_manage_clubs, 'Видалити клуб' => $can_manage_clubs ], 'CRUD клубів буде підключено окремим етапом.' ),
 				'accessNotice' => $can_manage_clubs ? 'Ви маєте право керувати клубами після підключення mutation-flow.' : 'Вкладка доступна лише для перегляду.',
 				'isReadOnly' => ! $can_manage_clubs,
-				'note'    => empty( $club_sections ) ? 'Користувач поки не прив’язаний до жодного клубу.' : 'Показано історію членства у спортивних клубах. CRUD буде перенесено окремим інкрементом.',
+				'note'    => 'Показано історію членства у спортивних клубах у вигляді компактної таблиці.',
 			],
 			'city' => [
 				'title'   => 'Місто',
@@ -551,7 +594,15 @@ class Personal_Cabinet_Service {
 				'visible' => $can_view_dues,
 				'sections' => $dues_sections,
 				'table'    => [
-					'type'           => 'dues',
+					'columns' => [
+						[ 'key' => 'year', 'label' => 'Рік' ],
+						[ 'key' => 'sum', 'label' => 'Сума' ],
+						[ 'key' => 'type', 'label' => 'Тип' ],
+						[ 'key' => 'date', 'label' => 'Дата додавання' ],
+						[ 'key' => 'financier', 'label' => 'Фінансист' ],
+						[ 'key' => 'status', 'label' => 'Статус' ],
+						[ 'key' => 'receipt_url', 'label' => 'Квитанція', 'type' => 'link' ],
+					],
 					'rows'           => $dues_table_rows,
 					'defaultPerPage' => 10,
 					'emptyMessage'   => __( 'Записи членських внесків відсутні.', 'fstu' ),
@@ -653,7 +704,8 @@ class Personal_Cabinet_Service {
 		$photo_path = ABSPATH . 'photo/' . $user_id . '.jpg';
 
 		if ( file_exists( $photo_path ) ) {
-			return site_url( '/photo/' . $user_id . '.jpg' );
+			// Додаємо ?v=час_файлу, щоб браузер ніколи не кешував старе фото
+			return site_url( '/photo/' . $user_id . '.jpg?v=' . filemtime( $photo_path ) );
 		}
 
 		return get_avatar_url( $user_id, [
@@ -1180,11 +1232,76 @@ class Personal_Cabinet_Service {
 	 */
 	private function get_integration_urls(): array {
 		return [
+			'member_card_applications' => $this->resolve_module_url( 'FSTU\\Modules\\Registry\\MemberCardApplications\\Member_Card_Applications_List' ),
 			'referees'     => $this->resolve_module_url( 'FSTU\\Modules\\Registry\\Referees\\Referees_List' ),
 			'payment_docs' => $this->discover_shortcode_page_url( 'fstu_payment_docs' ),
 			'steering'     => $this->resolve_module_url( 'FSTU\\Modules\\Registry\\Steering\\Steering_List' ),
 			'sailboats'    => $this->resolve_module_url( 'FSTU\\Modules\\Registry\\Sailboats\\Sailboats_List' ),
 		];
+	}
+
+	/**
+	 * @param array<string,mixed>  $member_card
+	 * @param array<string,bool>   $member_card_permissions
+	 * @param array<string,string> $integration_urls
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function build_member_card_action_items( array $member_card, array $member_card_permissions, array $integration_urls, int $profile_user_id, bool $is_owner ): array {
+		$actions  = [];
+		$base_url = (string) ( $integration_urls['member_card_applications'] ?? '' );
+		$has_card = ! empty( $member_card['UserMemberCard_ID'] ) || '' !== trim( (string) ( $member_card['CardNumber'] ?? '' ) );
+		$can_open_module = '' !== $base_url && $profile_user_id > 0;
+		$can_self_create = $is_owner && ! empty( $member_card_permissions['canSelfService'] ) && $can_open_module;
+		$can_self_reissue = $is_owner && $has_card && ! empty( $member_card_permissions['canReissue'] ) && $can_open_module;
+		$can_self_photo = $is_owner && $has_card && ! empty( $member_card_permissions['canUpdatePhoto'] ) && $can_open_module;
+		$can_staff_open = $can_open_module && ( ! empty( $member_card_permissions['canView'] ) || ! empty( $member_card_permissions['canManage'] ) );
+
+		if ( $can_self_create ) {
+			$actions[] = [
+				'label'   => $has_card ? 'Переглянути посвідчення' : 'Оформити посвідчення',
+				'enabled' => true,
+				'url'     => $this->build_member_card_manage_url( $base_url, $profile_user_id, $has_card ? 'view' : 'create' ),
+				'pending' => '',
+			];
+		}
+
+		if ( $can_self_reissue ) {
+			$actions[] = [
+				'label'   => 'Перевипустити посвідчення',
+				'enabled' => true,
+				'url'     => $this->build_member_card_manage_url( $base_url, $profile_user_id, 'reissue' ),
+				'pending' => '',
+			];
+		}
+
+		if ( $can_self_photo ) {
+			$actions[] = [
+				'label'   => 'Оновити фото посвідчення',
+				'enabled' => true,
+				'url'     => $this->build_member_card_manage_url( $base_url, $profile_user_id, 'photo' ),
+				'pending' => '',
+			];
+		}
+
+		if ( $can_staff_open && ! $is_owner ) {
+			$actions[] = [
+				'label'   => 'Відкрити модуль посвідчень',
+				'enabled' => true,
+				'url'     => $this->build_member_card_manage_url( $base_url, $profile_user_id, $has_card ? 'view' : 'create' ),
+				'pending' => '',
+			];
+		} elseif ( $profile_user_id > 0 && ! $is_owner ) {
+			$actions[] = [
+				'label'   => 'Відкрити модуль посвідчень',
+				'enabled' => false,
+				'url'     => '',
+				'pending' => '' !== $base_url
+					? 'Перехід до модуля посвідчень доступний лише власнику профілю або службовим ролям.'
+					: 'Сторінка модуля посвідчень поки не визначена через shortcode або налаштування модуля.',
+			];
+		}
+
+		return $actions;
 	}
 
 	private function resolve_module_url( string $class_name ): string {
@@ -1287,6 +1404,38 @@ class Personal_Cabinet_Service {
 		$args = [
 			'fstu_intent' => 'personal_steering',
 			'pc_user_id'  => $profile_user_id,
+		];
+
+		if ( '' !== $return_url ) {
+			$args['pc_return'] = $return_url;
+		}
+
+		return add_query_arg( $args, $base_url );
+	}
+
+	private function build_member_card_manage_url( string $base_url, int $profile_user_id, string $action = 'create' ): string {
+		$base_url = $this->normalize_integration_url( $base_url );
+		$action   = sanitize_key( $action );
+
+		if ( '' === $base_url || $profile_user_id <= 0 ) {
+			return '';
+		}
+
+		if ( ! in_array( $action, [ 'create', 'view', 'reissue', 'photo' ], true ) ) {
+			$action = 'create';
+		}
+
+		$return_url = class_exists( Personal_Cabinet_List::class ) ? Personal_Cabinet_List::get_module_url() : '';
+		$return_url = $this->normalize_integration_url( $return_url );
+
+		if ( '' !== $return_url ) {
+			$return_url = add_query_arg( [ 'ViewID' => $profile_user_id ], $return_url );
+		}
+
+		$args = [
+			'fstu_intent'             => 'personal_member_card',
+			'fstu_user_id'            => $profile_user_id,
+			'fstu_member_card_action' => $action,
 		];
 
 		if ( '' !== $return_url ) {

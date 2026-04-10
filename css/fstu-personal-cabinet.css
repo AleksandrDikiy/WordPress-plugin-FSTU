@@ -14,15 +14,32 @@
     margin: 0;
 }
 
+/* Зменшуємо паддінги для компактності */
 .fstu-personal-cabinet__action-bar {
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 12px;
-    padding: 14px 16px;
+    padding: 8px 16px; /* Було 14px 16px */
     background: #f8f9fa;
     border: 1px solid #d1d5db;
     border-radius: 10px;
+}
+
+/* Оновлюємо колір на #d9534f */
+.fstu-personal-tabs__btn:hover,
+.fstu-btn:hover,
+.fstu-page-btn:hover,
+.fstu-personal-tabs__btn--active,
+.fstu-btn--primary,
+.fstu-page-btn--active,
+.fstu-personal-tab-actions__item--enabled.fstu-personal-tab-actions__item-link:hover,
+.fstu-personal-tab-actions__item--enabled.fstu-personal-tab-actions__item-link:focus-visible,
+.fstu-modal__close:hover,
+.fstu-modal__close:focus-visible {
+    background: #d9534f;
+    color: #ffffff;
+    border-color: #d9534f;
 }
 
 .fstu-personal-cabinet__action-bar-left {
@@ -582,3 +599,253 @@
     }
 }
 
+/* Фаза 2: Grid для вкладки Загальні */
+.fstu-personal-grid-general {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 24px;
+    align-items: start;
+}
+
+.fstu-personal-grid-general__photo-side {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.fstu-personal-grid-general__content-side {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+/* Оптимізація форми редагування */
+.fstu-personal-form--compact .fstu-form-group {
+    margin-bottom: 8px;
+}
+
+.fstu-personal-form--compact .fstu-input {
+    height: 32px;
+}
+
+@media (max-width: 768px) {
+    .fstu-personal-grid-general {
+        grid-template-columns: 1fr;
+    }
+    .fstu-personal-grid-general__photo-side {
+        align-items: center;
+    }
+    .fstu-personal-grid-general__content-side {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Фаза 5: Мобільна адаптивність для табів */
+.fstu-personal-tabs__nav {
+    display: flex;
+    flex-wrap: nowrap; /* Забороняємо перенесення на новий рядок */
+    gap: 8px;
+    overflow-x: auto; /* Додаємо горизонтальний скрол */
+    -webkit-overflow-scrolling: touch; /* Плавний скрол на iOS */
+    padding-bottom: 8px; /* Відступ для скролбара */
+    scrollbar-width: thin; /* Тонкий скролбар для Firefox */
+}
+
+/* Стилізація скролбара для Webkit (Chrome, Safari) */
+.fstu-personal-tabs__nav::-webkit-scrollbar {
+    height: 4px;
+}
+.fstu-personal-tabs__nav::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+.fstu-personal-tabs__nav::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+/* Фаза 5: Skeleton Loaders (Анімація завантаження) */
+@keyframes fstu-skeleton-pulse {
+    0% { background-color: #f3f4f6; }
+    50% { background-color: #e5e7eb; }
+    100% { background-color: #f3f4f6; }
+}
+
+.fstu-skeleton {
+    animation: fstu-skeleton-pulse 1.5s infinite ease-in-out;
+    border-radius: 4px;
+    display: block;
+}
+
+.fstu-skeleton-text {
+    height: 14px;
+    margin-bottom: 6px;
+    width: 100%;
+}
+
+.fstu-skeleton-text--short {
+    width: 60%;
+}
+
+.fstu-skeleton-title {
+    height: 20px;
+    width: 40%;
+    margin-bottom: 12px;
+}
+
+.fstu-skeleton-image {
+    width: 150px;
+    height: 150px;
+    border-radius: 8px;
+}
+
+.fstu-skeleton-table-row {
+    height: 30px;
+    margin-bottom: 8px;
+}
+
+/* Адаптивність для таблиць на мобільних пристроях */
+@media (max-width: 768px) {
+    .fstu-table-wrap {
+        /* Гарантуємо, що таблиці можна скролити горизонтально */
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin: 0 -16px; /* Розтягуємо скрол до країв екрану */
+        padding: 0 16px;
+    }
+}
+
+/* Ховаємо системний заголовок "General" у першій вкладці */
+[data-tab-pane="general"] .fstu-personal-tab-card__title {
+    display: none !important;
+}
+
+/* Жорсткий захист кнопки "Змінити фото" від стилів WordPress теми */
+.fstu-btn.fstu-btn--secondary {
+    background-color: #f8f9fa !important;
+    color: #1f2937 !important;
+    border: 1px solid #d1d5db !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* Колір при наведенні та натисканні (корпоративний червоний) */
+.fstu-btn.fstu-btn--secondary:hover,
+.fstu-btn.fstu-btn--secondary:focus,
+.fstu-btn.fstu-btn--secondary:active {
+    background-color: #d9534f !important;
+    color: #ffffff !important;
+    border-color: #d9534f !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* Відміняємо старий grid для правої колонки, щоб таблиця була на всю ширину */
+.fstu-personal-grid-general__content-side {
+    display: block !important;
+}
+
+/* Стилі для нової таблиці у вкладці "Загальні" (як у Реєстрі ФСТУ) */
+.fstu-personal-general-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+}
+
+.fstu-personal-general-table td {
+    border: 1px solid #d1d5db;
+    padding: 12px 14px;
+    font-size: 15px;
+}
+
+.fstu-general-table-label {
+    background-color: #dcead6;
+    font-weight: 700;
+    text-align: center;
+    width: 35%;
+    color: #111827;
+}
+
+.fstu-general-table-value {
+    font-weight: 700;
+    text-align: center;
+    color: #1f2937;
+}
+
+/* Фаза 6: Зменшення висоти рядків у всіх таблицях */
+.fstu-personal-general-table td {
+    padding: 6px 12px !important; /* Зменшено висоту рядків */
+    font-size: 14px;
+}
+.fstu-th, .fstu-td {
+    padding: 6px 10px !important; /* Зменшено висоту рядків для data-tables */
+}
+
+/* Стилі для Перемикача Згоди (Toggle Switch) */
+.fstu-consent-wrapper {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: center;
+    text-align: center;
+    background: #f8faf6;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #dcead6;
+}
+
+.fstu-switch {
+    position: relative;
+    display: inline-block;
+    width: 46px;
+    height: 24px;
+}
+
+.fstu-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.fstu-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #cbd5e1;
+    transition: .4s;
+    border-radius: 24px;
+}
+
+.fstu-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .fstu-slider {
+    background-color: #166534; /* Темно-зелений колір ФСТУ */
+}
+
+input:checked + .fstu-slider:before {
+    transform: translateX(22px);
+}
+
+input:disabled + .fstu-slider {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.fstu-consent-text {
+    font-size: 11px;
+    color: #4b5563;
+    font-weight: 700;
+    line-height: 1.2;
+}
