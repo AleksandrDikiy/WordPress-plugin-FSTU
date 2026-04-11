@@ -118,6 +118,66 @@ class Personal_Cabinet_Service {
 		$can_view_service = ! empty( $permissions['canViewService'] );
 		$can_view_member_data = $can_view_private || ! empty( $permissions['canManage'] ) || ! empty( $permissions['isOwner'] );
 
+		// Логіка прав для редагування
+		$is_owner   = ! empty( $permissions['isOwner'] );
+		$is_admin   = current_user_can( 'administrator' );
+		$is_global  = current_user_can( 'globalregistrar' );
+		$is_userreg = current_user_can( 'userregistrar' );
+
+		$can_edit_full    = $is_owner || $is_admin || $is_global;
+		$can_edit_partial = $can_edit_full || $is_userreg;
+
+		$edit_schema = [
+			'general' => [
+				[ 'key' => 'last_name', 'label' => 'Прізвище', 'value' => (string) get_user_meta( $user_id, 'last_name', true ), 'readonly' => ! $can_edit_partial ],
+				[ 'key' => 'first_name', 'label' => 'Ім\'я', 'value' => (string) get_user_meta( $user_id, 'first_name', true ), 'readonly' => ! $can_edit_partial ],
+				[ 'key' => 'Patronymic', 'label' => 'По батькові', 'value' => (string) get_user_meta( $user_id, 'Patronymic', true ), 'readonly' => ! $can_edit_partial ],
+				[ 'key' => 'Sex', 'label' => 'Стать (Ж/Ч)', 'value' => (string) get_user_meta( $user_id, 'Sex', true ), 'readonly' => ! $can_edit_partial, 'type' => 'toggle_sex' ],
+				[ 'key' => 'BirthDate', 'label' => 'Дата народження', 'value' => gmdate( 'Y-m-d', strtotime( get_user_meta( $user_id, 'BirthDate', true ) ?: 'now' ) ), 'readonly' => ! $can_edit_partial, 'type' => 'date' ],
+				[ 'key' => 'user_email', 'label' => 'Email', 'value' => $user->user_email, 'readonly' => ! $can_edit_partial, 'type' => 'email' ],
+				[ 'key' => 'PhoneMobile', 'label' => 'Телефон', 'value' => (string) get_user_meta( $user_id, 'PhoneMobile', true ), 'readonly' => ! $can_edit_partial, 'type' => 'tel' ],
+				[ 'key' => 'Skype', 'label' => 'Skype', 'value' => (string) get_user_meta( $user_id, 'Skype', true ), 'readonly' => ! $can_edit_partial ],
+				[ 'key' => 'FaceBook', 'label' => 'Facebook', 'value' => (string) get_user_meta( $user_id, 'FaceBook', true ), 'readonly' => ! $can_edit_partial ],
+			],
+			'private' => [
+				[ 'key' => 'Adr', 'label' => 'Адреса проживання', 'value' => (string) get_user_meta( $user_id, 'Adr', true ), 'readonly' => ! $can_edit_partial ],
+				[ 'key' => 'Job', 'label' => 'Місце роботи, посада', 'value' => (string) get_user_meta( $user_id, 'Job', true ), 'readonly' => ! $can_edit_partial ],
+				[ 'key' => 'Education', 'label' => 'Освіта', 'value' => (string) get_user_meta( $user_id, 'Education', true ), 'readonly' => ! $can_edit_partial ],
+				[ 'key' => 'Phone2', 'label' => 'Дод. телефон 1', 'value' => (string) get_user_meta( $user_id, 'Phone2', true ), 'readonly' => ! $can_edit_partial, 'type' => 'tel' ],
+				[ 'key' => 'Phone3', 'label' => 'Дод. телефон 2', 'value' => (string) get_user_meta( $user_id, 'Phone3', true ), 'readonly' => ! $can_edit_partial, 'type' => 'tel' ],
+				[ 'key' => 'PhoneFamily', 'label' => 'Телефон родичів', 'value' => (string) get_user_meta( $user_id, 'PhoneFamily', true ), 'readonly' => ! $can_edit_partial, 'type' => 'tel' ],
+			],
+			'service' => [
+				// Рядок 1
+				[ 'key' => 'IPN', 'label' => 'ІПН', 'value' => isset($context['user_params']['IPN']) ? $context['user_params']['IPN'] : '', 'readonly' => ! $can_edit_full, 'col' => 'left' ],
+				[ 'key' => 'sys_id', 'label' => 'User ID', 'value' => $user_id, 'readonly' => true, 'col' => 'right' ],
+				
+				// Рядок 2
+				[ 'key' => 'BankName', 'label' => 'Назва банку', 'value' => isset($context['user_params']['BankName']) ? $context['user_params']['BankName'] : '', 'readonly' => ! $can_edit_full, 'col' => 'left' ],
+				[ 'key' => 'sys_reg', 'label' => 'Дата реєстрації', 'value' => $this->format_date((string)$user->user_registered), 'readonly' => true, 'col' => 'right' ],
+				
+				// Рядок 3 (Тепер IBAN та Login стоять в один рядок)
+				[ 'key' => 'IBAN', 'label' => 'IBAN', 'value' => isset($context['user_params']['IBAN']) ? $context['user_params']['IBAN'] : '', 'readonly' => ! $can_edit_full, 'col' => 'left' ],
+				[ 'key' => 'sys_login', 'label' => 'Login', 'value' => $user->user_login, 'readonly' => true, 'col' => 'right' ],
+				
+				// Рядок 4
+				[ 'key' => 'TelegramID', 'label' => 'Telegram ID', 'value' => isset($context['telegram_id']) ? $context['telegram_id'] : '', 'readonly' => ! $can_edit_full, 'col' => 'left' ],
+				[ 'key' => 'sys_last', 'label' => 'Останній вхід', 'value' => $this->format_date((string)get_user_meta( $user_id, 'last_login', true )), 'readonly' => true, 'col' => 'right' ],
+				
+				// Рядок 5
+				[ 'key' => 'VerificationCode', 'label' => 'VerificationCode', 'value' => isset($context['verification_code']) ? $context['verification_code'] : '', 'readonly' => ! $can_edit_full, 'col' => 'left' ],
+				[ 'key' => 'sys_roles', 'label' => 'Ролі', 'value' => implode( ', ', (array) $user->roles ), 'readonly' => true, 'type' => 'roles', 'col' => 'right' ],
+				
+				// Рядок 6
+				[ 'key' => 'TelegramVerification', 'label' => 'Активація Telegram', 'value' => isset($user->TelegramVerification) ? $user->TelegramVerification : '', 'readonly' => ! $can_edit_full, 'col' => 'left', 'type' => 'toggle_bool' ],
+				
+				// Рядки 7, 8, 9 (Тільки зліва під Telegram, права колонка порожня під ролями)
+				[ 'key' => 'sys_card1', 'label' => 'Тип картки', 'value' => isset($member_card['TypeCard_Name']) ? $member_card['TypeCard_Name'] : '', 'readonly' => true, 'col' => 'left' ],
+				[ 'key' => 'sys_card2', 'label' => 'Статус', 'value' => isset($member_card['StatusCard_Name']) ? $member_card['StatusCard_Name'] : '', 'readonly' => true, 'col' => 'left' ],
+				[ 'key' => 'sys_card3', 'label' => 'Сума', 'value' => $this->normalize_sum(isset($member_card['UserMemberCard_Summa']) ? (string)$member_card['UserMemberCard_Summa'] : ''), 'readonly' => true, 'col' => 'left' ],
+			]
+		];
+
 		$profile = [
 			'userId'      => $user_id,
 			'isOwnProfile' => ! empty( $permissions['isOwner'] ),
@@ -126,6 +186,8 @@ class Personal_Cabinet_Service {
 			'email'       => $can_view_member_data ? (string) $user->user_email : '',
 			'roles'       => $can_view_service ? implode( ', ', array_map( 'strval', (array) $user->roles ) ) : '',
 			'photoUrl'    => $this->get_photo_url( $user_id ),
+			'canEditProfile' => $can_edit_partial,
+			'editSchema'     => $edit_schema,
 			'hasConsent'  => $can_view_member_data ? $this->has_member_consent( $user_id ) : false,
 			'phone'       => $can_view_member_data ? (string) get_user_meta( $user_id, 'PhoneMobile', true ) : '',
 			'phoneList'   => $can_view_member_data ? $phones : [],
@@ -401,10 +463,10 @@ class Personal_Cabinet_Service {
 				'visible' => $can_view_private,
 				'sections' => [
 					[
-						'title' => 'Додаткова інформація',
+						'title' => '', // Прибрали заголовок "Додаткова інформація"
 						'items' => [
-							[ 'label' => 'Адреса', 'value' => (string) ( $profile['address'] ?? '' ), 'key' => 'Adr' ],
-							[ 'label' => 'Місце роботи', 'value' => (string) ( $profile['job'] ?? '' ), 'key' => 'Job' ],
+							[ 'label' => 'Адреса проживання', 'value' => (string) ( $profile['address'] ?? '' ), 'key' => 'Adr' ],
+							[ 'label' => 'Місце роботи, посада', 'value' => (string) ( $profile['job'] ?? '' ), 'key' => 'Job' ],
 							[ 'label' => 'Освіта', 'value' => (string) ( $profile['education'] ?? '' ), 'key' => 'Education' ],
 							[ 'label' => 'Додатковий телефон 1', 'value' => (string) ( $profile['phone2'] ?? '' ), 'key' => 'Phone2' ],
 							[ 'label' => 'Додатковий телефон 2', 'value' => (string) ( $profile['phone3'] ?? '' ), 'key' => 'Phone3' ],
@@ -413,9 +475,9 @@ class Personal_Cabinet_Service {
 					],
 				],
 				'actions' => [],
-				'accessNotice' => current_user_can( 'manage_options' ) ? 'Ви авторизовані як адміністратор: доступне редагування приватних даних.' : 'Приватні дані показані у режимі лише для перегляду.',
-				'isReadOnly' => ! current_user_can( 'manage_options' ), // Доступ до форми тільки адміну
-				'note'    => 'Зміни в цій вкладці логуються у розділі «ПРОТОКОЛ».',
+				'accessNotice' => '', // Прибрали сповіщення "Ви авторизовані як адміністратор..."
+				'isReadOnly' => true, // Тепер завжди тільки для перегляду
+				'note'    => '* Для оформлення документів (доступна тільки Реєстраторам, Адміністраторам та власнику)',
 			],
 			'service' => [
 				'title'   => 'Службове',
@@ -460,12 +522,12 @@ class Personal_Cabinet_Service {
 					],
 				],
 				'actions' => [],
-				'accessNotice' => 'Службова вкладка доступна лише визначеним ролям і працює тільки в read-only режимі.',
+				'accessNotice' => '',
 				'isReadOnly' => true,
-				'note'    => 'Службова вкладка вже читає реальні технічні й банківські поля користувача.',
+				'note'    => '',
 			],
 			'clubs' => [
-				'title'   => 'Клуби',
+				'title'   => '', // Прибрано заголовок
 				'visible' => true,
 				'table'   => [
 					'columns' => [
@@ -473,37 +535,65 @@ class Personal_Cabinet_Service {
 						[ 'key' => 'site', 'label' => 'Сайт', 'type' => 'link' ],
 						[ 'key' => 'address', 'label' => 'Адреса' ],
 						[ 'key' => 'date', 'label' => 'Дата додавання' ],
+						[ 'key' => '_actions', 'label' => 'Дії', 'type' => 'actions' ], // Нова колонка для кнопок
 					],
-					'rows' => array_map( function( $club ) {
+					'rows' => array_map( function( $club ) use ( $can_manage_clubs ) {
 						return [
+							'id'      => ! empty( $club['Club_ID'] ) ? $club['Club_ID'] : ( $club['Club_Name'] ?? '' ),
 							'name'    => $this->normalize_value( $club['Club_Name'] ?? '' ),
 							'site'    => $this->normalize_value( $club['Club_WWW'] ?? '' ),
 							'address' => $this->normalize_value( $club['Club_Adr'] ?? '' ),
 							'date'    => $this->format_date( $club['UserClub_Date'] ?? '' ),
+							'_actions'=> $can_manage_clubs ? 'delete' : '', // Дозвіл на видалення
 						];
 					}, isset( $collections['clubs'] ) && is_array( $collections['clubs'] ) ? $collections['clubs'] : [] ),
 					'defaultPerPage' => 10,
 					'emptyMessage'   => __( 'Користувач поки не прив’язаний до жодного клубу.', 'fstu' ),
 				],
-				'actions' => $this->build_tab_actions( [ 'Додати клуб' => $can_manage_clubs, 'Видалити клуб' => $can_manage_clubs ], 'CRUD клубів буде підключено окремим етапом.' ),
-				'accessNotice' => $can_manage_clubs ? 'Ви маєте право керувати клубами після підключення mutation-flow.' : 'Вкладка доступна лише для перегляду.',
+				'actions' => $this->build_tab_actions( [
+					[
+						'label'   => 'Додати клуб',
+						'enabled' => $can_manage_clubs,
+						'actionKey' => 'add_club',
+					]
+				], '' ),
+				'accessNotice' => '', // Прибрано текст-сповіщення
 				'isReadOnly' => ! $can_manage_clubs,
 				'note'    => 'Показано історію членства у спортивних клубах у вигляді компактної таблиці.',
 			],
 			'city' => [
-				'title'   => 'Місто',
+				'title'   => '', // Прибрано заголовок
 				'visible' => true,
-				'sections' => $city_sections,
-				'actions' => $this->build_tab_actions(
-					[
-						'Додати місто' => $can_manage_cities,
-						'Оновити історію міст' => $can_manage_cities,
+				'table'   => [
+					'columns' => [
+						[ 'key' => 'city', 'label' => 'Місто' ],
+						[ 'key' => 'region', 'label' => 'Область' ],
+						[ 'key' => 'date', 'label' => 'Дата додавання' ],
+						[ 'key' => '_actions', 'label' => 'Дії', 'type' => 'actions' ],
 					],
-					'Mutation-flow для міст буде підключено окремим етапом.'
-				),
-				'accessNotice' => $can_manage_cities ? 'Ви маєте право керувати історією міст після підключення mutation-flow.' : 'Вкладка доступна лише для перегляду.',
+					'rows' => array_map( function( $city ) use ( $can_manage_cities ) {
+						return [
+							// ЗМІНЕНО: Якщо City_ID немає, передаємо назву
+							'id'      => ! empty( $city['City_ID'] ) ? $city['City_ID'] : ( $city['City_Name'] ?? '' ),
+							'city'    => $this->normalize_value( $city['City_Name'] ?? '' ),
+							'region'  => $this->normalize_value( $city['Region_Name'] ?? '' ),
+							'date'    => $this->format_date( $city['UserCity_DateCreate'] ?? '' ),
+							'_actions'=> $can_manage_cities ? 'delete_city' : '', 
+						];
+					}, isset( $collections['cities'] ) && is_array( $collections['cities'] ) ? $collections['cities'] : [] ),
+					'defaultPerPage' => 10,
+					'emptyMessage'   => __( 'Історія міст проживання порожня.', 'fstu' ),
+				],
+				'actions' => $this->build_tab_actions( [
+					[
+						'label'   => 'Додати місто',
+						'enabled' => $can_manage_cities,
+						'actionKey' => 'add_city',
+					]
+				], '' ),
+				'accessNotice' => '',
 				'isReadOnly' => ! $can_manage_cities,
-				'note'    => empty( $city_sections ) ? 'Історія міст проживання поки відсутня.' : 'Показано актуальне місто проживання та історію змін.',
+				'note'    => 'Показано актуальне місто проживання та історію змін у вигляді таблиці.',
 			],
 			'units' => [
 				'title'   => 'Осередоки',

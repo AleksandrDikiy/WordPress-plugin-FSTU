@@ -2,8 +2,8 @@
 /**
  * Клас централізованого керування capability-моделлю ФСТУ.
  *
- * Version:     1.14.0
- * Date_update: 2026-04-10
+ * Version:     1.15.0
+ * Date_update: 2026-04-11
  *
  * @package FSTU\Core
  */
@@ -60,6 +60,10 @@ class Capabilities {
 	public const VIEW_REFEREES_PROTOCOL        = 'fstu_view_referees_protocol';
 	public const MANAGE_REFEREE_CERTIFICATES   = 'fstu_manage_referee_certificates';
 	public const UNBIND_REFEREE_CERTIFICATES   = 'fstu_unbind_referee_certificates';
+	public const VIEW_RECORDERS                = 'fstu_view_recorders';
+	public const MANAGE_RECORDERS              = 'fstu_manage_recorders';
+	public const DELETE_RECORDERS              = 'fstu_delete_recorders';
+	public const VIEW_RECORDERS_PROTOCOL       = 'fstu_view_recorders_protocol';
 	public const VIEW_STEERING                 = 'fstu_view_steering';
 	public const SUBMIT_STEERING_APPLICATIONS  = 'fstu_submit_steering_applications';
 	public const MANAGE_STEERING               = 'fstu_manage_steering';
@@ -161,6 +165,10 @@ class Capabilities {
 				self::VIEW_REFEREES_PROTOCOL        => true,
 				self::MANAGE_REFEREE_CERTIFICATES   => true,
 				self::UNBIND_REFEREE_CERTIFICATES   => true,
+				self::VIEW_RECORDERS                => true,
+				self::MANAGE_RECORDERS              => true,
+				self::DELETE_RECORDERS              => true,
+				self::VIEW_RECORDERS_PROTOCOL       => true,
 				self::VIEW_STEERING                 => true,
 				self::SUBMIT_STEERING_APPLICATIONS  => true,
 				self::MANAGE_STEERING               => true,
@@ -238,6 +246,10 @@ class Capabilities {
 				self::MANAGE_PERSONAL_TOURISM_TYPES => true,
 				self::MANAGE_PERSONAL_EXPERIENCE    => true,
 				self::MANAGE_PERSONAL_JUDGING       => true,
+				self::VIEW_RECORDERS                => true,
+				self::MANAGE_RECORDERS              => true,
+				self::DELETE_RECORDERS              => true,
+				self::VIEW_RECORDERS_PROTOCOL       => true,
 			],
 			'userregistrar' => [
 				self::ACCESS_ADMIN             => true,
@@ -502,6 +514,20 @@ class Capabilities {
 			'canProtocol'           => self::current_user_can_view_referees_protocol(),
 			'canManageCertificates' => self::current_user_can_manage_referee_certificates(),
 			'canUnbindCertificates' => self::current_user_can_unbind_referee_certificates(),
+		];
+	}
+
+	/**
+	 * Повертає прапорці прав для модуля реєстраторів.
+	 *
+	 * @return array<string,bool>
+	 */
+	public static function get_recorders_permissions(): array {
+		return [
+			'canView'     => self::current_user_can_view_recorders(),
+			'canManage'   => self::current_user_can_manage_recorders(),
+			'canDelete'   => self::current_user_can_delete_recorders(),
+			'canProtocol' => self::current_user_can_view_recorders_protocol(),
 		];
 	}
 
@@ -956,6 +982,34 @@ class Capabilities {
 	 */
 	public static function current_user_can_unbind_referee_certificates(): bool {
 		return current_user_can( 'manage_options' ) || current_user_can( self::UNBIND_REFEREE_CERTIFICATES );
+	}
+
+	/**
+	 * Чи може користувач переглядати модуль реєстраторів.
+	 */
+	public static function current_user_can_view_recorders(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_RECORDERS );
+	}
+
+	/**
+	 * Чи може користувач керувати модулем реєстраторів.
+	 */
+	public static function current_user_can_manage_recorders(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_RECORDERS );
+	}
+
+	/**
+	 * Чи може користувач видаляти записи модуля реєстраторів.
+	 */
+	public static function current_user_can_delete_recorders(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::DELETE_RECORDERS );
+	}
+
+	/**
+	 * Чи може користувач переглядати протокол модуля реєстраторів.
+	 */
+	public static function current_user_can_view_recorders_protocol(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_RECORDERS_PROTOCOL );
 	}
 
 	/**

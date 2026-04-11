@@ -2,8 +2,8 @@
 /**
  * View: Головна сторінка плагіна в адмінці.
  *
- * Version:     1.10.0
- * Date_update: 2026-04-10
+ * Version:     1.11.0
+ * Date_update: 2026-04-11
  */
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -20,6 +20,7 @@ $city_page_url = isset( $city_page_url ) ? (string) $city_page_url : '';
 $eventtype_page_url = isset( $eventtype_page_url ) ? (string) $eventtype_page_url : '';
 $tourismtype_page_url = isset( $tourismtype_page_url ) ? (string) $tourismtype_page_url : '';
 $referees_page_url = isset( $referees_page_url ) ? (string) $referees_page_url : '';
+$recorders_page_url = isset( $recorders_page_url ) ? (string) $recorders_page_url : '';
 $member_card_applications_page_url = isset( $member_card_applications_page_url ) ? (string) $member_card_applications_page_url : '';
 $steering_page_url = isset( $steering_page_url ) ? (string) $steering_page_url : '';
 $personal_cabinet_page_url = isset( $personal_cabinet_page_url ) ? (string) $personal_cabinet_page_url : '';
@@ -79,6 +80,16 @@ $personal_cabinet_page_url = isset( $personal_cabinet_page_url ) ? (string) $per
                                     Виводить реєстр суддів з пошуком по ПІБ, фільтрами за областю і категорією, compact-пагінацією, карткою судді, довідками за суддівство та розділом «ПРОТОКОЛ». Для ролей administrator і referee доступне повне керування, для userregistrar і userfstu — лише перегляд.
                                     <?php if ( '' !== $referees_page_url ) : ?>
                                         <br><a href="<?php echo esc_url( $referees_page_url ); ?>">Відкрити сторінку реєстру →</a>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_recorders]</code></th>
+                                <td>
+                                    <strong>Реєстратори ФСТУ</strong><br>
+                                    Виводить службовий реєстр призначень реєстраторів по осередках ФСТУ з фільтром по осередку, пошуком по ПІБ у шапці таблиці, compact-пагінацією, dropdown-меню «Дії», модальними вікнами перегляду/редагування та окремим розділом «ПРОТОКОЛ». Для ролей administrator і globalregistrar доступне повне керування, а колонка ПІБ веде на legacy-сторінку профілю `/Personal?ViewID=...`.
+                                    <?php if ( '' !== $recorders_page_url ) : ?>
+                                        <br><a href="<?php echo esc_url( $recorders_page_url ); ?>">Відкрити сторінку реєстру →</a>
                                     <?php endif; ?>
                                 </td>
                             </tr>

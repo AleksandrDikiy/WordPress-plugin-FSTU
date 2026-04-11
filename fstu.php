@@ -3,7 +3,7 @@
  * Plugin Name:  FSTU Portal
  * Plugin URI:   https://www.fstu.com.ua/
  * Description:  Офіційний плагін Федерації спортивного туризму України. Enterprise ERP/CRM система управління реєстрами, структурою та фінансами федерації.
- * Version:      1.13.0
+ * Version:      1.14.0
  * Author:       Oleksandr Dykyi
  * Author URI:   https://www.fstu.com.ua/
  * Text Domain:  fstu
@@ -11,7 +11,7 @@
  * Requires PHP: 8.0
  * Requires at least: 6.0
  *
- * Date_update: 2026-04-10
+ * Date_update: 2026-04-11
  *
  * @package FSTU
  */
@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // ─── Константи плагіна ────────────────────────────────────────────────────────
 
-define( 'FSTU_VERSION',      '1.13.0' );
+define( 'FSTU_VERSION',      '1.14.0' );
 define( 'FSTU_DB_VERSION',   '1.0.0' );
 define( 'FSTU_PLUGIN_FILE',  __FILE__ );
 define( 'FSTU_PLUGIN_DIR',   plugin_dir_path( __FILE__ ) );
@@ -176,6 +176,23 @@ if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Referees/class-re
 }
 if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Referees/class-referees-ajax.php' ) ) {
 	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Referees/class-referees-ajax.php';
+}
+
+// Recorders — Реєстратори ФСТУ (2026-04-11)
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Recorders/class-recorders-repository.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Recorders/class-recorders-repository.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Recorders/class-recorders-protocol-service.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Recorders/class-recorders-protocol-service.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Recorders/class-recorders-service.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Recorders/class-recorders-service.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Recorders/class-recorders-list.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Recorders/class-recorders-list.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Recorders/class-recorders-ajax.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Recorders/class-recorders-ajax.php';
 }
 
 // Steering — Реєстр стернових ФСТУ (2026-04-08)
@@ -358,6 +375,14 @@ function fstu_init(): void {
 	}
 	if ( class_exists( 'FSTU\\Modules\\Registry\\Referees\\Referees_Ajax' ) ) {
 		( new FSTU\Modules\Registry\Referees\Referees_Ajax() )->init();
+	}
+
+	// ── Реєстратори ФСТУ ─────────────────────────────────────────────────────
+	if ( class_exists( 'FSTU\\Modules\\Registry\\Recorders\\Recorders_List' ) ) {
+		( new FSTU\Modules\Registry\Recorders\Recorders_List() )->init();
+	}
+	if ( class_exists( 'FSTU\\Modules\\Registry\\Recorders\\Recorders_Ajax' ) ) {
+		( new FSTU\Modules\Registry\Recorders\Recorders_Ajax() )->init();
 	}
 
 	// ── Реєстр стернових ФСТУ ─────────────────────────────────────────────────

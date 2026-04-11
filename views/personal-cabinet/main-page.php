@@ -89,5 +89,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 		<?php include FSTU_PLUGIN_DIR . 'views/personal-cabinet/modal-dues.php'; ?>
 		<?php include FSTU_PLUGIN_DIR . 'views/personal-cabinet/modal-photo.php'; ?>
+		<?php include FSTU_PLUGIN_DIR . 'views/personal-cabinet/modal-edit.php'; ?>
+		<?php include FSTU_PLUGIN_DIR . 'views/personal-cabinet/modal-club.php'; ?>
+		<?php include FSTU_PLUGIN_DIR . 'views/personal-cabinet/modal-city.php'; ?>
+
 	<?php endif; ?>
 </div>

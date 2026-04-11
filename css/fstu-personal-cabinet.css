@@ -849,3 +849,121 @@ input:disabled + .fstu-slider {
     font-weight: 700;
     line-height: 1.2;
 }
+
+/* Ховаємо заголовок "Private" у вкладці "Приватне" */
+[data-tab-pane="private"] .fstu-personal-tab-card__title {
+    display: none !important;
+}
+
+/* Стилі для примітки у вкладці "Приватне" (як на скріншоті) */
+[data-tab-pane="private"] .fstu-personal-tab-card__note {
+    font-style: italic;
+    color: #6b7280;
+    font-size: 13px;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px dashed #d1d5db;
+}
+
+/* Фаза 7: Компактна вкладка Службове */
+[data-tab-pane="service"] .fstu-personal-tab-card__title {
+    display: none !important;
+}
+
+.fstu-personal-grid-service {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+}
+
+.fstu-personal-grid-service__col {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.fstu-service-block-title {
+    margin: 0 0 6px 4px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #4b5563;
+    text-transform: uppercase;
+}
+
+@media (max-width: 1024px) {
+    .fstu-personal-grid-service {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Жорстке перезаписування синього кольору теми WordPress */
+.fstu-personal-tabs__btn[data-edit-tab].fstu-personal-tabs__btn--active,
+.fstu-personal-tabs__btn.fstu-personal-tabs__btn--active {
+    background-color: #d9534f !important;
+    color: #ffffff !important;
+    border-color: #d9534f !important;
+}
+
+/* Компактна і відцентрована кнопка закриття модалки */
+.fstu-modal__close {
+    width: 26px !important;
+    height: 26px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    line-height: 1 !important;
+    font-size: 20px !important;
+}
+
+/* Форма в один рядок (Label + Input) */
+.fstu-form-group--inline {
+    display: grid !important;
+    grid-template-columns: 160px 1fr !important;
+    align-items: center !important;
+    gap: 16px !important;
+    margin-bottom: 8px !important;
+}
+
+.fstu-form-group--inline .fstu-label {
+    margin: 0 !important;
+    text-align: right;
+    font-size: 13px;
+    color: #4b5563;
+}
+
+/* Адаптивність для телефонів: скидання в 1 колонку */
+@media (max-width: 600px) {
+    .fstu-form-group--inline {
+        grid-template-columns: 1fr !important;
+        align-items: stretch !important;
+        gap: 6px !important;
+    }
+    .fstu-form-group--inline .fstu-label {
+        text-align: left;
+    }
+}
+
+/* Перенос довгого тексту (для Ролей) */
+.fstu-text-wrap {
+    white-space: normal !important;
+    word-wrap: break-word !important;
+}
+
+/* Стилі для випадаючого списку клубів (Autocomplete) */
+.fstu-club-option {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 13px;
+    border-bottom: 1px solid #f3f4f6;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+.fstu-club-option:last-child {
+    border-bottom: none;
+}
+.fstu-club-option:hover {
+    background-color: #f8faf6;
+    color: #b5473a;
+    font-weight: 600;
+}

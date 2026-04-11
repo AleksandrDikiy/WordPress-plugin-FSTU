@@ -155,8 +155,14 @@ jQuery(document).ready(function ($) {
                 var val = row[col.key];
                 var cellHtml = escHtml(val || '—');
                 
-                if (col.type === 'link' && val) {
+                if (col.type === 'link' && val && val !== '—') {
                     cellHtml = '<a href="' + escHtml(val) + '" target="_blank" rel="noopener noreferrer">Відкрити</a>';
+                } else if (col.type === 'actions') {
+                    if (val === 'delete') {
+                        cellHtml = '<button type="button" class="fstu-btn fstu-delete-club-btn" data-id="' + escHtml(row.id) + '">Видалити</button>';
+                    } else if (val === 'delete_city') {
+                        cellHtml = '<button type="button" class="fstu-btn fstu-delete-city-btn" data-id="' + escHtml(row.id) + '" style="padding: 4px 8px; font-size: 11px; background-color: #fef2f2!important; color: #b91c1c!important; border: 1px solid #fecaca!important;">Видалити</button>';
+                    }
                 }
                 
                 html += '<td class="fstu-td">' + cellHtml + '</td>';
@@ -416,6 +422,14 @@ jQuery(document).ready(function ($) {
             var $content = $('#fstu-personal-tab-' + slug);
             if (!$content.length || !tab.visible) return;
 
+            // ВИПРАВЛЕННЯ 1: Ховаємо заголовок (наприклад "Clubs"), якщо з PHP прийшов порожній title
+            var $title = $content.prev('.fstu-personal-tab-card__title');
+            if (tab.title === '') {
+                $title.addClass('fstu-hidden');
+            } else if (tab.title) {
+                $title.text(tab.title).removeClass('fstu-hidden');
+            }
+
             var html = '';
             html += buildAccessNotice(tab.accessNotice || '', !!tab.isReadOnly);
 
@@ -434,16 +448,21 @@ jQuery(document).ready(function ($) {
                 
                 // Перемикач згоди
                 var isConsent = profile.hasConsent;
-                var consentText = isConsent ? '1=показати персональні данні для членів ФСТУ' : '0=заборонити показ персональних даних';
+                var consentText = isConsent ? 'показати персональні данні для членів ФСТУ' : 'заборонити показ персональних даних';
                 html += '<div class="fstu-consent-wrapper">';
                 html += '<label class="fstu-switch">';
                 html += '<input type="checkbox" id="fstu-consent-toggle" ' + (isConsent ? 'checked' : '') + (tab.isReadOnly ? ' disabled' : '') + '>';
                 html += '<span class="fstu-slider"></span>';
                 html += '</label>';
                 html += '<div class="fstu-consent-text" id="fstu-consent-text">' + escHtml(consentText) + '</div>';
-                html += '</div>';
+                html += '</div>'; // закриття fstu-consent-wrapper
+                
+                // ДОДАНО КНОПКУ РЕДАГУВАТИ
+                if (profile.canEditProfile) {
+                    html += '<button type="button" class="fstu-btn fstu-btn--primary" id="fstu-open-edit-modal" style="width: 100%; margin-top: 12px;">РЕДАГУВАТИ</button>';
+                }
 
-                html += '</div>';
+                html += '</div>'; // закриття лівої колонки
 
                 // Права колонка: Таблиця як у Реєстрі
                 html += '<div class="fstu-personal-grid-general__content-side">';
@@ -468,20 +487,8 @@ jQuery(document).ready(function ($) {
                 html += '</tbody></table>';
                 html += '</div></div>';
             } 
-            // Спеціальний рендеринг для вкладки ПРИВАТНЕ (Адмін-форма)
-            else if (slug === 'private' && !tab.isReadOnly) {
-                html += '<form class="fstu-personal-form fstu-personal-form--compact" id="fstu-admin-private-form">';
-                $.each(tab.sections[0].items, function(_, item) {
-                    html += '<div class="fstu-form-group">';
-                    html += '<label class="fstu-label">' + escHtml(item.label) + '</label>';
-                    html += '<input type="text" name="' + escHtml(item.key) + '" value="' + escHtml(item.value) + '" class="fstu-input">';
-                    html += '</div>';
-                });
-                html += '<button type="submit" class="fstu-btn fstu-btn--primary" style="margin-top:10px;">Зберегти зміни</button>';
-                html += '</form>';
-            }
-            // Спеціальний рендеринг для вкладки ПРИВАТНЕ (Перегляд як у Реєстрі ФСТУ)
-            else if (slug === 'private' && tab.isReadOnly) {
+            // Спеціальний рендеринг для вкладки ПРИВАТНЕ
+            else if (slug === 'private') {
                 html += '<table class="fstu-personal-general-table"><tbody>';
                 $.each(tab.sections, function(_, section) {
                     $.each(section.items, function(_, item) {
@@ -492,13 +499,48 @@ jQuery(document).ready(function ($) {
                     });
                 });
                 html += '</tbody></table>';
+                
+                if (tab.note) {
+                     html += '<div class="fstu-personal-tab-card__note">' + escHtml(tab.note) + '</div>';
+                }
             }
+            // Спеціальний рендеринг для вкладки СЛУЖБОВЕ
+            else if (slug === 'service') {
+                var buildServiceTable = function(section) {
+                    if (!section) return '';
+                    var sHtml = '<div class="fstu-service-block">';
+                    if (section.title) {
+                        sHtml += '<h4 class="fstu-service-block-title">' + escHtml(section.title) + '</h4>';
+                    }
+                    sHtml += '<table class="fstu-personal-general-table"><tbody>';
+                    $.each(section.items || [], function(_, item) {
+                        sHtml += '<tr>';
+                        sHtml += '<td class="fstu-general-table-label">' + escHtml(item.label) + ':</td>';
+                        sHtml += '<td class="fstu-general-table-value">' + escHtml(item.value || '—') + '</td>';
+                        sHtml += '</tr>';
+                    });
+                    sHtml += '</tbody></table></div>';
+                    return sHtml;
+                };
+
+                html += '<div class="fstu-personal-grid-service">';
+                html += '<div class="fstu-personal-grid-service__col">';
+                html += buildServiceTable(tab.sections[0]);
+                html += buildServiceTable(tab.sections[1]);
+                html += '</div>';
+                html += '<div class="fstu-personal-grid-service__col">';
+                html += buildServiceTable(tab.sections[2]);
+                html += buildServiceTable(tab.sections[3]);
+                html += '</div>';
+                html += '</div>';
+            }
+            // ВИПРАВЛЕННЯ 2: Рендеринг кнопок дій (actions) для таблиць та звичайних вкладок
             else if (tab.table) {
-                // Рендеринг таблиці для вкладки з конфігурацією table  
+                html += buildTabActions(tab.actions); // <--- Тепер кнопка "Додати клуб" з'явиться!
                 html += buildTabTable(slug, tab.table);
             }
             else {
-                // Стандартний рендеринг для інших вкладок
+                html += buildTabActions(tab.actions); // <--- Кнопки для інших вкладок (Осередки, Місто)
                 html += buildSections(tab.sections);
             }
 
@@ -519,6 +561,9 @@ jQuery(document).ready(function ($) {
     // Рендер профілю після завантаження даних
     function renderProfile(payload) {
         var profile = payload.profile || {};
+        
+        // ДОДАНО: Передача схеми редагування в глобальний state
+        state.editSchema = profile.editSchema || {};
 
         if ($('#fstu-personal-alert').length) {
             if (state.flashAlert && state.flashAlert.message) {
@@ -532,39 +577,7 @@ jQuery(document).ready(function ($) {
 
         renderTabs(payload.tabs || {}, profile);
     }
-    // Збереження форми Приватні (Адміністратор)
-    $(document).on('submit', '#fstu-admin-private-form', function (e) {
-        e.preventDefault();
-        var $form = $(this);
-        var $btn = $form.find('button[type="submit"]');
-        var formData = $form.serializeArray();
-        
-        var payload = {
-            action: 'fstu_personal_cabinet_update_private_data',
-            nonce: l10n.nonce,
-            profile_user_id: state.profileUserId
-        };
-        
-        $.each(formData, function(_, field) {
-            payload[field.name] = field.value;
-        });
-
-        $btn.prop('disabled', true).text('Збереження...');
-
-        $.post(l10n.ajaxUrl, payload).done(function (response) {
-            if (response.success) {
-                state.flashAlert = { type: 'success', message: response.data.message || 'Збережено' };
-                loadProfile();
-            } else {
-                setMainAlert('error', response.data.message || 'Помилка');
-            }
-        }).fail(function (xhr) {
-            setMainAlert('error', getAjaxErrorMessage(xhr, 'Помилка збереження.'));
-        }).always(function () {
-            $btn.prop('disabled', false).text('Зберегти зміни');
-        });
-    });
-
+    
     // Завантаження фото
     $(document).on('submit', '#fstu-personal-photo-form', function (e) {
         e.preventDefault();
@@ -872,7 +885,340 @@ jQuery(document).ready(function ($) {
             consent: isChecked ? 1 : 0
         });
     });
+    // Логіка модального вікна редагування (всі вкладки в DOM одночасно)
+    var activeEditTab = 'general';
 
+    function buildEditField(field) {
+        var colStyle = '';
+        if (field.col === 'left') colStyle = 'grid-column: 1;';
+        else if (field.col === 'right') colStyle = 'grid-column: 2;';
+        else if (field.col === 'full') colStyle = 'grid-column: 1 / -1;';
+
+        var html = '<div class="fstu-form-group fstu-form-group--inline" style="' + colStyle + '">';
+        html += '<label class="fstu-label">' + escHtml(field.label) + '</label>';
+
+        var readonlyAttr = field.readonly ? 'readonly style="background: #f3f4f6; color: #6b7280; cursor: not-allowed;"' : '';
+
+        if (field.type === 'toggle_sex') {
+            var isMale = field.value === 'Ч';
+            html += '<div class="fstu-switch-wrapper" style="justify-content: flex-start; margin: 0; padding: 0; border: none; background: transparent;">';
+            html += '<label class="fstu-switch">';
+            html += '<input type="checkbox" name="' + escHtml(field.key) + '" value="Ч" ' + (isMale ? 'checked' : '') + ' ' + (field.readonly ? 'disabled' : '') + '>';
+            html += '<span class="fstu-slider"></span>';
+            html += '</label></div>';
+        } else if (field.type === 'toggle_bool') {
+            var isActive = field.value === '1' || field.value === 'Так' || field.value === 'true';
+            html += '<div class="fstu-switch-wrapper" style="justify-content: flex-start; margin: 0; padding: 0; border: none; background: transparent;">';
+            html += '<label class="fstu-switch">';
+            html += '<input type="checkbox" name="' + escHtml(field.key) + '" value="1" ' + (isActive ? 'checked' : '') + ' ' + (field.readonly ? 'disabled' : '') + '>';
+            html += '<span class="fstu-slider"></span>';
+            html += '</label></div>';
+        } else if (field.type === 'roles') {
+            html += '<div class="fstu-input fstu-text-wrap" style="background: #f3f4f6; color: #6b7280; height: auto; min-height: 26px; padding: 6px; cursor: not-allowed;">' + escHtml(field.value || '—') + '</div>';
+        } else {
+            var inputType = field.type || 'text';
+            html += '<input type="' + inputType + '" name="' + escHtml(field.key) + '" value="' + escHtml(field.value) + '" class="fstu-input" ' + readonlyAttr + '>';
+        }
+
+        html += '</div>';
+        return html;
+    }
+
+    function initEditForm() {
+        var schema = state.editSchema || {};
+        var html = '';
+        
+        // Рендеримо всі 3 вкладки одразу
+        $.each(['general', 'private', 'service'], function(_, tabSlug) {
+            var fields = schema[tabSlug] || [];
+            if (!fields.length) return;
+
+            var displayClass = (tabSlug === activeEditTab) ? '' : 'fstu-hidden';
+            html += '<div class="fstu-edit-tab-pane ' + displayClass + '" data-pane="' + tabSlug + '">';
+
+            if (tabSlug === 'service') {
+                html += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px;">';
+                $.each(fields, function(_, field) { html += buildEditField(field); });
+                html += '</div>';
+            } else {
+                html += '<div style="display: flex; flex-direction: column; gap: 8px;">';
+                $.each(fields, function(_, field) { html += buildEditField(field); });
+                html += '</div>';
+            }
+            html += '</div>';
+        });
+
+        $('#fstu-personal-edit-form').html(html);
+        updateEditTabUI();
+    }
+
+    function updateEditTabUI() {
+        $('.fstu-personal-tabs__btn[data-edit-tab]').removeClass('fstu-personal-tabs__btn--active');
+        $('.fstu-personal-tabs__btn[data-edit-tab="' + activeEditTab + '"]').addClass('fstu-personal-tabs__btn--active');
+        
+        $('.fstu-edit-tab-pane').addClass('fstu-hidden');
+        $('.fstu-edit-tab-pane[data-pane="' + activeEditTab + '"]').removeClass('fstu-hidden');
+    }
+
+    $(document).on('click', '#fstu-open-edit-modal', function() {
+        $('#fstu-personal-edit-alert').addClass('fstu-hidden');
+        $('#fstu-personal-edit-modal').removeClass('fstu-hidden');
+        activeEditTab = 'general'; // Завжди починаємо з першої вкладки
+        initEditForm();
+    });
+
+    $(document).on('click', '.fstu-personal-tabs__btn[data-edit-tab]', function() {
+        activeEditTab = $(this).data('edit-tab');
+        updateEditTabUI(); // Тепер ми просто перемикаємо видимість, а не перемальовуємо поля
+    });
+
+    $(document).on('click', '#fstu-personal-edit-modal-close, #fstu-personal-edit-cancel', function() {
+        $('#fstu-personal-edit-modal').addClass('fstu-hidden');
+    });
+
+    $(document).on('submit', '#fstu-personal-edit-form', function(e) {
+        e.preventDefault();
+        var $btn = $('#fstu-personal-edit-submit');
+        var $alert = $('#fstu-personal-edit-alert');
+        var formData = $(this).serializeArray();
+        
+        var payload = {
+            action: 'fstu_personal_cabinet_update_profile',
+            nonce: l10n.nonce,
+            profile_user_id: state.profileUserId
+        };
+        
+        $.each(formData, function(_, field) {
+            payload[field.name] = field.value;
+        });
+
+        // Ручна обробка невідмічених перемикачів для ВСІХ вкладок
+        var schema = state.editSchema || {};
+        $.each(['general', 'private', 'service'], function(_, tabSlug) {
+            var schemaFields = schema[tabSlug] || [];
+            $.each(schemaFields, function(_, field) {
+                if (field.type === 'toggle_sex' && !payload[field.key]) {
+                    payload[field.key] = 'Ж';
+                } else if (field.type === 'toggle_bool' && !payload[field.key]) {
+                    payload[field.key] = '0';
+                }
+            });
+        });
+
+        $btn.prop('disabled', true).text('Збереження...');
+        $alert.addClass('fstu-hidden');
+
+        $.post(l10n.ajaxUrl, payload).done(function(response) {
+            if (response.success) {
+                $('#fstu-personal-edit-modal').addClass('fstu-hidden');
+                state.flashAlert = { type: 'success', message: 'Дані профілю успішно оновлено.' };
+                loadProfile();
+            } else {
+                $alert.removeClass('fstu-hidden').addClass('fstu-alert--error').text(response.data.message || 'Помилка');
+            }
+        }).fail(function(xhr) {
+            $alert.removeClass('fstu-hidden').addClass('fstu-alert--error').text(getAjaxErrorMessage(xhr, 'Помилка збереження.'));
+        }).always(function() {
+            $btn.prop('disabled', false).text('Зберегти зміни');
+        });
+    });
+
+    // Логіка додавання/видалення клубів (Живий пошук)
+    var allClubsList = []; // Кеш для довідника клубів
+
+    $(document).on('click', '.fstu-personal-tab-actions__item-button[data-action-key="add_club"]', function () {
+        $('#fstu-personal-club-alert').addClass('fstu-hidden');
+        $('#fstu-personal-club-form')[0].reset();
+        $('#fstu-club-id').val('');
+        $('#fstu-club-dropdown').addClass('fstu-hidden');
+        $('#fstu-personal-club-modal').removeClass('fstu-hidden');
+
+        // Завантажуємо список клубів при першому відкритті модалки
+        if (!allClubsList.length) {
+            var $searchInput = $('#fstu-club-search');
+            $searchInput.prop('disabled', true).val('Завантаження довідника...');
+            
+            $.post(l10n.ajaxUrl, {
+                action: 'fstu_personal_cabinet_get_all_clubs',
+                nonce: l10n.nonce
+            }).done(function(res) {
+                if (res && res.success) {
+                    allClubsList = res.data || [];
+                    $searchInput.prop('disabled', false).val('').attr('placeholder', 'Почніть вводити назву...');
+                    $searchInput.focus(); // Одразу ставимо курсор для зручності
+                } else {
+                    // Якщо бекенд повернув success: false (наприклад, помилку SQL)
+                    $searchInput.val('Помилка: ' + (res.data && res.data.message ? res.data.message : 'Немає даних'));
+                    setTimeout(function() { $searchInput.prop('disabled', false).val(''); }, 3500);
+                }
+            }).fail(function(xhr) {
+                // Якщо сервер взагалі "впав" (500 помилка або обрив інтернету)
+                $searchInput.val('Фатальна помилка сервера. Дивіться консоль (F12)');
+                setTimeout(function() { $searchInput.prop('disabled', false).val(''); }, 3500);
+                console.error('AJAX Clubs Error:', xhr.responseText);
+            });
+        }
+    });
+
+    // Фільтрація списку при введенні тексту
+    $(document).on('input', '#fstu-club-search', function() {
+        var term = $(this).val().toLowerCase();
+        var $dropdown = $('#fstu-club-dropdown');
+        $('#fstu-club-id').val(''); // Скидаємо ID, якщо користувач змінив текст
+
+        if (term.length < 1) {
+            $dropdown.addClass('fstu-hidden');
+            return;
+        }
+
+        // Шукаємо збіги
+        var matches = allClubsList.filter(function(c) {
+            return c.name.toLowerCase().indexOf(term) > -1;
+        });
+
+        if (matches.length) {
+            var html = '';
+            $.each(matches, function(_, c) {
+                html += '<div class="fstu-club-option" data-id="' + c.id + '" data-name="' + escHtml(c.name) + '">' + escHtml(c.name) + '</div>';
+            });
+            $dropdown.html(html).removeClass('fstu-hidden');
+        } else {
+            $dropdown.html('<div style="padding: 8px 12px; color: #6b7280; font-size: 13px;">Клуб не знайдено</div>').removeClass('fstu-hidden');
+        }
+    });
+
+    // Вибір клубу зі списку
+    $(document).on('click', '.fstu-club-option', function() {
+        $('#fstu-club-id').val($(this).data('id')); // Записуємо схований ID
+        $('#fstu-club-search').val($(this).data('name')); // Показуємо красиву назву
+        $('#fstu-club-dropdown').addClass('fstu-hidden'); // Ховаємо список
+    });
+
+    // Закриття списку при кліку будь-де поза ним
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('.fstu-autocomplete-wrapper').length) {
+            $('#fstu-club-dropdown').addClass('fstu-hidden');
+        }
+    });
+
+    // Відправка форми
+    $(document).on('submit', '#fstu-personal-club-form', function(e) {
+        e.preventDefault();
+        var $btn = $('#fstu-personal-club-submit');
+        var $alert = $('#fstu-personal-club-alert');
+        var clubId = $('#fstu-club-id').val();
+        
+        // Захист: перевіряємо чи користувач дійсно обрав клуб зі списку
+        if (!clubId) {
+            $alert.removeClass('fstu-hidden').addClass('fstu-alert--error').text('Будь ласка, оберіть клуб зі списку підказок.');
+            return;
+        }
+
+        $btn.prop('disabled', true).text('Збереження...');
+        $alert.addClass('fstu-hidden');
+
+        $.post(l10n.ajaxUrl, {
+            action: 'fstu_personal_cabinet_add_club',
+            nonce: l10n.nonce,
+            profile_user_id: state.profileUserId,
+            club_id: clubId
+        }).done(function(response) {
+            if (response.success) {
+                $('#fstu-personal-club-modal').addClass('fstu-hidden');
+                state.flashAlert = { type: 'success', message: 'Клуб успішно додано.' };
+                loadProfile();
+            } else {
+                $alert.removeClass('fstu-hidden').addClass('fstu-alert--error').text(response.data.message || 'Помилка');
+            }
+        }).fail(function(xhr) {
+            $alert.removeClass('fstu-hidden').addClass('fstu-alert--error').text(getAjaxErrorMessage(xhr, 'Помилка збереження.'));
+        }).always(function() {
+            $btn.prop('disabled', false).text('Додати');
+        });
+    });
+
+    $(document).on('click', '.fstu-delete-club-btn', function() {
+        if (!confirm('Ви впевнені, що хочете видалити цей клуб?')) return;
+        
+        var clubId = $(this).data('id');
+        $.post(l10n.ajaxUrl, {
+            action: 'fstu_personal_cabinet_delete_club',
+            nonce: l10n.nonce,
+            profile_user_id: state.profileUserId,
+            club_id: clubId
+        }).done(function(response) {
+            if (response.success) {
+                state.flashAlert = { type: 'success', message: 'Клуб видалено зі списку.' };
+                loadProfile();
+            } else {
+                // ТЕПЕР МИ ПОБАЧИМО ПОМИЛКУ, ЯКЩО ВОНА Є
+                alert(response.data && response.data.message ? response.data.message : 'Помилка видалення');
+            }
+        }).fail(function(xhr) {
+            alert(getAjaxErrorMessage(xhr, 'Помилка видалення клубу.'));
+        });
+    });
+    // Логіка Міста (Autocomplete)
+    var allCitiesList = [];
+    $(document).on('click', '.fstu-personal-tab-actions__item-button[data-action-key="add_city"]', function() {
+        $('#fstu-personal-city-alert').addClass('fstu-hidden');
+        $('#fstu-personal-city-form')[0].reset();
+        $('#fstu-city-id').val('');
+        $('#fstu-personal-city-modal').removeClass('fstu-hidden');
+        if (!allCitiesList.length) {
+            $.post(l10n.ajaxUrl, { action: 'fstu_personal_cabinet_get_all_cities', nonce: l10n.nonce }).done(function(res) {
+                if (res.success) allCitiesList = res.data || [];
+            });
+        }
+    });
+
+    $(document).on('input', '#fstu-city-search', function() {
+        var term = $(this).val().toLowerCase(), $dropdown = $('#fstu-city-dropdown');
+        if (term.length < 2) { $dropdown.addClass('fstu-hidden'); return; }
+        var matches = allCitiesList.filter(c => c.name.toLowerCase().includes(term));
+        if (matches.length) {
+            var html = matches.map(c => '<div class="fstu-club-option" data-id="'+c.id+'" data-name="'+escHtml(c.name)+'">'+escHtml(c.name)+'</div>').join('');
+            $dropdown.html(html).removeClass('fstu-hidden');
+        } else { $dropdown.html('<div class="fstu-club-option">Нічого не знайдено</div>').removeClass('fstu-hidden'); }
+    });
+
+    $(document).on('click', '#fstu-city-dropdown .fstu-club-option', function() {
+        $('#fstu-city-id').val($(this).data('id'));
+        $('#fstu-city-search').val($(this).data('name'));
+        $('#fstu-city-dropdown').addClass('fstu-hidden');
+    });
+
+    $(document).on('submit', '#fstu-personal-city-form', function(e) {
+        e.preventDefault();
+        var cityId = $('#fstu-city-id').val();
+        if (!cityId) return alert('Оберіть місто зі списку');
+        $.post(l10n.ajaxUrl, { action: 'fstu_personal_cabinet_add_city', nonce: l10n.nonce, profile_user_id: state.profileUserId, city_id: cityId }).done(function() {
+            $('#fstu-personal-city-modal').addClass('fstu-hidden');
+            loadProfile();
+        });
+    });
+
+    $(document).on('click', '.fstu-delete-city-btn', function() {
+        if (!confirm('Видалити цей запис з історії міст?')) return;
+        
+        var cityId = $(this).data('id');
+        $.post(l10n.ajaxUrl, {
+            action: 'fstu_personal_cabinet_delete_city',
+            nonce: l10n.nonce,
+            profile_user_id: state.profileUserId,
+            city_id: cityId
+        }).done(function(response) {
+            if (response.success) {
+                state.flashAlert = { type: 'success', message: 'Місто видалено зі списку.' };
+                loadProfile();
+            } else {
+                alert(response.data && response.data.message ? response.data.message : 'Помилка видалення');
+            }
+        }).fail(function(xhr) {
+            alert(getAjaxErrorMessage(xhr, 'Помилка видалення міста.'));
+        });
+    });
+    // Ініціалізація профілю при завантаженні сторінки
     loadProfile();
 });
 
