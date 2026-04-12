@@ -162,6 +162,8 @@ jQuery(document).ready(function ($) {
                         cellHtml = '<button type="button" class="fstu-btn fstu-delete-club-btn" data-id="' + escHtml(row.id) + '">Видалити</button>';
                     } else if (val === 'delete_city') {
                         cellHtml = '<button type="button" class="fstu-btn fstu-delete-city-btn" data-id="' + escHtml(row.id) + '" style="padding: 4px 8px; font-size: 11px; background-color: #fef2f2!important; color: #b91c1c!important; border: 1px solid #fecaca!important;">Видалити</button>';
+                    } else if (val === 'delete_unit') {
+                        cellHtml = '<button type="button" class="fstu-btn fstu-delete-unit-btn" data-id="' + escHtml(row.id) + '" style="padding: 4px 8px; font-size: 11px; background-color: #fef2f2!important; color: #b91c1c!important; border: 1px solid #fecaca!important;">Видалити</button>';
                     }
                 }
                 
@@ -1216,6 +1218,99 @@ jQuery(document).ready(function ($) {
             }
         }).fail(function(xhr) {
             alert(getAjaxErrorMessage(xhr, 'Помилка видалення міста.'));
+        });
+    });
+    // Логіка Осередки (Autocomplete)
+    var allUnitsList = [];
+    $(document).on('click', '.fstu-personal-tab-actions__item-button[data-action-key="add_unit"]', function() {
+        $('#fstu-personal-unit-alert').addClass('fstu-hidden');
+        $('#fstu-personal-unit-form')[0].reset();
+        $('#fstu-unit-id').val('');
+        $('#fstu-personal-unit-modal').removeClass('fstu-hidden');
+
+        if (!allUnitsList.length) {
+            var $searchInput = $('#fstu-unit-search');
+            $searchInput.prop('disabled', true).val('Завантаження довідника...');
+            $.post(l10n.ajaxUrl, { action: 'fstu_personal_cabinet_get_all_units', nonce: l10n.nonce }).done(function(res) {
+                if (res && res.success) {
+                    allUnitsList = res.data || [];
+                    $searchInput.prop('disabled', false).val('').attr('placeholder', 'Введіть назву осередку...');
+                    $searchInput.focus();
+                } else {
+                    $searchInput.val('Помилка: ' + (res.data && res.data.message ? res.data.message : 'Немає даних'));
+                    setTimeout(function() { $searchInput.prop('disabled', false).val(''); }, 3500);
+                }
+            }).fail(function(xhr) {
+                $searchInput.val('Фатальна помилка сервера.');
+                setTimeout(function() { $searchInput.prop('disabled', false).val(''); }, 3500);
+            });
+        }
+    });
+
+    $(document).on('input', '#fstu-unit-search', function() {
+        var term = $(this).val().toLowerCase(), $dropdown = $('#fstu-unit-dropdown');
+        $('#fstu-unit-id').val('');
+        if (term.length < 2) { $dropdown.addClass('fstu-hidden'); return; }
+
+        var matches = allUnitsList.filter(c => c.name.toLowerCase().includes(term));
+        if (matches.length) {
+            var html = matches.map(c => '<div class="fstu-club-option" data-id="'+c.id+'" data-name="'+escHtml(c.name)+'">'+escHtml(c.name)+'</div>').join('');
+            $dropdown.html(html).removeClass('fstu-hidden');
+        } else { $dropdown.html('<div class="fstu-club-option">Нічого не знайдено</div>').removeClass('fstu-hidden'); }
+    });
+
+    $(document).on('click', '#fstu-unit-dropdown .fstu-club-option', function() {
+        $('#fstu-unit-id').val($(this).data('id'));
+        $('#fstu-unit-search').val($(this).data('name'));
+        $('#fstu-unit-dropdown').addClass('fstu-hidden');
+    });
+
+    $(document).on('click', '#fstu-personal-unit-cancel, #fstu-personal-unit-cancel-icon', function() {
+        $('#fstu-personal-unit-modal').addClass('fstu-hidden');
+    });
+
+    $(document).on('submit', '#fstu-personal-unit-form', function(e) {
+        e.preventDefault();
+        var unitId = $('#fstu-unit-id').val();
+        if (!unitId) return alert('Оберіть осередок зі списку підказок.');
+
+        var $btn = $('#fstu-personal-unit-submit').prop('disabled', true).text('Збереження...');
+        $.post(l10n.ajaxUrl, {
+            action: 'fstu_personal_cabinet_add_unit',
+            nonce: l10n.nonce,
+            profile_user_id: state.profileUserId,
+            unit_id: unitId
+        }).done(function(res) {
+            if(res.success) {
+                $('#fstu-personal-unit-modal').addClass('fstu-hidden');
+                state.flashAlert = { type: 'success', message: 'Осередок додано.' };
+                loadProfile();
+            } else {
+                $('#fstu-personal-unit-alert').removeClass('fstu-hidden').addClass('fstu-alert--error').text(res.data.message || 'Помилка');
+            }
+        }).fail(function(xhr) {
+            $('#fstu-personal-unit-alert').removeClass('fstu-hidden').addClass('fstu-alert--error').text(getAjaxErrorMessage(xhr, 'Помилка збереження.'));
+        }).always(function() {
+            $btn.prop('disabled', false).text('Додати');
+        });
+    });
+
+    $(document).on('click', '.fstu-delete-unit-btn', function() {
+        if (!confirm('Видалити цей осередок з історії користувача?')) return;
+        $.post(l10n.ajaxUrl, {
+            action: 'fstu_personal_cabinet_delete_unit',
+            nonce: l10n.nonce,
+            profile_user_id: state.profileUserId,
+            unit_id: $(this).data('id')
+        }).done(function(res) {
+            if(res.success) {
+                state.flashAlert = { type: 'success', message: 'Осередок видалено.' };
+                loadProfile();
+            } else {
+                alert(res.data && res.data.message ? res.data.message : 'Помилка видалення');
+            }
+        }).fail(function(xhr) {
+            alert(getAjaxErrorMessage(xhr, 'Помилка видалення осередку.'));
         });
     });
     // Ініціалізація профілю при завантаженні сторінки

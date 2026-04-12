@@ -45,6 +45,10 @@ class Personal_Cabinet_Ajax {
 		add_action( 'wp_ajax_fstu_personal_cabinet_get_all_cities', [ $this, 'handle_get_all_cities' ] );
 		add_action( 'wp_ajax_fstu_personal_cabinet_add_city', [ $this, 'handle_add_city' ] );
 		add_action( 'wp_ajax_fstu_personal_cabinet_delete_city', [ $this, 'handle_delete_city' ] );
+        // Методи для роботи з осередками
+        add_action( 'wp_ajax_fstu_personal_cabinet_get_all_units', [ $this, 'handle_get_all_units' ] );
+        add_action( 'wp_ajax_fstu_personal_cabinet_add_unit', [ $this, 'handle_add_unit' ] );
+        add_action( 'wp_ajax_fstu_personal_cabinet_delete_unit', [ $this, 'handle_delete_unit' ] );
 	}
 
 	public function handle_get_profile(): void {
@@ -503,5 +507,126 @@ class Personal_Cabinet_Ajax {
 			$this->send_safe_error('Помилка БД.', 500); 
 		}
 	}
+    public function handle_get_all_units(): void {
+        $this->verify_nonce();
+        global $wpdb;
+        $wpdb->suppress_errors(true);
+
+        // Об'єднуємо осередок з областю
+        $sql = "SELECT u.Unit_ID as id, CONCAT(u.Unit_Name, ' (', r.Region_Name, ')') as name 
+				FROM S_Unit u 
+				LEFT JOIN S_Region r ON u.Region_ID = r.Region_ID 
+				ORDER BY u.Unit_Name ASC";
+        $results = $wpdb->get_results($sql, ARRAY_A);
+
+        if ( $wpdb->last_error ) {
+            $this->send_safe_error( 'Помилка SQL: ' . $wpdb->last_error, 500 );
+        }
+
+        wp_send_json_success($results ?: []);
+    }
+
+    public function handle_add_unit(): void {
+        $this->verify_nonce();
+        $this->assert_authenticated();
+        $profile_user_id = $this->sanitize_profile_user_id();
+
+        if ( empty( \FSTU\Core\Capabilities::get_personal_cabinet_permissions( $profile_user_id )['canManageUnits'] ) ) {
+            $this->send_safe_error('Немає прав для керування осередками.', 403);
+        }
+
+        $unit_id = absint($_POST['unit_id'] ?? 0);
+        if ( $unit_id <= 0 ) {
+            $this->send_safe_error( 'Некоректний ID осередку.', 400 );
+        }
+
+        global $wpdb;
+
+        // ДІСТАЄМО ОСЕРЕДОК РАЗОМ З REGION_ID
+        $sql = "SELECT u.Region_ID, CONCAT(u.Unit_Name, ' (', r.Region_Name, ')') as Unit_Name_Full 
+				FROM S_Unit u 
+				LEFT JOIN S_Region r ON u.Region_ID = r.Region_ID 
+				WHERE u.Unit_ID = %d";
+        $unit_data = $wpdb->get_row( $wpdb->prepare( $sql, $unit_id ), ARRAY_A );
+
+        $unit_name = $unit_data['Unit_Name_Full'] ?? "ID $unit_id";
+        $region_id = $unit_data['Region_ID'] ?? 0;
+
+        $wpdb->query('START TRANSACTION');
+        try {
+            // ТЕПЕР ПЕРЕДАЄМО Region_ID, ЯК ЦЬОГО ВИМАГАЄ СТАРА БАЗА
+            $inserted = $wpdb->insert('UserRegistationOFST', [
+                'User_ID' => $profile_user_id,
+                'Region_ID' => $region_id,
+                'Unit_ID' => $unit_id,
+                'UserRegistationOFST_DateCreate' => current_time('mysql')
+            ]);
+
+            // Якщо база відмовилася записувати рядок (наприклад, через дублікат чи обмеження)
+            if ( false === $inserted ) {
+                throw new \Exception('Помилка вставки в БД');
+            }
+
+            $this->service->get_protocol_service()->log_action_for_user( get_current_user_id(), 'I', "Додано осередок: \"$unit_name\" (профіль ID $profile_user_id)", '✓' );
+
+            $wpdb->query('COMMIT');
+            wp_send_json_success( [ 'message' => 'Осередок успішно додано.' ] );
+        } catch (\Exception $e) {
+            $wpdb->query('ROLLBACK');
+            $this->send_safe_error('Помилка збереження в базу даних. Можливо, такий осередок вже існує.', 500);
+        }
+    }
+
+    public function handle_delete_unit(): void {
+        $this->verify_nonce();
+        $this->assert_authenticated();
+        $profile_user_id = $this->sanitize_profile_user_id();
+
+        if ( empty( \FSTU\Core\Capabilities::get_personal_cabinet_permissions( $profile_user_id )['canManageUnits'] ) ) {
+            $this->send_safe_error('Немає прав для видалення осередків.', 403);
+        }
+
+        $identifier = sanitize_text_field( wp_unslash( $_POST['unit_id'] ?? '' ) );
+        $passed_id = absint( $identifier );
+        global $wpdb;
+
+        // 1. Спочатку шукаємо за точним первинним ключем (UserRegistationOFST_ID)
+        $row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM UserRegistationOFST WHERE UserRegistationOFST_ID = %d AND User_ID = %d", $passed_id, $profile_user_id ) );
+
+        // 2. Якщо не знайшли (можливо прийшов Unit_ID), шукаємо за Unit_ID
+        if ( ! $row && $passed_id > 0 ) {
+            $row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM UserRegistationOFST WHERE Unit_ID = %d AND User_ID = %d LIMIT 1", $passed_id, $profile_user_id ) );
+        }
+
+        // 3. Fallback: Шукаємо за текстом (якщо прийшла назва області)
+        if ( ! $row && $passed_id === 0 && '' !== $identifier ) {
+            $sql = "SELECT uro.* FROM UserRegistationOFST uro LEFT JOIN S_Unit u ON uro.Unit_ID = u.Unit_ID LEFT JOIN S_Region r ON uro.Region_ID = r.Region_ID WHERE (u.Unit_Name = %s OR r.Region_Name = %s) AND uro.User_ID = %d LIMIT 1";
+            $row = $wpdb->get_row( $wpdb->prepare( $sql, $identifier, $identifier, $profile_user_id ) );
+        }
+
+        if ( ! $row ) {
+            $this->send_safe_error( 'Помилка: неможливо знайти осередок для видалення.', 400 );
+        }
+
+        $target_id = (int) $row->UserRegistationOFST_ID;
+        $unit_id = (int) $row->Unit_ID;
+
+        $sql_name = "SELECT CONCAT(u.Unit_Name, ' (', r.Region_Name, ')') FROM S_Unit u LEFT JOIN S_Region r ON u.Region_ID = r.Region_ID WHERE u.Unit_ID = %d";
+        $unit_name = $wpdb->get_var( $wpdb->prepare( $sql_name, $unit_id ) ) ?: "ID $unit_id";
+
+        $wpdb->query('START TRANSACTION');
+        try {
+            // Видаляємо за точним первинним ключем!
+            $deleted = $wpdb->delete('UserRegistationOFST', [ 'UserRegistationOFST_ID' => $target_id ]);
+            if ( $deleted ) {
+                $this->service->get_protocol_service()->log_action_for_user( get_current_user_id(), 'D', "Видалено осередок: \"$unit_name\" (профіль ID $profile_user_id)", '✓' );
+            }
+            $wpdb->query('COMMIT');
+            wp_send_json_success( [ 'message' => 'Осередок успішно видалено.' ] );
+        } catch (\Exception $e) {
+            $wpdb->query('ROLLBACK');
+            $this->send_safe_error('Помилка БД.', 500);
+        }
+    }
 	//-----------------
 }

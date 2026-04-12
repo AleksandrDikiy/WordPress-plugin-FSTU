@@ -595,21 +595,42 @@ class Personal_Cabinet_Service {
 				'isReadOnly' => ! $can_manage_cities,
 				'note'    => 'Показано актуальне місто проживання та історію змін у вигляді таблиці.',
 			],
-			'units' => [
-				'title'   => 'Осередоки',
-				'visible' => true,
-				'sections' => $unit_sections,
-				'actions' => $this->build_tab_actions(
-					[
-						'Додати осередок' => $can_manage_units,
-						'Оновити осередок' => $can_manage_units,
-					],
-					'Mutation-flow для осередків буде підключено окремим етапом.'
-				),
-				'accessNotice' => $can_manage_units ? 'Ви маєте право керувати осередками після підключення mutation-flow.' : 'Вкладка доступна лише для перегляду.',
-				'isReadOnly' => ! $can_manage_units,
-				'note'    => empty( $unit_sections ) ? 'Історія членства в осередках ФСТУ поки відсутня.' : 'Показано актуальний осередок та історію членства в осередках ФСТУ.',
-			],
+            'units' => [
+                'title'   => '', // Прибрано заголовок
+                'visible' => true,
+                'table'   => [
+                    'columns' => [
+                        [ 'key' => 'unit', 'label' => 'Осередок' ],
+                        [ 'key' => 'region', 'label' => 'Область' ],
+                        [ 'key' => 'date', 'label' => 'Дата додавання' ],
+                        [ 'key' => '_actions', 'label' => 'Дії', 'type' => 'actions' ],
+                    ],
+                    'rows' => array_map( function( $unit ) use ( $can_manage_units ) {
+                        return [
+                            // ВАЖЛИВО: Використовуємо правильний первинний ключ або Fallback на назву
+                            'id'      => ! empty( $unit['UserRegistationOFST_ID'] ) ? $unit['UserRegistationOFST_ID'] : ( ! empty( $unit['Unit_ID'] ) ? $unit['Unit_ID'] : ( $unit['Region_Name'] ?? '' ) ),
+
+                            // Fallback для старих записів, де немає Unit_Name
+                            'unit'    => $this->normalize_value( $unit['Unit_Name'] ?? $unit['Region_Name'] ?? '' ),
+                            'region'  => $this->normalize_value( $unit['Region_Name'] ?? '' ),
+                            'date'    => $this->format_date( $unit['UserRegistationOFST_DateCreate'] ?? '' ),
+                            '_actions'=> $can_manage_units ? 'delete_unit' : '',
+                        ];
+                    }, isset( $collections['units'] ) && is_array( $collections['units'] ) ? $collections['units'] : [] ),
+                    'defaultPerPage' => 10,
+                    'emptyMessage'   => __( 'Історія членства в осередках ФСТУ відсутня.', 'fstu' ),
+                ],
+                'actions' => $this->build_tab_actions( [
+                    [
+                        'label'   => 'Додати осередок',
+                        'enabled' => $can_manage_units,
+                        'actionKey' => 'add_unit',
+                    ]
+                ], '' ),
+                'accessNotice' => '',
+                'isReadOnly' => ! $can_manage_units,
+                'note'    => 'Показано актуальний осередок та історію членства в осередках ФСТУ.',
+            ],
 			'tourism' => [
 				'title'   => 'Види туризму',
 				'visible' => true,
