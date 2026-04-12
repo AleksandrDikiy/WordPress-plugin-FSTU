@@ -499,6 +499,15 @@ class Steering_Service {
 			&& ! $is_registered
 			&& ( ! empty( $permissions['canManage'] ) || $is_qualified );
 
+		if ( isset( $item['Record_Type'] ) && 'skipper' === $item['Record_Type'] ) {
+			$item['CanRegister']            = false;
+			$item['CanDelete']              = false;
+			$item['CanMarkSentPost']        = false;
+			$item['CanMarkReceived']        = false;
+			$item['CanConfirmVerification'] = false;
+			$item['PhotoUrl']               = home_url( '/photo_skipper/' . $target_user_id . '.jpg' );
+		}
+
 		return $item;
 	}
 

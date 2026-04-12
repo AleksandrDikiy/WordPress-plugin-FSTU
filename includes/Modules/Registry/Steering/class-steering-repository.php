@@ -149,7 +149,7 @@ class Steering_Repository {
 				FROM VerificationSteering v
 				LEFT JOIN vUserFSTU u ON u.User_ID = v.User_ID
 				LEFT JOIN vSkipper k ON k.User_ID = v.User_ID
-				LEFT JOIN vSteering sv ON sv.User_ID = v.User_ID
+				LEFT JOIN vSteeringSkipper sv ON sv.User_ID = v.User_ID
 				WHERE v.Steering_ID = %d
 				ORDER BY v.VerificationSteering_Date DESC, v.User_ID DESC",
 				$steering_id
@@ -445,7 +445,7 @@ class Steering_Repository {
 					ORDER BY vt.UserTelegram_DateCreate DESC
 					LIMIT 1
 				) AS TelegramID
-			FROM vSteering vs
+			FROM vSteeringSkipper vs
 			LEFT JOIN {$users_table} u ON u.ID = vs.User_ID
 			WHERE vs.Steering_ID = %d
 			LIMIT 1";
@@ -464,7 +464,7 @@ class Steering_Repository {
 		global $wpdb;
 
 		[ $where_sql, $params ] = $this->build_where_sql( $filters, $can_view_hidden_expired );
-		$sql = "SELECT vs.Steering_ID, vs.User_ID, vs.FIO, vs.AppStatus_ID, vs.AppStatus_Name,
+		$sql = "SELECT vs.Record_Type, vs.Steering_ID, vs.User_ID, vs.FIO, vs.AppStatus_ID, vs.AppStatus_Name,
 				vs.Steering_RegNumber, vs.Steering_DatePay, vs.Steering_DateCreate, vs.Steering_DateDelivery,
 				vs.Steering_NumberNP, vs.Steering_CityNP, vs.Steering_BirthDate, vs.Steering_Url,
 				vs.Steering_TypeApp, vs.Steering_SurName, vs.Steering_Name, vs.Steering_Partronymic,
@@ -474,7 +474,7 @@ class Steering_Repository {
 				GetUserDuesSail(vs.User_ID, YEAR(CURDATE())) AS SailCurrentYear,
 				GetUserDues(vs.User_ID, YEAR(CURDATE()) - 1) AS FstuPrevYear,
 				GetUserDues(vs.User_ID, YEAR(CURDATE())) AS FstuCurrentYear
-			FROM vSteering vs
+			FROM vSteeringSkipper vs
 			{$where_sql}
 			ORDER BY vs.FIO ASC
 			LIMIT %d OFFSET %d";
@@ -495,7 +495,7 @@ class Steering_Repository {
 		global $wpdb;
 
 		[ $where_sql, $params ] = $this->build_where_sql( $filters, $can_view_hidden_expired );
-		$sql = "SELECT COUNT(*) FROM vSteering vs {$where_sql}";
+		$sql = "SELECT COUNT(*) FROM vSteeringSkipper vs {$where_sql}";
 
 		if ( empty( $params ) ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery
@@ -521,7 +521,7 @@ class Steering_Repository {
 				SUM(GetUserDuesSail(vs.User_ID, YEAR(CURDATE()))) AS SailCurrentYearTotal,
 				SUM(GetUserDues(vs.User_ID, YEAR(CURDATE()) - 1)) AS FstuPrevYearTotal,
 				SUM(GetUserDues(vs.User_ID, YEAR(CURDATE()))) AS FstuCurrentYearTotal
-			FROM vSteering vs
+			FROM vSteeringSkipper vs
 			{$where_sql}";
 
 		if ( empty( $params ) ) {
@@ -673,7 +673,7 @@ class Steering_Repository {
 		$existing_id = $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT User_ID
-				FROM vSteering
+				FROM vSteeringSkipper
 				WHERE User_ID = %d
 				  AND ( ( Steering_RegNumber IS NOT NULL AND Steering_RegNumber <> '' ) OR AppStatus_ID >= 3 )
 				LIMIT 1",
@@ -691,7 +691,7 @@ class Steering_Repository {
 		$existing_id = $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT Steering_ID
-				FROM vSteering
+				FROM vSteeringSkipper
 				WHERE Steering_ID = %d
 				  AND ( ( Steering_RegNumber IS NOT NULL AND Steering_RegNumber <> '' ) OR AppStatus_ID >= 3 )
 				LIMIT 1",
@@ -703,7 +703,7 @@ class Steering_Repository {
 	}
 
 	private function get_single_select_sql(): string {
-		return "SELECT vs.Steering_ID, vs.User_ID, vs.City_ID, vs.FIO, vs.AppStatus_ID, vs.AppStatus_Name,
+		return "SELECT vs.Record_Type, vs.Steering_ID, vs.User_ID, vs.City_ID, vs.FIO, vs.AppStatus_ID, vs.AppStatus_Name,
 				vs.Steering_RegNumber, vs.Steering_DatePay, vs.Steering_DateCreate, vs.Steering_DateDelivery,
 				vs.Steering_NumberNP, vs.Steering_CityNP, vs.Steering_BirthDate, vs.Steering_Url,
 				vs.Steering_TypeApp, vs.Steering_SurName, vs.Steering_Name, vs.Steering_Partronymic,
@@ -713,7 +713,7 @@ class Steering_Repository {
 				GetUserDuesSail(vs.User_ID, YEAR(CURDATE())) AS SailCurrentYear,
 				GetUserDues(vs.User_ID, YEAR(CURDATE()) - 1) AS FstuPrevYear,
 				GetUserDues(vs.User_ID, YEAR(CURDATE())) AS FstuCurrentYear
-			FROM vSteering vs";
+			FROM vSteeringSkipper vs";
 	}
 
 	/**
@@ -726,12 +726,18 @@ class Steering_Repository {
 		$where  = [];
 		$params = [];
 
-		$search     = trim( (string) ( $filters['search'] ?? '' ) );
+		$search      = trim( (string) ( $filters['search'] ?? '' ) );
 		$dues_filter = trim( (string) ( $filters['dues_filter'] ?? 'all' ) );
-		$status_id  = (int) ( $filters['status_id'] ?? 0 );
+		$status_id   = (int) ( $filters['status_id'] ?? 0 );
+		$type_filter = trim( (string) ( $filters['type_filter'] ?? 'all' ) );
 
 		$has_sail_any = '( GetUserDuesSail(vs.User_ID, YEAR(CURDATE()) - 1) > 0 OR GetUserDuesSail(vs.User_ID, YEAR(CURDATE())) > 0 )';
 		$has_fstu_any = '( GetUserDues(vs.User_ID, YEAR(CURDATE()) - 1) > 0 OR GetUserDues(vs.User_ID, YEAR(CURDATE())) > 0 )';
+
+		if ( in_array( $type_filter, [ 'steering', 'skipper' ], true ) ) {
+			$where[]  = 'vs.Record_Type = %s';
+			$params[] = $type_filter;
+		}
 
 		if ( ! $can_view_hidden_expired ) {
 			$where[] = 'vs.AppStatus_ID > 2';

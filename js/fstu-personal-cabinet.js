@@ -186,6 +186,10 @@ jQuery(document).ready(function ($) {
                     } else if (val === 'pay_portmone') {
                         // ЗЕЛЕНА КНОПКА СПЛАТИТИ (з передачею року)
                         cellHtml = '<button type="button" class="fstu-btn fstu-pay-portmone-btn" data-year="' + escHtml(row.year) + '" style="padding: 4px 8px; font-size: 11px; background-color: #ecfdf5!important; color: #047857!important; border: 1px solid #a7f3d0!important;">Сплатити</button>';
+                    } else if (val === 'pay_monobank') {
+                        // ЗЕЛЕНА КНОПКА ДЛЯ ВІТРИЛЬНИКІВ (Посилання-кнопка в нову вкладку)
+                        var payUrl = row.url_pay ? escHtml(row.url_pay) : '#';
+                        cellHtml = '<a href="' + payUrl + '" target="_blank" class="fstu-btn" style="padding: 4px 8px; font-size: 11px; background-color: #ecfdf5!important; color: #047857!important; border: 1px solid #a7f3d0!important; text-decoration: none; display: inline-block;">Сплатити</a>';
                     } else {
                         cellHtml = ''; // ПРИБИРАЄМО РИСКУ "—", ЯКЩО ДІЙ НЕМАЄ
                     }

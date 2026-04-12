@@ -350,22 +350,39 @@ class Personal_Cabinet_Service {
 	 * @return array<string,mixed>
 	 */
 	private function get_tabs_payload( array $profile, array $permissions, array $collections = [] ): array {
-		$can_view_private    = ! empty( $permissions['canViewPrivate'] );
-		$can_view_member_data = $can_view_private || ! empty( $permissions['canManage'] ) || ! empty( $permissions['isOwner'] );
-		$dues_items_raw      = isset( $collections['dues'] ) && is_array( $collections['dues'] ) ? $collections['dues'] : [];
-		$dues_sail_items_raw = isset( $collections['dues_sail'] ) && is_array( $collections['dues_sail'] ) ? $collections['dues_sail'] : [];
-		$member_card      = isset( $profile['memberCard'] ) && is_array( $profile['memberCard'] ) ? $profile['memberCard'] : [];
-		$phone_list       = isset( $profile['phoneList'] ) && is_array( $profile['phoneList'] ) ? $profile['phoneList'] : [];
-		$settings_values   = isset( $collections['settings'] ) && is_array( $collections['settings'] ) ? $collections['settings'] : [];
-		$club_sections    = $this->build_club_sections( isset( $collections['clubs'] ) && is_array( $collections['clubs'] ) ? $collections['clubs'] : [] );
-		$city_sections    = $this->build_city_sections( isset( $collections['cities'] ) && is_array( $collections['cities'] ) ? $collections['cities'] : [] );
-		$unit_sections    = $this->build_unit_sections( isset( $collections['units'] ) && is_array( $collections['units'] ) ? $collections['units'] : [] );
-		$tourism_sections = $this->build_tourism_sections( isset( $collections['tourism'] ) && is_array( $collections['tourism'] ) ? $collections['tourism'] : [] );
-		$experience_sections = $this->build_experience_sections( isset( $collections['experience'] ) && is_array( $collections['experience'] ) ? $collections['experience'] : [] );
-		
 		global $wpdb;
 		$profile_user_id = isset( $profile['userId'] ) ? (int) $profile['userId'] : 0;
 		$user = get_userdata( $profile_user_id );
+
+		// Ініціалізуємо всі права доступу на самому початку, щоб уникнути PHP помилок
+		$can_view_private      = ! empty( $permissions['canViewPrivate'] );
+		$can_view_member_data  = $can_view_private || ! empty( $permissions['canManage'] ) || ! empty( $permissions['isOwner'] );
+		$is_owner              = ! empty( $permissions['isOwner'] );
+		$can_edit_profile      = ! empty( $permissions['canEditProfile'] );
+		$can_manage_clubs      = ! empty( $permissions['canManageClubs'] );
+		$can_manage_cities     = ! empty( $permissions['canManageCities'] );
+		$can_manage_units      = ! empty( $permissions['canManageUnits'] );
+		$can_manage_tourism    = ! empty( $permissions['canManageTourism'] );
+		$can_manage_experience = ! empty( $permissions['canManageExperience'] );
+		$can_manage_ranks      = ! empty( $permissions['canManageRanks'] );
+		$can_manage_judging    = ! empty( $permissions['canManageJudging'] );
+		$can_manage_dues       = ! empty( $permissions['canManageDues'] );
+		$can_pay_online        = ! empty( $permissions['canPayOnline'] );
+		$can_view_dues         = $can_manage_dues || $can_pay_online || $is_owner;
+		$can_manage_sailing    = ! empty( $permissions['canManageSailing'] );
+		$can_manage_sail_dues  = ! empty( $permissions['canManageSailDues'] );
+
+		$dues_items_raw      = isset( $collections['dues'] ) && is_array( $collections['dues'] ) ? $collections['dues'] : [];
+		$dues_sail_items_raw = isset( $collections['dues_sail'] ) && is_array( $collections['dues_sail'] ) ? $collections['dues_sail'] : [];
+		$member_card         = isset( $profile['memberCard'] ) && is_array( $profile['memberCard'] ) ? $profile['memberCard'] : [];
+		$phone_list          = isset( $profile['phoneList'] ) && is_array( $profile['phoneList'] ) ? $profile['phoneList'] : [];
+		$settings_values     = isset( $collections['settings'] ) && is_array( $collections['settings'] ) ? $collections['settings'] : [];
+		
+		$club_sections       = $this->build_club_sections( isset( $collections['clubs'] ) && is_array( $collections['clubs'] ) ? $collections['clubs'] : [] );
+		$city_sections       = $this->build_city_sections( isset( $collections['cities'] ) && is_array( $collections['cities'] ) ? $collections['cities'] : [] );
+		$unit_sections       = $this->build_unit_sections( isset( $collections['units'] ) && is_array( $collections['units'] ) ? $collections['units'] : [] );
+		$tourism_sections    = $this->build_tourism_sections( isset( $collections['tourism'] ) && is_array( $collections['tourism'] ) ? $collections['tourism'] : [] );
+		$experience_sections = $this->build_experience_sections( isset( $collections['experience'] ) && is_array( $collections['experience'] ) ? $collections['experience'] : [] );
 
 		// --- РОЗРЯДИ ---
 		$db_ranks = $wpdb->get_results( $wpdb->prepare( "
@@ -391,48 +408,31 @@ class Personal_Cabinet_Service {
 		", $profile_user_id ), ARRAY_A );
 		if ( ! is_array( $db_judging ) ) { $db_judging = []; }
 
-		// --- ВНЕСКИ (Новий оптимізований SQL-запит) ---
-		$db_dues = $wpdb->get_results( $wpdb->prepare( "
-			SELECT 
-				d.Dues_ID, d.User_ID, d.DuesType_ID, d.Year_ID, d.Year_ID AS Year_Name, 
-				d.Dues_Summa, d.Dues_URL, d.Dues_DateCreate, d.UserCreate, 
-				d.Dues_ShopBillid, d.Dues_ShopOrderNumber, d.Dues_ApprovalCode, d.Dues_CardMask, 
-				t.DuesType_Name,
-				CONCAT(
-					COALESCE(m1.meta_value, ''), ' ', 
-					LEFT(COALESCE(m2.meta_value, ''), 1), '.', 
-					LEFT(COALESCE(m3.meta_value, ''), 1), '.'
-				) AS Financier
-			FROM Dues d
-			JOIN {$wpdb->users} u ON u.ID = d.UserCreate
-			JOIN S_DuesType t ON t.DuesType_ID = d.DuesType_ID
-			LEFT JOIN {$wpdb->usermeta} m1 ON m1.user_id = u.ID AND m1.meta_key = 'last_name'
-			LEFT JOIN {$wpdb->usermeta} m2 ON m2.user_id = u.ID AND m2.meta_key = 'first_name'
-			LEFT JOIN {$wpdb->usermeta} m3 ON m3.user_id = u.ID AND m3.meta_key = 'Patronymic'
-			WHERE d.User_ID = %d
-			ORDER BY d.Year_ID DESC, d.Dues_DateCreate DESC
-		", $profile_user_id ), ARRAY_A );
-		if ( ! is_array( $db_dues ) ) { $db_dues = []; }
-
-		// Групуємо внески по роках
-		$dues_by_year = [];
-		foreach ($db_dues as $due) {
-			$y = (int) ($due['Year_ID'] ?? 0);
-			if ($y > 0) { $dues_by_year[$y][] = $due; }
-		}
-
 		$reg_date = $user->user_registered ?? current_time('mysql');
 		$year_reg = (int) gmdate('Y', strtotime($reg_date));
 		if ($year_reg < 2000) $year_reg = (int) current_time('Y');
 		$current_year = (int) current_time('Y');
-		
-		$is_owner = ! empty( $permissions['isOwner'] );
 
-		// Формуємо рядки таблиці внесків (включаючи порожні роки)
+		// --- ВНЕСКИ ФСТУ ---
+		$db_dues = $wpdb->get_results( $wpdb->prepare( "
+			SELECT d.Dues_ID, d.Year_Name, d.Dues_Summa, d.Dues_URL, d.Dues_DateCreate, d.UserCreate, 
+				   (SELECT FIOshort FROM vUser WHERE User_ID = d.UserCreate LIMIT 1) as Financier,
+				   d.Dues_ShopBillid, d.Dues_ShopOrderNumber, d.Dues_ApprovalCode, d.Dues_CardMask, d.DuesType_Name
+			FROM vUserDues d 
+			WHERE d.User_ID = %d
+			ORDER BY d.Year_Name DESC, d.Dues_DateCreate DESC
+		", $profile_user_id ), ARRAY_A );
+		if ( ! is_array( $db_dues ) ) { $db_dues = []; }
+
+		$dues_by_year = [];
+		foreach ($db_dues as $due) {
+			$y = (int) ($due['Year_Name'] ?? 0);
+			if ($y > 0) { $dues_by_year[$y][] = $due; }
+		}
+
 		$dues_table_rows = [];
 		for ($y = $current_year; $y >= $year_reg; $y--) {
 			if (!empty($dues_by_year[$y])) {
-				// Беремо найновіший запис за рік, щоб точно не було дублікатів
 				$due = $dues_by_year[$y][0]; 
 				$has_receipt   = '' !== trim( (string) ( $due['Dues_URL'] ?? '' ) );
 				$has_acquiring = '' !== trim( (string) ( $due['Dues_ShopBillid'] ?? '' ) );
@@ -450,7 +450,6 @@ class Personal_Cabinet_Service {
 					'_actions'     => '', 
 				];
 			} else {
-				// Порожній рядок + Кнопка ОПЛАТИТИ
 				$dues_table_rows[] = [
 					'id'           => '',
 					'year'         => $y,
@@ -465,6 +464,67 @@ class Personal_Cabinet_Service {
 			}
 		}
 
+		// --- ВНЕСКИ (ВІТР.) (Точний запит зі старого плагіна) ---
+		$db_dues_sail = $wpdb->get_results( $wpdb->prepare( "
+			SELECT 
+				`d`.`DuesSail_ID` AS `DuesSail_ID`,
+				`d`.`User_ID` AS `User_ID`,
+				`d`.`Year_ID` AS `Year_ID`,
+				`d`.`DuesSail_Summa` AS `DuesSail_Summa`,
+				`d`.`DuesSail_DateCreate` AS `DuesSail_DateCreate`,
+				`d`.`UserCreate` AS `UserCreate`,
+				concat(
+					(case when isnull(`m21`.`meta_value`) then '' else `m21`.`meta_value` end), ' ',
+					(case when isnull(`m22`.`meta_value`) then '' else `m22`.`meta_value` end), ' ',
+					(case when isnull(`m23`.`meta_value`) then '' else `m23`.`meta_value` end)
+				) AS `FIOCreate`
+			FROM `DuesSail` `d` 
+			JOIN {$wpdb->users} `u` ON `u`.`ID` = `d`.`User_ID`
+			LEFT JOIN {$wpdb->users} `u2` ON `u2`.`ID` = `d`.`UserCreate`
+			LEFT JOIN {$wpdb->usermeta} `m21` ON `m21`.`user_id` = `u2`.`ID` AND `m21`.`meta_key` = 'last_name'
+			LEFT JOIN {$wpdb->usermeta} `m22` ON `m22`.`user_id` = `u2`.`ID` AND `m22`.`meta_key` = 'first_name'
+			LEFT JOIN {$wpdb->usermeta} `m23` ON `m23`.`user_id` = `u2`.`ID` AND `m23`.`meta_key` = 'Patronymic'
+			WHERE `d`.`User_ID` = %d 
+			ORDER BY `d`.`Year_ID` DESC
+		", $profile_user_id ), ARRAY_A );
+		if ( ! is_array( $db_dues_sail ) ) { $db_dues_sail = []; }
+
+		$dues_sail_by_year = [];
+		foreach ($db_dues_sail as $ds) {
+			$y = (int) ($ds['Year_ID'] ?? 0);
+			if ($y > 0) { $dues_sail_by_year[$y][] = $ds; }
+		}
+
+		// Дістаємо посилання на оплату Monobank з налаштувань БД
+		$url_pay_sail = isset($settings_values['UrlPayFinancierCard']) ? $this->normalize_integration_url((string)$settings_values['UrlPayFinancierCard']) : '';
+
+		$dues_sail_table_rows = [];
+		for ($y = $current_year; $y >= $year_reg; $y--) {
+			if (!empty($dues_sail_by_year[$y])) {
+				$ds = $dues_sail_by_year[$y][0]; 
+				$dues_sail_table_rows[] = [
+					'year'      => $y,
+					'sum'       => $this->normalize_sum( (string) ($ds['DuesSail_Summa'] ?? '') ),
+					'date'      => $this->format_date( $ds['DuesSail_DateCreate'] ?? '' ),
+					'financier' => $this->normalize_value( $ds['FIOCreate'] ?? '' ),
+					'status'    => 'Сплачено',
+					'url_pay'   => '', // Порожнє, якщо сплачено
+					'_actions'  => '', 
+				];
+			} else {
+				$dues_sail_table_rows[] = [
+					'year'      => $y,
+					'sum'       => '—',
+					'date'      => '—',
+					'financier' => '—',
+					'status'    => 'Не сплачено',
+					'url_pay'   => $url_pay_sail, // Передаємо посилання у фронтенд
+					// Нова кнопка: з'явиться, якщо є посилання на банку
+					'_actions'  => ($is_owner || current_user_can('administrator')) && $url_pay_sail ? 'pay_monobank' : '', 
+				];
+			}
+		}
+
 		$rank_sections       = $this->build_rank_sections( $db_ranks );
 		$judging_sections    = $this->build_judging_sections( $db_judging );
 		$dues_sections       = $this->build_dues_sections(
@@ -473,30 +533,14 @@ class Personal_Cabinet_Service {
 			isset( $collections['unit_payment'] ) && is_array( $collections['unit_payment'] ) ? $collections['unit_payment'] : []
 		);
 		$sailing_sections    = $this->build_sailing_sections(
-			isset( $collections['vessels'] ) && is_array( $collections['vessels'] ) ? $collections['vessels'] : [],
 			isset( $collections['certs'] ) && is_array( $collections['certs'] ) ? $collections['certs'] : []
 		);
 		$dues_sail_sections  = $this->build_dues_sail_sections(
 			$dues_sail_items_raw,
 			$settings_values
 		);
-		$dues_sail_table_rows = $this->build_dues_sail_table_rows( $dues_sail_items_raw );
 		$integration_urls    = $this->get_integration_urls();
 		$member_card_permissions = \FSTU\Core\Capabilities::get_member_card_applications_permissions();
-		
-		$can_edit_profile   = ! empty( $permissions['canEditProfile'] );
-		$can_manage_clubs   = ! empty( $permissions['canManageClubs'] );
-		$can_manage_cities  = ! empty( $permissions['canManageCities'] );
-		$can_manage_units   = ! empty( $permissions['canManageUnits'] );
-		$can_manage_tourism = ! empty( $permissions['canManageTourism'] );
-		$can_manage_experience = ! empty( $permissions['canManageExperience'] );
-		$can_manage_ranks   = ! empty( $permissions['canManageRanks'] );
-		$can_manage_judging = ! empty( $permissions['canManageJudging'] );
-		$can_manage_dues    = ! empty( $permissions['canManageDues'] );
-		$can_pay_online     = ! empty( $permissions['canPayOnline'] );
-		$can_view_dues      = $can_manage_dues || $can_pay_online || $is_owner;
-		$can_manage_sailing = ! empty( $permissions['canManageSailing'] );
-		$can_manage_sail_dues = ! empty( $permissions['canManageSailDues'] );
 
 		if ( ! $can_view_dues ) {
 			$dues_sections = [];
@@ -559,11 +603,6 @@ class Personal_Cabinet_Service {
 		);
 
 		$general_note = 'Розділ «Загальні» вже читає реальні дані користувача, фото, місто, осередок і короткий стан членського квитка.';
-		if ( '' !== ( $integration_urls['member_card_applications'] ?? '' ) ) {
-			$general_note .= ' Подання, перевипуск і оновлення фото посвідчення запускаються через окремий модуль «Посвідчення членів ФСТУ» без дублювання форми у кабінеті.';
-		} else {
-			$general_note .= ' Інтеграція з модулем посвідчень буде активована після визначення сторінки shortcode [fstu_member_card_applications].';
-		}
 
 		return [
 			'general' => [
@@ -594,7 +633,7 @@ class Personal_Cabinet_Service {
 				'actions' => [],
 				'accessNotice' => '', 
 				'isReadOnly' => true, 
-				'note'    => '* Для оформлення документів (доступна тільки Реєстраторам, Адміністраторам та власнику)',
+				'note'    => '* Для оформлення документів',
 			],
 			'service' => [
 				'title'   => 'Службове',
@@ -809,7 +848,7 @@ class Personal_Cabinet_Service {
 				'actions' => [], 
 				'accessNotice' => '',
 				'isReadOnly' => !( $is_owner || $can_manage_experience || current_user_can('administrator') || current_user_can('globalregistrar') ),
-				'note'    => 'Показано історію участі у спортивних походах. Ви можете додати або оновити посилання на довідку (копію документа попередньо завантажте на Google Диск).',
+				'note'    => 'Показано історію участі у спортивних походах.',
 			],
 			'ranks' => [
 				'title'   => '',
@@ -856,7 +895,7 @@ class Personal_Cabinet_Service {
 				], '' ),
 				'accessNotice' => '',
 				'isReadOnly' => !( $is_owner || $can_manage_ranks || current_user_can('administrator') || current_user_can('globalregistrar') ),
-				'note'    => 'Показано історію присвоєння спортивних розрядів та звань. Додавання нових записів здійснюватиметься через підсумкові протоколи Календаря змагань.',
+				'note'    => 'Показано історію присвоєння спортивних розрядів та звань.',
 			],
 			'judging' => [
 				'title'   => '',
@@ -926,7 +965,7 @@ class Personal_Cabinet_Service {
 						[
 							'label'   => 'Відкрити реєстр платіжних документів',
 							'enabled' => true,
-							'actionKey' => 'open_payment_docs', // ЗМІНЕНО: Прибрали url, додали actionKey, щоб малювалася <button>
+							'actionKey' => 'open_payment_docs',
 						],
 					],
 					''
@@ -936,67 +975,101 @@ class Personal_Cabinet_Service {
 				'note'    => 'Показано історію членських внесків. Якщо внесок за рік відсутній, ви можете оплатити його онлайн.',
 			],
 			'sailing' => [
-				'title'   => 'Вітрильництво',
+				'title'   => '',
 				'visible' => true,
-				'sections' => $sailing_sections,
+				'table'   => [
+					'columns' => [
+						[ 'key' => 'name', 'label' => 'Назва' ],
+						[ 'key' => 'reg_num', 'label' => 'Реєстраційний №', 'type' => 'html' ],
+						[ 'key' => 'sail_num', 'label' => '№ на вітрилі' ],
+						[ 'key' => 'date', 'label' => 'Дата реєстрації' ],
+						[ 'key' => 'status', 'label' => 'Статус' ],
+						[ 'key' => 'sum', 'label' => 'Сума сплати' ],
+						[ 'key' => 'dues_prev', 'label' => 'Попер. рік' ],
+						[ 'key' => 'dues_curr', 'label' => 'Поточ. рік' ],
+						[ 'key' => 'warning', 'label' => 'Попередження' ],
+					],
+					'rows' => array_map( function( $item ) {
+						$reg_num = $this->normalize_value( $item['RegNumber'] ?? '' );
+						$url = $this->build_sailboat_url( $item['AppShipTicket_ID'] ?? '' );
+						$reg_html = $url ? '<a href="' . esc_url($url) . '" target="_blank" style="color: #1d4ed8; font-weight: bold; text-decoration: underline;">' . esc_html($reg_num) . '</a>' : esc_html($reg_num);
+
+						return [
+							'name'      => $this->normalize_value( $item['Sailboat_Name'] ?? '' ),
+							'reg_num'   => $reg_html,
+							'sail_num'  => $this->normalize_value( $item['Sailboat_NumberSail'] ?? '' ),
+							'date'      => $this->format_date( $item['AppShipTicket_DateCreate'] ?? '' ),
+							'status'    => $this->normalize_value( $item['Verification_Name'] ?? '' ),
+							'sum'       => $this->normalize_sum( (string) ($item['AppShipTicket_Summa'] ?? '') ),
+							'dues_prev' => $this->normalize_dues_flag( (string) ($item['PrevYearDuesSail'] ?? '') ),
+							'dues_curr' => $this->normalize_dues_flag( (string) ($item['CurrYearDuesSail'] ?? '') ),
+							'warning'   => $this->build_sailing_dues_warning( (string) ($item['PrevYearDuesSail'] ?? ''), (string) ($item['CurrYearDuesSail'] ?? '') ),
+						];
+					}, isset( $collections['vessels'] ) && is_array( $collections['vessels'] ) ? $collections['vessels'] : [] ),
+					'defaultPerPage' => 10,
+					'emptyMessage'   => __( 'Вітрильні судна відсутні.', 'fstu' ),
+				],
+				'sections' => $sailing_sections, 
 				'actions' => $this->build_tab_actions(
 					[
 						[
 							'label'   => 'Подати / редагувати заявку стернового',
 							'enabled' => $can_manage_sailing && '' !== ( $integration_urls['steering'] ?? '' ) && $profile_user_id > 0,
 							'url'     => $this->build_steering_manage_url( (string) ( $integration_urls['steering'] ?? '' ), $profile_user_id ),
-							'pending' => 'Reuse-flow стернових буде доступний після визначення сторінки Steering та прав керування.',
+							'pending' => 'Сторінка Steering поки не визначена.',
 						],
 						[
 							'label'   => 'Подати заявку до суднового реєстру',
 							'enabled' => $can_manage_sailing && $is_owner && '' !== ( $integration_urls['sailboats'] ?? '' ) && $profile_user_id > 0,
 							'url'     => $this->build_sailboats_create_url( (string) ( $integration_urls['sailboats'] ?? '' ), $profile_user_id ),
-							'pending' => 'Auto-open create-flow суднового реєстру доступний лише для власного профілю.',
+							'pending' => 'Модуль суднового реєстру доступний лише для власного профілю.',
 						],
 						[
 							'label'   => 'Відкрити реєстр суден ФСТУ',
 							'enabled' => '' !== ( $integration_urls['sailboats'] ?? '' ),
 							'url'     => (string) ( $integration_urls['sailboats'] ?? '' ),
 							'target'  => '_blank',
-							'pending' => 'Сторінка реєстру суден поки не визначена через shortcode або налаштування модуля.',
+							'pending' => 'Сторінка реєстру суден поки не визначена.',
 						],
 						[
 							'label'   => 'Відкрити реєстр стернових ФСТУ',
 							'enabled' => '' !== ( $integration_urls['steering'] ?? '' ),
 							'url'     => (string) ( $integration_urls['steering'] ?? '' ),
 							'target'  => '_blank',
-							'pending' => 'Сторінка реєстру стернових поки не визначена через shortcode або налаштування модуля.',
+							'pending' => 'Сторінка реєстру стернових поки не визначена.',
 						],
 					],
-					'Керування суднами та посвідченнями виконується через чинні модулі Steering і Sailboats без дублювання форм у кабінеті.'
+					''
 				),
-				'accessNotice' => $can_manage_sailing ? 'Ви маєте право керувати вітрильним доменом після підключення mutation-flow.' : 'Вкладка доступна лише для перегляду.',
+				'accessNotice' => '',
 				'isReadOnly' => ! $can_manage_sailing,
-				'note'    => empty( $sailing_sections ) ? 'Вітрильні судна або посвідчення поки відсутні.' : 'Показано read-only дані про судна та вітрильні посвідчення користувача.',
+				'note'    => 'Показано дані про судна та вітрильні посвідчення користувача.',
 			],
 			'dues_sail' => [
-				'title'   => 'Внески (вітр.)',
+				'title'   => '', 
 				'visible' => ! empty( $permissions['canViewSailDues'] ),
-				'sections' => $dues_sail_sections,
+				'sections' => $dues_sail_sections, 
 				'table'    => [
-					'type'           => 'dues_sail',
+					'columns' => [
+						[ 'key' => 'year', 'label' => 'Рік' ],
+						[ 'key' => 'sum', 'label' => 'Сума' ],
+						[ 'key' => 'date', 'label' => 'Дата додавання' ],
+						[ 'key' => 'financier', 'label' => 'Фінансист' ],
+						[ 'key' => 'status', 'label' => 'Статус' ],
+						[ 'key' => '_actions', 'label' => 'Дії', 'type' => 'actions' ],
+					],
 					'rows'           => $dues_sail_table_rows,
 					'defaultPerPage' => 10,
 					'emptyMessage'   => __( 'Записи вітрильних внесків відсутні.', 'fstu' ),
 				],
-				'actions' => $this->build_tab_actions(
-					[
-						'Додати вітрильний внесок' => $can_manage_sail_dues,
-					],
-					'Mutation-flow для вітрильних внесків буде підключено окремим етапом.'
-				),
-				'accessNotice' => $can_manage_sail_dues ? 'Ви маєте право керувати вітрильними внесками після підключення mutation-flow.' : 'Вкладка доступна лише для перегляду.',
+				// ВИПРАВЛЕННЯ: Повністю прибрали зайві кнопки дій
+				'actions' => [],
+				'accessNotice' => '',
 				'isReadOnly' => ! $can_manage_sail_dues,
-				'note'    => empty( $dues_sail_sections ) ? 'Вітрильні внески або реквізити поки відсутні.' : 'Показано read-only історію членських внесків вітрильників та службові реквізити для оплати.',
+				'note'    => 'Показано історію членських внесків вітрильників.',
 			],
 		];
 	}
-//...
 //...
 
 	private function get_photo_url( int $user_id ): string {
@@ -1356,48 +1429,42 @@ class Personal_Cabinet_Service {
 	}
 
 	/**
-	 * @param array<int,array<string,string>> $vessels
 	 * @param array<int,array<string,string>> $certs
 	 * @return array<int,array<string,mixed>>
 	 */
-	private function build_sailing_sections( array $vessels, array $certs ): array {
-		$sections = [];
-
-		foreach ( $vessels as $index => $item ) {
-			$warning = $this->build_sailing_dues_warning( $item['PrevYearDuesSail'] ?? '', $item['CurrYearDuesSail'] ?? '' );
-			$sections[] = [
-				'title' => 'Судно #' . ( $index + 1 ) . ': ' . $this->normalize_value( $item['Sailboat_Name'] ?? '' ),
-				'items' => [
-					[ 'label' => 'Назва', 'value' => $this->normalize_value( $item['Sailboat_Name'] ?? '' ) ],
-					[ 'label' => 'Реєстраційний №', 'value' => $this->normalize_value( $item['RegNumber'] ?? '' ) ],
-					[ 'label' => 'Посилання на реєстр судна', 'value' => $this->build_sailboat_url( $item['AppShipTicket_ID'] ?? '' ), 'type' => 'link' ],
-					[ 'label' => '№ на вітрилі', 'value' => $this->normalize_value( $item['Sailboat_NumberSail'] ?? '' ) ],
-					[ 'label' => 'Дата реєстрації', 'value' => $this->format_date( $item['AppShipTicket_DateCreate'] ?? '' ) ],
-					[ 'label' => 'Статус', 'value' => $this->normalize_value( $item['Verification_Name'] ?? '' ) ],
-					[ 'label' => 'Сума сплати', 'value' => $this->normalize_sum( $item['AppShipTicket_Summa'] ?? '' ) ],
-					[ 'label' => 'Попередній рік (вітр. внесок)', 'value' => $this->normalize_dues_flag( $item['PrevYearDuesSail'] ?? '' ) ],
-					[ 'label' => 'Поточний рік (вітр. внесок)', 'value' => $this->normalize_dues_flag( $item['CurrYearDuesSail'] ?? '' ) ],
-					[ 'label' => 'Попередження', 'value' => $warning ],
-				],
-			];
+	private function build_sailing_sections( array $certs ): array {
+		if ( empty( $certs ) ) {
+			return [];
 		}
 
-		foreach ( $certs as $index => $item ) {
+		$html = '<h4 class="fstu-personal-section-block__title" style="margin-top: 20px; margin-bottom: 15px;">Посвідчення стернового</h4>';
+		$html .= '<div class="fstu-table-wrap"><table class="fstu-table"><thead class="fstu-thead"><tr class="fstu-row">';
+		$html .= '<th class="fstu-th">Тип</th><th class="fstu-th">Номер</th><th class="fstu-th">Статус</th><th class="fstu-th">Дата створення</th><th class="fstu-th">Дата оплати / реєстрації</th><th class="fstu-th">Документ</th>';
+		$html .= '</tr></thead><tbody class="fstu-tbody">';
+
+		foreach ( $certs as $item ) {
 			$type = $this->normalize_value( $item['Type'] ?? '' );
-			$sections[] = [
-				'title' => 'Посвідчення #' . ( $index + 1 ) . ': ' . $type,
-				'items' => [
-					[ 'label' => 'Тип', 'value' => $type ],
-					[ 'label' => 'Номер', 'value' => $this->normalize_value( $item['Number'] ?? '' ) ],
-					[ 'label' => 'Статус', 'value' => $this->normalize_value( $item['Status'] ?? '' ) ],
-					[ 'label' => 'Дата створення', 'value' => $this->format_date( $item['Created_At'] ?? '' ) ],
-					[ 'label' => 'Дата оплати / реєстрації', 'value' => $this->format_date( $item['Paid_At'] ?? '' ) ],
-					[ 'label' => 'Посилання на документ', 'value' => $this->build_document_url( $item['Base_Url'] ?? '', $item['Document_ID'] ?? '' ), 'type' => 'link' ],
-				],
-			];
+			$url = $this->build_document_url( $item['Base_Url'] ?? '', $item['Document_ID'] ?? '' );
+			$doc_link = $url ? '<a href="' . esc_url($url) . '" target="_blank" style="color: #1d4ed8; text-decoration: underline;">Відкрити</a>' : '—';
+
+			$html .= '<tr class="fstu-row">';
+			$html .= '<td class="fstu-td">' . esc_html($type) . '</td>';
+			$html .= '<td class="fstu-td">' . esc_html($this->normalize_value( $item['Number'] ?? '' )) . '</td>';
+			$html .= '<td class="fstu-td">' . esc_html($this->normalize_value( $item['Status'] ?? '' )) . '</td>';
+			$html .= '<td class="fstu-td">' . esc_html($this->format_date( $item['Created_At'] ?? '' )) . '</td>';
+			$html .= '<td class="fstu-td">' . esc_html($this->format_date( $item['Paid_At'] ?? '' )) . '</td>';
+			$html .= '<td class="fstu-td">' . $doc_link . '</td>';
+			$html .= '</tr>';
 		}
 
-		return $sections;
+		$html .= '</tbody></table></div>';
+
+		return [
+			[
+				'type' => 'raw_html',
+				'html' => $html,
+			]
+		];
 	}
 
 	/**
@@ -1406,24 +1473,48 @@ class Personal_Cabinet_Service {
 	 * @return array<int,array<string,mixed>>
 	 */
 	private function build_dues_sail_sections( array $items, array $settings ): array {
-		$sections = [];
+		$sail_fee = $this->normalize_sum( $settings['PaymentRegistration'] ?? '' );
+		$financier_name = $this->normalize_value( $settings['NameSailboatFinancier'] ?? '' );
+		$financier_card = $this->normalize_value( $settings['FinancierCardNumber'] ?? '' );
+		
+		$url_pay = $this->normalize_value( $settings['UrlPayFinancierCard'] ?? '' );
+		$url_docs = $this->normalize_value( $settings['UrlPayDocuments'] ?? '' );
+		$card_docs = $this->normalize_value( $settings['CardNumberToPayDocuments'] ?? '' );
 
-		$sections[] = [
-			'title' => 'Реквізити та посилання',
-			'items' => [
-				[ 'label' => 'Річний внесок вітрильників', 'value' => $this->normalize_sum( $settings['PaymentRegistration'] ?? '' ) ],
-				[ 'label' => 'Фінансист / отримувач', 'value' => $this->normalize_value( $settings['NameSailboatFinancier'] ?? '' ) ],
-				[ 'label' => 'Карта фінансиста', 'value' => $this->normalize_value( $settings['FinancierCardNumber'] ?? '' ) ],
-				[ 'label' => 'Посилання для сплати внесків вітрильників', 'value' => $this->normalize_value( $settings['UrlPayFinancierCard'] ?? '' ), 'type' => 'link' ],
-				[ 'label' => 'Посилання на фінансиста', 'value' => $this->normalize_value( $settings['UrlSailboatFinancier'] ?? '' ), 'type' => 'link' ],
-				[ 'label' => 'Карта для оплати документів', 'value' => $this->normalize_value( $settings['CardNumberToPayDocuments'] ?? '' ) ],
-				[ 'label' => 'Посилання для оплати документів', 'value' => $this->normalize_value( $settings['UrlPayDocuments'] ?? '' ), 'type' => 'link' ],
-				[ 'label' => 'ПОЛОЖЕННЯ про реєстрацію', 'value' => 'https://drive.google.com/file/d/1EV7nIMphPMG5YGh9DZ3VmCDyBNUnMH79/view?usp=sharing', 'type' => 'link' ],
-				[ 'label' => 'Правила та порядок реєстрації суден', 'value' => 'https://docs.google.com/document/d/1TnHnEQS3FZl_6JJ1ni1vYgFLUKO2MfFDtGCMHLRCIuU/edit?usp=sharing', 'type' => 'link' ],
-			],
+		$html = '<div class="fstu-table-wrap" style="margin-top: 20px;"><table class="fstu-table"><tbody class="fstu-tbody">';
+		
+		// Рядок 1: Річний внесок
+		$html .= '<tr class="fstu-row">';
+		$html .= '<td class="fstu-td" style="width: 33%;">Річний внесок вітрильників</td>';
+		$html .= '<td class="fstu-td" style="width: 33%; font-weight: 600;">' . esc_html($sail_fee) . '</td>';
+		$html .= '<td class="fstu-td" style="width: 33%;">' . ($url_pay !== '—' ? '<a href="' . esc_url($url_pay) . '" target="_blank" style="color: #1d4ed8; text-decoration: underline;">Посилання для сплати</a>' : '') . '</td>';
+		$html .= '</tr>';
+
+		// Рядок 2: Фінансист
+		$html .= '<tr class="fstu-row">';
+		$html .= '<td class="fstu-td">Фінансист / Карта</td>';
+		$html .= '<td class="fstu-td" style="font-weight: 600;">' . esc_html($financier_card) . '</td>';
+		$html .= '<td class="fstu-td">' . esc_html($financier_name) . '</td>';
+		$html .= '</tr>';
+
+		// Рядок 3: Оплата документів
+		if ($card_docs !== '—' || $url_docs !== '—') {
+			$html .= '<tr class="fstu-row">';
+			$html .= '<td class="fstu-td">Оплата документів (Карта / Посилання)</td>';
+			$html .= '<td class="fstu-td" style="font-weight: 600;">' . esc_html($card_docs) . '</td>';
+			$html .= '<td class="fstu-td">' . ($url_docs !== '—' ? '<a href="' . esc_url($url_docs) . '" target="_blank" style="color: #1d4ed8; text-decoration: underline;">Оплатити документи</a>' : '') . '</td>';
+			$html .= '</tr>';
+		}
+
+		$html .= '</tbody></table></div>';
+
+		return [
+			[
+				'title' => 'Реквізити та посилання (вітрильництво)',
+				'type'  => 'raw_html',
+				'html'  => $html,
+			]
 		];
-
-		return $sections;
 	}
 
 	/**

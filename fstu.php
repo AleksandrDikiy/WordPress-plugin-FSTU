@@ -3,7 +3,7 @@
  * Plugin Name:  FSTU Portal
  * Plugin URI:   https://www.fstu.com.ua/
  * Description:  Офіційний плагін Федерації спортивного туризму України. Enterprise ERP/CRM система управління реєстрами, структурою та фінансами федерації.
- * Version:      1.15.1
+ * Version:      1.17.1
  * Author:       Oleksandr Dykyi
  * Author URI:   https://www.fstu.com.ua/
  * Text Domain:  fstu
@@ -22,8 +22,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // ─── Константи плагіна ────────────────────────────────────────────────────────
 
-define( 'FSTU_VERSION',      '1.15.1' );
-define( 'FSTU_DB_VERSION',   '1.0.0' );
+define( 'FSTU_VERSION',      '1.17.1' );
+define( 'FSTU_DB_VERSION',   '1.1.0' );
 define( 'FSTU_PLUGIN_FILE',  __FILE__ );
 define( 'FSTU_PLUGIN_DIR',   plugin_dir_path( __FILE__ ) );
 define( 'FSTU_PLUGIN_URL',   plugin_dir_url( __FILE__ ) );
@@ -99,6 +99,14 @@ require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/City/class-city-ajax.php';
 // Commission — Довідник комісій та колегій ФСТУ (2026-04-06)
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/Commission/class-commission-list.php';
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/Commission/class-commission-ajax.php';
+
+// ParticipationType — Довідник видів участі в заходах ФСТУ (2026-04-12)
+require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/ParticipationType/class-participationtype-list.php';
+require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/ParticipationType/class-participationtype-ajax.php';
+
+// TourType — Довідник видів походів ФСТУ (2026-04-12)
+require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/TourType/class-tourtype-list.php';
+require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/TourType/class-tourtype-ajax.php';
 
 // EventType — Довідник типів заходів ФСТУ (2026-04-07)
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/EventType/class-eventtype-list.php';
@@ -318,6 +326,7 @@ register_deactivation_hook( FSTU_PLUGIN_FILE, [ 'FSTU\\Core\\Activator', 'deacti
 add_action( 'plugins_loaded', 'fstu_init' );
 
 function fstu_init(): void {
+	FSTU\Core\Activator::maybe_upgrade();
 	FSTU\Core\Capabilities::bootstrap();
 
 	// ── Реєстр членів ФСТУ ────────────────────────────────────────────────────
@@ -364,6 +373,14 @@ function fstu_init(): void {
 	// ── Довідник комісій та колегій ФСТУ ──────────────────────────────────────
 	( new FSTU\Dictionaries\Commission\Commission_List() )->init();
 	( new FSTU\Dictionaries\Commission\Commission_Ajax() )->init();
+
+	// ── Довідник видів участі в заходах ФСТУ ──────────────────────────────────
+	( new FSTU\Dictionaries\ParticipationType\ParticipationType_List() )->init();
+	( new FSTU\Dictionaries\ParticipationType\ParticipationType_Ajax() )->init();
+
+	// ── Довідник видів походів ФСТУ ───────────────────────────────────────────
+	( new FSTU\Dictionaries\TourType\TourType_List() )->init();
+	( new FSTU\Dictionaries\TourType\TourType_Ajax() )->init();
 
 	// ── Довідник типів заходів ФСТУ ───────────────────────────────────────────
 	( new FSTU\Dictionaries\EventType\EventType_List() )->init();

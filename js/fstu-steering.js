@@ -30,6 +30,7 @@ jQuery( document ).ready( function ( $ ) {
 		search: '',
 		duesFilter: 'all',
 		statusId: 0,
+		typeFilter: 'all',
 		total: 0,
 		totalPages: 1,
 		loading: false,
@@ -70,6 +71,12 @@ jQuery( document ).ready( function ( $ ) {
 			if ( ! $( event.target ).closest( '.fstu-steering-dropdown' ).length ) {
 				closeAllDropdowns();
 			}
+		} );
+
+		$( document ).on( 'change', '#fstu-steering-type-filter', function () {
+			listState.typeFilter = $( this ).val() || 'all';
+			listState.page = 1;
+			loadList();
 		} );
 
 		$( document ).on( 'click', '.fstu-steering-dropdown__toggle', function ( event ) {
@@ -273,6 +280,7 @@ jQuery( document ).ready( function ( $ ) {
 			per_page: listState.perPage,
 			status_id: permissions.canManage || permissions.canManageStatus ? listState.statusId : 0,
 			dues_filter: permissions.canSeeFinance ? listState.duesFilter : 'all',
+			type_filter: listState.typeFilter,
 		} ).done( function ( response ) {
 			$( '#fstu-steering-tbody' ).html( response.html || '' );
 			listState.total = parseInt( response.total, 10 ) || 0;

@@ -2,7 +2,7 @@
 /**
  * Клас централізованого керування capability-моделлю ФСТУ.
  *
- * Version:     1.17.1
+ * Version:     1.19.1
  * Date_update: 2026-04-12
  *
  * @package FSTU\Core
@@ -20,6 +20,14 @@ class Capabilities {
 	public const MANAGE_COMMISSION        = 'fstu_manage_commission';
 	public const DELETE_COMMISSION        = 'fstu_delete_commission';
 	public const VIEW_COMMISSION_PROTOCOL = 'fstu_view_commission_protocol';
+	public const VIEW_PARTICIPATION_TYPE  = 'fstu_view_participation_type';
+	public const MANAGE_PARTICIPATION_TYPE = 'fstu_manage_participation_type';
+	public const DELETE_PARTICIPATION_TYPE = 'fstu_delete_participation_type';
+	public const VIEW_PARTICIPATION_TYPE_PROTOCOL = 'fstu_view_participation_type_protocol';
+	public const VIEW_TOURTYPE            = 'fstu_view_tourtype';
+	public const MANAGE_TOURTYPE          = 'fstu_manage_tourtype';
+	public const DELETE_TOURTYPE          = 'fstu_delete_tourtype';
+	public const VIEW_TOURTYPE_PROTOCOL   = 'fstu_view_tourtype_protocol';
 	public const VIEW_TYPEGUIDANCE        = 'fstu_view_typeguidance';
 	public const MANAGE_TYPEGUIDANCE      = 'fstu_manage_typeguidance';
 	public const DELETE_TYPEGUIDANCE      = 'fstu_delete_typeguidance';
@@ -135,6 +143,14 @@ class Capabilities {
 				self::MANAGE_COMMISSION        => true,
 				self::DELETE_COMMISSION        => true,
 				self::VIEW_COMMISSION_PROTOCOL => true,
+				self::VIEW_PARTICIPATION_TYPE  => true,
+				self::MANAGE_PARTICIPATION_TYPE => true,
+				self::DELETE_PARTICIPATION_TYPE => true,
+				self::VIEW_PARTICIPATION_TYPE_PROTOCOL => true,
+				self::VIEW_TOURTYPE            => true,
+				self::MANAGE_TOURTYPE          => true,
+				self::DELETE_TOURTYPE          => true,
+				self::VIEW_TOURTYPE_PROTOCOL   => true,
 				self::VIEW_TYPEGUIDANCE        => true,
 				self::MANAGE_TYPEGUIDANCE      => true,
 				self::DELETE_TYPEGUIDANCE      => true,
@@ -248,6 +264,14 @@ class Capabilities {
 			],
 			'globalregistrar' => [
 				self::ACCESS_ADMIN                  => true,
+				self::VIEW_PARTICIPATION_TYPE       => true,
+				self::MANAGE_PARTICIPATION_TYPE     => true,
+				self::DELETE_PARTICIPATION_TYPE     => true,
+				self::VIEW_PARTICIPATION_TYPE_PROTOCOL => true,
+				self::VIEW_TOURTYPE                => true,
+				self::MANAGE_TOURTYPE              => true,
+				self::DELETE_TOURTYPE              => true,
+				self::VIEW_TOURTYPE_PROTOCOL       => true,
 				self::VIEW_MEMBER_CARD_APPLICATIONS => true,
 				self::MANAGE_MEMBER_CARD_APPLICATIONS => true,
 				self::VIEW_MEMBER_CARD_APPLICATIONS_PROTOCOL => true,
@@ -280,6 +304,10 @@ class Capabilities {
 			],
 			'userregistrar' => [
 				self::ACCESS_ADMIN             => true,
+				self::VIEW_PARTICIPATION_TYPE  => true,
+				self::MANAGE_PARTICIPATION_TYPE => true,
+				self::VIEW_PARTICIPATION_TYPE_PROTOCOL => true,
+				self::VIEW_TOURTYPE            => true,
 				self::VIEW_MEMBER_CARD_APPLICATIONS => true,
 				self::MANAGE_MEMBER_CARD_APPLICATIONS => true,
 				self::VIEW_MEMBER_CARD_APPLICATIONS_PROTOCOL => true,
@@ -323,6 +351,8 @@ class Capabilities {
 				self::VIEW_GUIDANCE_CARD         => true,
 			],
 			'userfstu' => [
+				self::VIEW_PARTICIPATION_TYPE => true,
+				self::VIEW_TOURTYPE => true,
 				self::SELF_MANAGE_MEMBER_CARD_APPLICATIONS => true,
 				self::REISSUE_MEMBER_CARD_APPLICATIONS => true,
 				self::UPDATE_MEMBER_CARD_APPLICATIONS_PHOTO => true,
@@ -563,6 +593,36 @@ class Capabilities {
 			'canManage'   => self::current_user_can_manage_recorders(),
 			'canDelete'   => self::current_user_can_delete_recorders(),
 			'canProtocol' => self::current_user_can_view_recorders_protocol(),
+		];
+	}
+
+	/**
+	 * Повертає прапорці прав для довідника видів участі в заходах.
+	 *
+	 * @return array<string,bool>
+	 */
+	public static function get_participation_type_permissions(): array {
+		return [
+			'canView'     => self::current_user_can_view_participation_type(),
+			'canManage'   => self::current_user_can_manage_participation_type(),
+			'canDelete'   => self::current_user_can_delete_participation_type(),
+			'canProtocol' => self::current_user_can_view_participation_type_protocol(),
+		];
+	}
+
+	/**
+	 * Повертає прапорці прав для довідника видів походів.
+	 *
+	 * @return array<string,bool>
+	 */
+	public static function get_tourtype_permissions(): array {
+		$can_view = self::current_user_can_view_tourtype();
+
+		return [
+			'canView'     => $can_view,
+			'canManage'   => self::current_user_can_manage_tourtype(),
+			'canDelete'   => self::current_user_can_delete_tourtype(),
+			'canProtocol' => self::current_user_can_view_tourtype_protocol(),
 		];
 	}
 
@@ -1054,6 +1114,62 @@ class Capabilities {
 	 */
 	public static function current_user_can_view_recorders(): bool {
 		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_RECORDERS );
+	}
+
+	/**
+	 * Чи може користувач переглядати довідник видів участі в заходах.
+	 */
+	public static function current_user_can_view_participation_type(): bool {
+		return is_user_logged_in() || current_user_can( self::VIEW_PARTICIPATION_TYPE );
+	}
+
+	/**
+	 * Чи може користувач керувати довідником видів участі в заходах.
+	 */
+	public static function current_user_can_manage_participation_type(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_PARTICIPATION_TYPE );
+	}
+
+	/**
+	 * Чи може користувач видаляти записи довідника видів участі в заходах.
+	 */
+	public static function current_user_can_delete_participation_type(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::DELETE_PARTICIPATION_TYPE );
+	}
+
+	/**
+	 * Чи може користувач переглядати протокол довідника видів участі в заходах.
+	 */
+	public static function current_user_can_view_participation_type_protocol(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_PARTICIPATION_TYPE_PROTOCOL );
+	}
+
+	/**
+	 * Чи може користувач переглядати довідник видів походів.
+	 */
+	public static function current_user_can_view_tourtype(): bool {
+		return true;
+	}
+
+	/**
+	 * Чи може користувач керувати довідником видів походів.
+	 */
+	public static function current_user_can_manage_tourtype(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_TOURTYPE );
+	}
+
+	/**
+	 * Чи може користувач видаляти записи довідника видів походів.
+	 */
+	public static function current_user_can_delete_tourtype(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::DELETE_TOURTYPE );
+	}
+
+	/**
+	 * Чи може користувач переглядати протокол довідника видів походів.
+	 */
+	public static function current_user_can_view_tourtype_protocol(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_TOURTYPE_PROTOCOL );
 	}
 
 	/**

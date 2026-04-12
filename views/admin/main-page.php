@@ -2,7 +2,7 @@
 /**
  * View: Головна сторінка плагіна в адмінці.
  *
- * Version:     1.12.2
+ * Version:     1.14.0
  * Date_update: 2026-04-12
  */
 if ( ! defined( 'ABSPATH' ) ) {
@@ -18,6 +18,8 @@ $country_page_url = isset( $country_page_url ) ? (string) $country_page_url : ''
 $region_page_url = isset( $region_page_url ) ? (string) $region_page_url : '';
 $city_page_url = isset( $city_page_url ) ? (string) $city_page_url : '';
 $eventtype_page_url = isset( $eventtype_page_url ) ? (string) $eventtype_page_url : '';
+  $participationtype_page_url = isset( $participationtype_page_url ) ? (string) $participationtype_page_url : '';
+$tourtype_page_url = isset( $tourtype_page_url ) ? (string) $tourtype_page_url : '';
 $tourismtype_page_url = isset( $tourismtype_page_url ) ? (string) $tourismtype_page_url : '';
 $referees_page_url = isset( $referees_page_url ) ? (string) $referees_page_url : '';
 $recorders_page_url = isset( $recorders_page_url ) ? (string) $recorders_page_url : '';
@@ -163,6 +165,16 @@ $personal_cabinet_page_url = isset( $personal_cabinet_page_url ) ? (string) $per
                                     Виводить таблицю видів змагань з пошуком, пагінацією та модальними вікнами перегляду/редагування. Дозволяє адміністраторам та реєстраторам додавати й редагувати записи, а адміністраторам — видаляти їх без inline-коду та з AJAX-захистом nonce.
                                 </td>
                             </tr>
+                                            <tr>
+                                              <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_participationtype]</code></th>
+                                              <td>
+                                                <strong>Довідник видів участі в заходах ФСТУ</strong><br>
+                                                Виводить довідник видів участі з пошуком у шапці таблиці, колонкою «Тип», compact-пагінацією, drag-and-drop сортуванням, dropdown-меню «Дії», модальними вікнами перегляду/редагування та окремим розділом «ПРОТОКОЛ». Для всіх авторизованих користувачів доступний перегляд списку й картки, для ролей `administrator`, `globalregistrar`, `userregistrar` — create/update, а delete залишено лише для `administrator` і `globalregistrar`.
+                                                <?php if ( '' !== $participationtype_page_url ) : ?>
+                                                  <br><a href="<?php echo esc_url( $participationtype_page_url ); ?>">Відкрити сторінку довідника →</a>
+                                                <?php endif; ?>
+                                              </td>
+                                            </tr>
                             <tr>
                                 <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_commission]</code></th>
                                 <td>
@@ -250,6 +262,16 @@ $personal_cabinet_page_url = isset( $personal_cabinet_page_url ) ? (string) $per
                                     Виводить список типів туризму з пошуком у шапці таблиці, compact-пагінацією, shared-модалкою та розділом «ПРОТОКОЛ». Для ролі userregistrar доступні перегляд, створення, редагування та видалення, для адміністратора — повне керування модулем.
                                     <?php if ( '' !== ( $tourismtype_page_url ?? '' ) ) : ?>
                                         <br><a href="<?php echo esc_url( (string) ( $tourismtype_page_url ?? '' ) ); ?>">Відкрити сторінку довідника →</a>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_tourtype]</code></th>
+                                <td>
+                                    <strong>Довідник видів походів</strong><br>
+                                    Виводить публічний довідник видів походів з фільтром по категорії складності, пошуком у шапці таблиці, compact-пагінацією, dropdown-меню «Дії», модальними вікнами перегляду/редагування та окремим розділом «ПРОТОКОЛ». Перегляд списку і картки доступний гостям та авторизованим користувачам, а create/update/delete/protocol — лише ролям `administrator` і `globalregistrar`.
+                                    <?php if ( '' !== ( $tourtype_page_url ?? '' ) ) : ?>
+                                        <br><a href="<?php echo esc_url( (string) ( $tourtype_page_url ?? '' ) ); ?>">Відкрити сторінку довідника →</a>
                                     <?php endif; ?>
                                 </td>
                             </tr>

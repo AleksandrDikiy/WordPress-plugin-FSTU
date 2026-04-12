@@ -2,7 +2,7 @@
 /**
  * Реєстрація меню плагіна в адмін-панелі WordPress.
  *
- * Version:     1.14.1
+ * Version:     1.16.0
  * Date_update: 2026-04-12
  *
  * @package FSTU\Admin
@@ -77,6 +77,8 @@ class Admin_Menu {
 
     public function render_main_page(): void {
         $typeguidance_list_class = 'FSTU\\Dictionaries\\TypeGuidance\\TypeGuidance_List';
+        $participationtype_list_class = 'FSTU\\Dictionaries\\ParticipationType\\ParticipationType_List';
+        $tourtype_list_class = 'FSTU\\Dictionaries\\TourType\\TourType_List';
         $member_regional_list_class = 'FSTU\\Dictionaries\\MemberRegional\\Member_Regional_List';
         $member_guidance_list_class = 'FSTU\\Dictionaries\\MemberGuidance\\Member_Guidance_List';
         $country_list_class = 'FSTU\\Dictionaries\\Country\\Country_List';
@@ -98,6 +100,12 @@ class Admin_Menu {
         $commission_page_url = class_exists( Commission_List::class )
           ? Commission_List::get_module_url( 'admin' )
           : '';
+            $participationtype_page_url = class_exists( $participationtype_list_class )
+              ? $participationtype_list_class::get_module_url( 'admin' )
+              : '/adm/ParticipationType/';
+            $tourtype_page_url = class_exists( $tourtype_list_class )
+              ? $tourtype_list_class::get_module_url( 'admin' )
+              : '/adm/tourtype/';
         $typeguidance_page_url = class_exists( $typeguidance_list_class )
           ? $typeguidance_list_class::get_module_url( 'admin' )
           : '';

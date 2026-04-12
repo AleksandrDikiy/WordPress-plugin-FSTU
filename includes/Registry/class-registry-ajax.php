@@ -628,7 +628,6 @@ class Registry_Ajax {
 	}
 
 	// ─── Приватні методи: рендер HTML ────────────────────────────────────────
-
 	/**
 	 * Будує HTML рядки таблиці для передачі у JS.
 	 *
@@ -646,6 +645,11 @@ class Registry_Ajax {
 		$is_logged_in = is_user_logged_in();
 		$member_card_permissions = Capabilities::get_member_card_applications_permissions();
 		$current_user_id = get_current_user_id();
+
+		// Отримуємо базовий URL кабінету
+		$cabinet_base_url = class_exists( '\FSTU\Modules\PersonalCabinet\Personal_Cabinet_List' )
+			? \FSTU\Modules\PersonalCabinet\Personal_Cabinet_List::get_module_url()
+			: home_url( '/personal/' );
 
 		$html = '';
 		$num  = ( $page - 1 ) * $per_page;
@@ -665,11 +669,19 @@ class Registry_Ajax {
 				|| $can_view_member_card
 			);
 
-			// ПІБ
-			$fio = trim(
+			// ПІБ (Очищений текст)
+			$fio_text = trim(
 				esc_html( $row['last_name'] ) . ' ' .
 				esc_html( $row['first_name'] ) . ' ' .
 				esc_html( $row['patronymic'] )
+			);
+
+			// ПІБ як посилання на особистий кабінет
+			$profile_url = add_query_arg( 'ViewID', $uid, $cabinet_base_url );
+			$fio = sprintf(
+				'<a href="%s" target="_blank" class="fstu-registry-profile-link" style="color: inherit; text-decoration: underline;">%s</a>',
+				esc_url( $profile_url ),
+				$fio_text
 			);
 
 			// Статус ФСТУ (іконка)
@@ -731,17 +743,17 @@ class Registry_Ajax {
 				   <td class=\"fstu-td fstu-td--dues\">{$sail_curr_html}</td>"
 				: '<td colspan="4" class="fstu-td fstu-td--locked" title="Тільки для авторизованих">—</td>';
 
-            // ── Формування меню опцій (БЕЗ КОНФЛІКТІВ З ТЕМОЮ) ─────────────
-            $btn_html = '';
-            if ( $is_logged_in ) {
-                $btn_html = '
+			// ── Формування меню опцій (БЕЗ КОНФЛІКТІВ З ТЕМОЮ) ─────────────
+			$btn_html = '';
+			if ( $is_logged_in ) {
+				$btn_html = '
 				<div class="fstu-opts">
 					<button type="button" class="fstu-btn-action fstu-opts-btn" title="Опції">▾</button>
 					<ul class="fstu-opts-list">
 						<li><a href="#" class="fstu-action-view" data-id="'.$uid.'">🔍 Перегляд</a></li>';
 
-                if ( $is_admin ) {
-                    $btn_html .= '
+				if ( $is_admin ) {
+					$btn_html .= '
 						<li><a href="#" class="fstu-action-edit" data-id="'.$uid.'">📝 Редагування</a></li>
 						<li><a href="#" class="fstu-action-dues" data-id="'.$uid.'">💰 Додати чл. внесок</a></li>
 						<li><a href="#" class="fstu-action-club" data-id="'.$uid.'">👤 Додати клуб</a></li>
@@ -751,7 +763,7 @@ class Registry_Ajax {
 						<li><a href="#" class="fstu-action-notify" data-id="'.$uid.'">📧 Повідомити про внесок</a></li>
 						<li><hr class="fstu-opts-divider"></li>
 						<li><a href="#" class="fstu-action-delete" data-id="'.$uid.'" style="color:#c0392b !important;">❌ Видалення</a></li>';
-                }
+				}
 
 				if ( $can_open_member_card ) {
 					$member_card_label = $current_user_id === $uid && ! empty( $member_card_permissions['canSelfService'] )
@@ -763,10 +775,10 @@ class Registry_Ajax {
 						<li><a href="#" class="fstu-action-member-card" data-id="'.$uid.'" data-member-card-action="'.$member_card_action.'">'.$member_card_label.'</a></li>';
 				}
 
-                $btn_html .= '
+				$btn_html .= '
 					</ul>
 				</div>';
-            }
+			}
 
 			$html .= "
 			<tr class=\"fstu-row\" data-user-id=\"{$uid}\">

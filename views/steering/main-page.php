@@ -52,12 +52,11 @@ $bootstrap_return_url = isset( $bootstrap_return_url ) ? (string) $bootstrap_ret
 
 		<div class="fstu-action-bar__group fstu-action-bar__group--filters">
 			<?php if ( $can_manage || $can_manage_status ) : ?>
-				<label class="fstu-steering-filter-label" for="fstu-steering-status-filter"><?php esc_html_e( 'СТАТУС:', 'fstu' ); ?></label>
-				<select id="fstu-steering-status-filter" class="fstu-select fstu-select--compact" aria-label="<?php esc_attr_e( 'Фільтр по статусу', 'fstu' ); ?>">
-					<option value="0"><?php esc_html_e( 'усі статуси', 'fstu' ); ?></option>
-					<?php foreach ( $status_options as $status_option ) : ?>
-						<option value="<?php echo esc_attr( (string) ( $status_option['AppStatus_ID'] ?? 0 ) ); ?>"><?php echo esc_html( (string) ( $status_option['AppStatus_Name'] ?? '' ) ); ?></option>
-					<?php endforeach; ?>
+				<label class="fstu-steering-filter-label" for="fstu-steering-type-filter"><?php esc_html_e( 'ТИП:', 'fstu' ); ?></label>
+				<select id="fstu-steering-type-filter" class="fstu-select fstu-select--compact" aria-label="<?php esc_attr_e( 'Фільтр по типу реєстру', 'fstu' ); ?>">
+					<option value="all"><?php esc_html_e( 'Всі записи', 'fstu' ); ?></option>
+					<option value="steering"><?php esc_html_e( 'Тільки Стернові', 'fstu' ); ?></option>
+					<option value="skipper"><?php esc_html_e( 'Тільки Капітани', 'fstu' ); ?></option>
 				</select>
 			<?php endif; ?>
 

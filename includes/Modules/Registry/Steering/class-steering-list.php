@@ -12,10 +12,11 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Реєструє shortcode, підключає assets та локалізує фронтенд-дані.
  *
 	 * Version:     1.10.0
-	 * Date_update: 2026-04-09
+	 * Date_update: 2026-04-12
  *
  * @package FSTU\Modules\Registry\Steering
  */
+
 class Steering_List {
 
 	private const ASSET_HANDLE = 'fstu-steering';

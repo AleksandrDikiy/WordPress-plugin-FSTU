@@ -52,6 +52,7 @@ class Steering_Ajax {
 		$per_page    = min( max( 1, absint( $_POST['per_page'] ?? self::DEFAULT_PER_PAGE ) ), self::MAX_PER_PAGE );
 		$dues_filter = sanitize_key( wp_unslash( $_POST['dues_filter'] ?? 'all' ) );
 		$status_id   = absint( $_POST['status_id'] ?? 0 );
+		$type_filter = sanitize_key( wp_unslash( $_POST['type_filter'] ?? 'all' ) );
 		$offset      = ( $page - 1 ) * $per_page;
 
 		$permissions = $this->get_permissions();
@@ -71,6 +72,7 @@ class Steering_Ajax {
 				'offset'      => $offset,
 				'status_id'   => $status_id,
 				'dues_filter' => $dues_filter,
+				'type_filter' => $type_filter,
 			],
 			$permissions
 		);
@@ -317,21 +319,27 @@ class Steering_Ajax {
 			$number         = $offset + $index + 1;
 			$fio            = trim( (string) ( $item['FIO'] ?? '' ) );
 			$reg_number     = (string) ( $item['Steering_RegNumber'] ?? '' );
+
+
 			$date_pay       = (string) ( $item['Steering_DatePay'] ?? '' );
 			$row_class      = $this->resolve_row_class( $item );
+			$is_skipper     = ( $item['Record_Type'] ?? 'steering' ) === 'skipper';
+			$badge          = $is_skipper ? ' <span class="fstu-badge fstu-badge--warning">Капітан</span>' : '';
 			$actions        = '<button type="button" class="fstu-steering-dropdown__item fstu-steering-view-btn" data-steering-id="' . esc_attr( (string) $steering_id ) . '">' . esc_html__( 'Перегляд', 'fstu' ) . '</button>';
 
-			if ( ! empty( $permissions['canManage'] ) ) {
+			if ( ! empty( $permissions['canManage'] ) && ! $is_skipper ) {
 				$actions .= '<button type="button" class="fstu-steering-dropdown__item fstu-steering-edit-btn" data-steering-id="' . esc_attr( (string) $steering_id ) . '">' . esc_html__( 'Редагувати', 'fstu' ) . '</button>';
 			}
 
-			if ( ! empty( $permissions['canDelete'] ) ) {
+			if ( ! empty( $permissions['canDelete'] ) && ! $is_skipper ) {
 				$actions .= '<button type="button" class="fstu-steering-dropdown__item fstu-steering-delete-btn" data-steering-id="' . esc_attr( (string) $steering_id ) . '">' . esc_html__( 'Видалити', 'fstu' ) . '</button>';
 			}
 
 			$html .= '<tr class="' . esc_attr( $row_class ) . '">';
 			$html .= '<td class="fstu-td fstu-td--num">' . esc_html( (string) $number ) . '</td>';
-			$html .= '<td class="fstu-td fstu-td--name"><button type="button" class="fstu-steering-link-button fstu-steering-view-btn" data-steering-id="' . esc_attr( (string) $steering_id ) . '">' . esc_html( '' !== $fio ? $fio : '—' ) . '</button></td>';
+			$html .= '<td class="fstu-td fstu-td--name"><button type="button" class="fstu-steering-link-button fstu-steering-view-btn" data-steering-id="' . esc_attr( (string) $steering_id ) . '">' . esc_html( '' !== $fio ? $fio : '—' ) . '</button>' . $badge . '</td>';
+			
+			
 			$html .= '<td class="fstu-td">' . $this->format_table_value( $reg_number ) . '</td>';
 			$html .= '<td class="fstu-td">' . esc_html( $this->format_date( $date_pay ) ) . '</td>';
 
