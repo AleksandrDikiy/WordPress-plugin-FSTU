@@ -2,7 +2,7 @@
 /**
  * View: Модальне вікно редагування профілю.
  * Version: 1.0.0
-  * Date_update: 2026-04-11
+ * Date_update: 2026-04-12
 */
 if ( ! defined( 'ABSPATH' ) ) exit;
 ?>

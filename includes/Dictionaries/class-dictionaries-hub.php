@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Клас-контролер для Хабу довідників (Dashboard).
- * * Version:     1.7.0
+ * Version:     1.8.0
  * Date_update: 2026-04-06
  */
 class Dictionaries_Hub {
@@ -49,6 +49,7 @@ class Dictionaries_Hub {
      * Повний масив усіх 21+ довідників системи, розбитий по категоріях.
      */
     private function get_dictionaries_data(): array {
+        $guidance_list_class = 'FSTU\\Modules\\Registry\\Guidance\\Guidance_List';
         $typeguidance_list_class = 'FSTU\\Dictionaries\\TypeGuidance\\TypeGuidance_List';
         $member_regional_list_class = 'FSTU\\Dictionaries\\MemberRegional\\Member_Regional_List';
         $member_guidance_list_class = 'FSTU\\Dictionaries\\MemberGuidance\\Member_Guidance_List';
@@ -67,6 +68,9 @@ class Dictionaries_Hub {
             $member_guidance_url = class_exists( $member_guidance_list_class )
               ? $member_guidance_list_class::get_module_url( 'hub' )
               : '';
+                    $guidance_url = class_exists( $guidance_list_class )
+                      ? $guidance_list_class::get_module_url( 'hub' )
+                      : '';
         $country_url = class_exists( $country_list_class )
           ? $country_list_class::get_module_url( 'hub' )
           : '';
@@ -93,6 +97,10 @@ class Dictionaries_Hub {
                   $member_guidance_url = '#';
                 }
 
+                    if ( '' === $guidance_url ) {
+                      $guidance_url = '#';
+                    }
+
         if ( '' === $country_url ) {
           $country_url = '#';
         }
@@ -112,6 +120,7 @@ class Dictionaries_Hub {
                     [ 'title' => 'Осередки ФСТУ', 'desc' => 'Довідник регіональних осередків', 'url' => '/adm/Unit/' ],
                     [ 'title' => 'Клуби', 'desc' => 'Довідник туристичних клубів', 'url' => '/adm/Club/' ],
                     [ 'title' => 'Комісії та колегії', 'desc' => 'Довідник комісій ФСТУ', 'url' => $commission_url ],
+                          [ 'title' => 'Склад керівних органів ФСТУ', 'desc' => 'Реєстр складу керівних органів', 'url' => $guidance_url ],
                               [ 'title' => 'Керівні органи ФСТУ', 'desc' => 'Довідник керівних органів', 'url' => $typeguidance_url ],
                           [ 'title' => 'Посади у керівних органах', 'desc' => 'Довідник посад', 'url' => $member_guidance_url ],
                                                   [ 'title' => 'Посади федерацій', 'desc' => 'Довідник регіональних посад', 'url' => $member_regional_url ],

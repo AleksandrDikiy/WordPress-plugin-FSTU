@@ -2,8 +2,8 @@
 /**
  * Реєстрація меню плагіна в адмін-панелі WordPress.
  *
- * Version:     1.13.0
- * Date_update: 2026-04-11
+ * Version:     1.14.1
+ * Date_update: 2026-04-12
  *
  * @package FSTU\Admin
  */
@@ -86,11 +86,15 @@ class Admin_Menu {
         $tourismtype_list_class = 'FSTU\\Dictionaries\\TourismType\\TourismType_List';
         $referees_list_class = 'FSTU\\Modules\\Registry\\Referees\\Referees_List';
             $recorders_list_class = 'FSTU\\Modules\\Registry\\Recorders\\Recorders_List';
+              $mkk_list_class = 'FSTU\\Modules\\Registry\\MKK\\MKK_List';
+                  $guidance_list_class = 'FSTU\\Modules\\Registry\\Guidance\\Guidance_List';
             $member_card_applications_list_class = 'FSTU\\Modules\\Registry\\MemberCardApplications\\Member_Card_Applications_List';
             $steering_list_class = 'FSTU\\Modules\\Registry\\Steering\\Steering_List';
             $personal_cabinet_list_class = 'FSTU\\Modules\\PersonalCabinet\\Personal_Cabinet_List';
-        $plugin_data = get_plugin_data( WP_PLUGIN_DIR . '/fstu_new/fstu.php' );
-            $version = ! empty( $plugin_data['Version'] ) ? $plugin_data['Version'] : '1.12.0';
+            $plugin_data = get_plugin_data( WP_PLUGIN_DIR . '/fstu_new/fstu.php' );
+              $version = ! empty( $plugin_data['Version'] )
+                ? $plugin_data['Version']
+                : ( defined( 'FSTU_VERSION' ) ? FSTU_VERSION : '1.15.0' );
         $commission_page_url = class_exists( Commission_List::class )
           ? Commission_List::get_module_url( 'admin' )
           : '';
@@ -124,6 +128,12 @@ class Admin_Menu {
             $recorders_page_url = class_exists( $recorders_list_class )
               ? $recorders_list_class::get_module_url( 'admin' )
               : '';
+                  $mkk_page_url = class_exists( $mkk_list_class )
+                    ? $mkk_list_class::get_module_url( 'admin' )
+                    : '';
+                      $guidance_page_url = class_exists( $guidance_list_class )
+                        ? $guidance_list_class::get_module_url( 'admin' )
+                        : '';
             $member_card_applications_page_url = class_exists( $member_card_applications_list_class )
               ? $member_card_applications_list_class::get_module_url( 'admin' )
               : '';

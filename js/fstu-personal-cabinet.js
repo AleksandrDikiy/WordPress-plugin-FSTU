@@ -2,7 +2,7 @@
  * JS модуля «Особистий кабінет ФСТУ».
  *
  * Version:     1.8.0
- * Date_update: 2026-04-09
+ * Date_update: 2026-04-12
  */
 jQuery(document).ready(function ($) {
     'use strict';
@@ -77,7 +77,14 @@ jQuery(document).ready(function ($) {
             if (section.title) {
                 html += '<h4 class="fstu-personal-section-block__title">' + escHtml(section.title) + '</h4>';
             }
-            html += buildInfoList(section.items || []);
+            
+            // Підтримка сирого HTML (для 3-колонкової таблиці реквізитів)
+            if (section.type === 'raw_html') {
+                html += section.html || '';
+            } else {
+                html += buildInfoList(section.items || []);
+            }
+            
             html += '</section>';
         });
 
@@ -157,6 +164,9 @@ jQuery(document).ready(function ($) {
                 
                 if (col.type === 'link' && val && val !== '—') {
                     cellHtml = '<a href="' + escHtml(val) + '" target="_blank" rel="noopener noreferrer">Відкрити</a>';
+                } else if (col.type === 'html') {
+                    // Новий тип: виводимо HTML як є (для посилань на календар)
+                    cellHtml = val || '—';
                 } else if (col.type === 'actions') {
                     if (val === 'delete') {
                         cellHtml = '<button type="button" class="fstu-btn fstu-delete-club-btn" data-id="' + escHtml(row.id) + '">Видалити</button>';
@@ -164,6 +174,20 @@ jQuery(document).ready(function ($) {
                         cellHtml = '<button type="button" class="fstu-btn fstu-delete-city-btn" data-id="' + escHtml(row.id) + '" style="padding: 4px 8px; font-size: 11px; background-color: #fef2f2!important; color: #b91c1c!important; border: 1px solid #fecaca!important;">Видалити</button>';
                     } else if (val === 'delete_unit') {
                         cellHtml = '<button type="button" class="fstu-btn fstu-delete-unit-btn" data-id="' + escHtml(row.id) + '" style="padding: 4px 8px; font-size: 11px; background-color: #fef2f2!important; color: #b91c1c!important; border: 1px solid #fecaca!important;">Видалити</button>';
+                    } else if (val === 'delete_tourism') {
+                        cellHtml = '<button type="button" class="fstu-btn fstu-delete-tourism-btn" data-id="' + escHtml(row.id) + '" style="padding: 4px 8px; font-size: 11px; background-color: #fef2f2!important; color: #b91c1c!important; border: 1px solid #fecaca!important;">Видалити</button>';
+                    } else if (val === 'edit_divodka') {
+                        var existingUrl = row['divodka'] !== '—' ? row['divodka'] : '';
+                        cellHtml = '<button type="button" class="fstu-btn fstu-edit-divodka-btn" data-id="' + escHtml(row.id) + '" data-url="' + escHtml(existingUrl) + '" style="padding: 4px 8px; font-size: 11px; background-color: #eff6ff!important; color: #1d4ed8!important; border: 1px solid #bfdbfe!important;">Довідка</button>';
+                    } else if (val === 'delete_rank') {
+                        cellHtml = '<button type="button" class="fstu-btn fstu-delete-rank-btn" data-id="' + escHtml(row.id) + '" style="padding: 4px 8px; font-size: 11px; background-color: #fef2f2!important; color: #b91c1c!important; border: 1px solid #fecaca!important;">Видалити</button>';
+                    } else if (val === 'delete_judging') {
+                        cellHtml = '<button type="button" class="fstu-btn fstu-delete-judging-btn" data-id="' + escHtml(row.id) + '" style="padding: 4px 8px; font-size: 11px; background-color: #fef2f2!important; color: #b91c1c!important; border: 1px solid #fecaca!important;">Видалити</button>';
+                    } else if (val === 'pay_portmone') {
+                        // ЗЕЛЕНА КНОПКА СПЛАТИТИ (з передачею року)
+                        cellHtml = '<button type="button" class="fstu-btn fstu-pay-portmone-btn" data-year="' + escHtml(row.year) + '" style="padding: 4px 8px; font-size: 11px; background-color: #ecfdf5!important; color: #047857!important; border: 1px solid #a7f3d0!important;">Сплатити</button>';
+                    } else {
+                        cellHtml = ''; // ПРИБИРАЄМО РИСКУ "—", ЯКЩО ДІЙ НЕМАЄ
                     }
                 }
                 
@@ -342,25 +366,37 @@ jQuery(document).ready(function ($) {
         $form.trigger('submit');
     }
 
-    function requestPortmonePayload() {
+    // Оновлена функція приймає рік!
+    function requestPortmonePayload(year) {
         setMainAlert('info', l10n.messages.paymentPreparing || 'Готуємо безпечний платіжний payload Portmone...');
 
         $.post(l10n.ajaxUrl, {
-            action: l10n.actions.getPortmonePayload,
+            action: 'fstu_personal_cabinet_get_portmone_payload',
             nonce: l10n.nonce,
             profile_user_id: state.profileUserId,
+            year: year, // ПЕРЕДАЄМО РІК
             fstu_website: ''
         }).done(function (response) {
             if (!response || !response.success || !response.data) {
-                setMainAlert('error', response && response.data && response.data.message ? response.data.message : (l10n.messages.paymentError || 'Не вдалося підготувати онлайн-оплату внеску.'));
+                setMainAlert('error', response && response.data && response.data.message ? response.data.message : 'Не вдалося підготувати онлайн-оплату внеску.');
                 return;
             }
-
             submitGatewayForm(response.data);
         }).fail(function (xhr) {
-            setMainAlert('error', getAjaxErrorMessage(xhr, l10n.messages.paymentError || 'Не вдалося підготувати онлайн-оплату внеску.'));
+            setMainAlert('error', getAjaxErrorMessage(xhr, 'Не вдалося підготувати онлайн-оплату внеску.'));
         });
     }
+
+    // Перехоплюємо клік по зеленій кнопці в таблиці
+    $(document).on('click', '.fstu-pay-portmone-btn', function () {
+        var year = $(this).data('year');
+        requestPortmonePayload(year);
+    });
+
+    // Швидкий перехід до реєстру платежів
+    $(document).on('click', '.fstu-personal-tab-actions__item-button[data-action-key="open_payment_docs"]', function() {
+        window.open('/personal/rejestr-platizhok/', '_blank');
+    });
 
     function uploadDuesReceipt() {
         var $form = $('#fstu-personal-dues-form');
@@ -424,8 +460,8 @@ jQuery(document).ready(function ($) {
             var $content = $('#fstu-personal-tab-' + slug);
             if (!$content.length || !tab.visible) return;
 
-            // ВИПРАВЛЕННЯ 1: Ховаємо заголовок (наприклад "Clubs"), якщо з PHP прийшов порожній title
-            var $title = $content.prev('.fstu-personal-tab-card__title');
+            // ВИПРАВЛЕННЯ 1: Ховаємо заголовок (надійний селектор)
+            var $title = $content.closest('.fstu-personal-tab-card').find('.fstu-personal-tab-card__title');
             if (tab.title === '') {
                 $title.addClass('fstu-hidden');
             } else if (tab.title) {
@@ -536,10 +572,13 @@ jQuery(document).ready(function ($) {
                 html += '</div>';
                 html += '</div>';
             }
-            // ВИПРАВЛЕННЯ 2: Рендеринг кнопок дій (actions) для таблиць та звичайних вкладок
+            // ВИПРАВЛЕННЯ: Виводимо секції (Реквізити) ПІД таблицею!
             else if (tab.table) {
-                html += buildTabActions(tab.actions); // <--- Тепер кнопка "Додати клуб" з'явиться!
-                html += buildTabTable(slug, tab.table);
+                html += buildTabActions(tab.actions); 
+                html += buildTabTable(slug, tab.table); // Таблиця спочатку
+                if (tab.sections && tab.sections.length > 0) {
+                    html += buildSections(tab.sections); // Секції після таблиці
+                }
             }
             else {
                 html += buildTabActions(tab.actions); // <--- Кнопки для інших вкладок (Осередки, Місто)
@@ -1312,6 +1351,317 @@ jQuery(document).ready(function ($) {
         }).fail(function(xhr) {
             alert(getAjaxErrorMessage(xhr, 'Помилка видалення осередку.'));
         });
+    });
+    // Логіка Видів туризму (Autocomplete)
+    var allTourismList = [];
+    $(document).on('click', '.fstu-personal-tab-actions__item-button[data-action-key="add_tourism"]', function() {
+        $('#fstu-personal-tourism-alert').addClass('fstu-hidden');
+        $('#fstu-personal-tourism-form')[0].reset();
+        $('#fstu-tourism-id').val('');
+        $('#fstu-personal-tourism-modal').removeClass('fstu-hidden');
+
+        if (!allTourismList.length) {
+            var $searchInput = $('#fstu-tourism-search');
+            $searchInput.prop('disabled', true).val('Завантаження довідника...');
+            $.post(l10n.ajaxUrl, { action: 'fstu_personal_cabinet_get_all_tourism', nonce: l10n.nonce }).done(function(res) {
+                if (res && res.success) {
+                    allTourismList = res.data || [];
+                    $searchInput.prop('disabled', false).val('').attr('placeholder', 'Введіть назву (наприклад, Пішохідний)...');
+                    $searchInput.focus();
+                } else {
+                    $searchInput.val('Помилка: ' + (res.data && res.data.message ? res.data.message : 'Немає даних'));
+                    setTimeout(function() { $searchInput.prop('disabled', false).val(''); }, 3500);
+                }
+            }).fail(function(xhr) {
+                $searchInput.val('Фатальна помилка сервера.');
+                setTimeout(function() { $searchInput.prop('disabled', false).val(''); }, 3500);
+            });
+        }
+    });
+
+    $(document).on('input', '#fstu-tourism-search', function() {
+        var term = $(this).val().toLowerCase(), $dropdown = $('#fstu-tourism-dropdown');
+        $('#fstu-tourism-id').val('');
+        if (term.length < 1) { $dropdown.addClass('fstu-hidden'); return; }
+
+        var matches = allTourismList.filter(c => c.name.toLowerCase().includes(term));
+        if (matches.length) {
+            var html = matches.map(c => '<div class="fstu-club-option" data-id="'+c.id+'" data-name="'+escHtml(c.name)+'">'+escHtml(c.name)+'</div>').join('');
+            $dropdown.html(html).removeClass('fstu-hidden');
+        } else { $dropdown.html('<div class="fstu-club-option">Нічого не знайдено</div>').removeClass('fstu-hidden'); }
+    });
+
+    $(document).on('click', '#fstu-tourism-dropdown .fstu-club-option', function() {
+        $('#fstu-tourism-id').val($(this).data('id'));
+        $('#fstu-tourism-search').val($(this).data('name'));
+        $('#fstu-tourism-dropdown').addClass('fstu-hidden');
+    });
+
+    $(document).on('click', '#fstu-personal-tourism-cancel, #fstu-personal-tourism-cancel-icon', function() {
+        $('#fstu-personal-tourism-modal').addClass('fstu-hidden');
+    });
+
+    $(document).on('submit', '#fstu-personal-tourism-form', function(e) {
+        e.preventDefault();
+        var tourismId = $('#fstu-tourism-id').val();
+        if (!tourismId) return alert('Оберіть вид туризму зі списку підказок.');
+
+        var $btn = $('#fstu-personal-tourism-submit').prop('disabled', true).text('Збереження...');
+        $.post(l10n.ajaxUrl, {
+            action: 'fstu_personal_cabinet_add_tourism',
+            nonce: l10n.nonce,
+            profile_user_id: state.profileUserId,
+            tourism_id: tourismId
+        }).done(function(res) {
+            if(res.success) {
+                $('#fstu-personal-tourism-modal').addClass('fstu-hidden');
+                state.flashAlert = { type: 'success', message: 'Вид туризму додано.' };
+                loadProfile();
+            } else {
+                $('#fstu-personal-tourism-alert').removeClass('fstu-hidden').addClass('fstu-alert--error').text(res.data.message || 'Помилка');
+            }
+        }).fail(function(xhr) {
+            $('#fstu-personal-tourism-alert').removeClass('fstu-hidden').addClass('fstu-alert--error').text(getAjaxErrorMessage(xhr, 'Помилка збереження.'));
+        }).always(function() {
+            $btn.prop('disabled', false).text('Додати');
+        });
+    });
+
+    $(document).on('click', '.fstu-delete-tourism-btn', function() {
+        if (!confirm('Видалити цей вид туризму?')) return;
+        $.post(l10n.ajaxUrl, {
+            action: 'fstu_personal_cabinet_delete_tourism',
+            nonce: l10n.nonce,
+            profile_user_id: state.profileUserId,
+            tourism_id: $(this).data('id')
+        }).done(function(res) {
+            if(res.success) {
+                state.flashAlert = { type: 'success', message: 'Вид туризму видалено.' };
+                loadProfile();
+            } else {
+                alert(res.data && res.data.message ? res.data.message : 'Помилка видалення');
+            }
+        }).fail(function(xhr) {
+            alert(getAjaxErrorMessage(xhr, 'Помилка видалення.'));
+        });
+    });
+    // Логіка Досвід (Довідка за похід)
+    $(document).on('click', '.fstu-edit-divodka-btn', function() {
+        $('#fstu-personal-experience-alert').addClass('fstu-hidden');
+        $('#fstu-experience-id').val($(this).attr('data-id')); // Змінено на attr для надійності
+        $('#fstu-experience-url').val($(this).attr('data-url'));
+        $('#fstu-personal-experience-modal').removeClass('fstu-hidden');
+    });
+
+    $(document).on('click', '#fstu-personal-experience-cancel, #fstu-personal-experience-cancel-icon', function() {
+        $('#fstu-personal-experience-modal').addClass('fstu-hidden');
+    });
+
+    $(document).on('submit', '#fstu-personal-experience-form', function(e) {
+        e.preventDefault();
+        var expId = $('#fstu-experience-id').val();
+        var url = $('#fstu-experience-url').val();
+
+        var $btn = $('#fstu-personal-experience-submit').prop('disabled', true).text('Збереження...');
+        $.post(l10n.ajaxUrl, {
+            action: 'fstu_personal_cabinet_update_experience_url',
+            nonce: l10n.nonce,
+            profile_user_id: state.profileUserId,
+            experience_id: expId,
+            url: url
+        }).done(function(res) {
+            if(res.success) {
+                $('#fstu-personal-experience-modal').addClass('fstu-hidden');
+                state.flashAlert = { type: 'success', message: 'Посилання на довідку оновлено.' };
+                loadProfile();
+            } else {
+                $('#fstu-personal-experience-alert').removeClass('fstu-hidden').addClass('fstu-alert--error').text(res.data.message || 'Помилка');
+            }
+        }).fail(function(xhr) {
+            $('#fstu-personal-experience-alert').removeClass('fstu-hidden').addClass('fstu-alert--error').text(getAjaxErrorMessage(xhr, 'Помилка збереження.'));
+        }).always(function() {
+            $btn.prop('disabled', false).text('Зберегти посилання');
+        });
+    });
+    // Логіка Розряди (Ranks)
+    var allRanksList = [];
+    
+    function populateTourismSelect() {
+        var $tSelect = $('#fstu-rank-tourism-id');
+        if ($tSelect.children().length <= 1 && allTourismList.length) {
+            var opts = '<option value="">Оберіть зі списку...</option>';
+            $.each(allTourismList, function(_, t) { opts += '<option value="'+t.id+'">'+escHtml(t.name)+'</option>'; });
+            $tSelect.html(opts);
+        }
+    }
+
+    $(document).on('click', '.fstu-personal-tab-actions__item-button[data-action-key="add_rank"]', function() {
+        $('#fstu-personal-rank-alert').addClass('fstu-hidden');
+        $('#fstu-personal-rank-form')[0].reset();
+        $('#fstu-rank-tourism-group').addClass('fstu-hidden');
+        $('#fstu-rank-tourism-id').prop('required', false);
+        $('#fstu-personal-rank-modal').removeClass('fstu-hidden');
+        
+        if (!allRanksList.length) {
+            var $rankSelect = $('#fstu-rank-id');
+            $rankSelect.html('<option value="">Завантаження...</option>').prop('disabled', true);
+            $.post(l10n.ajaxUrl, { action: 'fstu_personal_cabinet_get_all_ranks', nonce: l10n.nonce }).done(function(res) {
+                if (res && res.success) {
+                    allRanksList = res.data || [];
+                    var opts = '<option value="">Оберіть зі списку...</option>';
+                    $.each(allRanksList, function(_, r) { opts += '<option value="'+r.id+'">'+escHtml(r.name)+'</option>'; });
+                    $rankSelect.html(opts).prop('disabled', false);
+                }
+            });
+        }
+        
+        // Використовуємо кеш видів туризму (він спільний з іншою вкладкою)
+        if (!allTourismList.length) {
+            $.post(l10n.ajaxUrl, { action: 'fstu_personal_cabinet_get_all_tourism', nonce: l10n.nonce }).done(function(res) {
+                if (res && res.success) allTourismList = res.data || [];
+                populateTourismSelect();
+            });
+        } else {
+            populateTourismSelect();
+        }
+    });
+
+    $(document).on('change', '#fstu-rank-show-tourism', function() {
+        if ($(this).is(':checked')) {
+            $('#fstu-rank-tourism-group').removeClass('fstu-hidden');
+            $('#fstu-rank-tourism-id').prop('required', true);
+        } else {
+            $('#fstu-rank-tourism-group').addClass('fstu-hidden');
+            $('#fstu-rank-tourism-id').prop('required', false).val('');
+        }
+    });
+
+    $(document).on('click', '#fstu-personal-rank-cancel, #fstu-personal-rank-cancel-icon', function() {
+        $('#fstu-personal-rank-modal').addClass('fstu-hidden');
+    });
+
+    $(document).on('submit', '#fstu-personal-rank-form', function(e) {
+        e.preventDefault();
+        var $btn = $('#fstu-personal-rank-submit').prop('disabled', true).text('Збереження...');
+        
+        $.post(l10n.ajaxUrl, {
+            action: 'fstu_personal_cabinet_add_rank',
+            nonce: l10n.nonce,
+            profile_user_id: state.profileUserId,
+            rank_id: $('#fstu-rank-id').val(),
+            tourism_id: $('#fstu-rank-tourism-id').val(),
+            prikaz_num: $('#fstu-rank-prikaz-num').val(),
+            prikaz_date: $('#fstu-rank-prikaz-date').val(),
+            prikaz_url: $('#fstu-rank-prikaz-url').val()
+        }).done(function(res) {
+            if(res.success) {
+                $('#fstu-personal-rank-modal').addClass('fstu-hidden');
+                state.flashAlert = { type: 'success', message: 'Розряд успішно додано.' };
+                loadProfile();
+            } else {
+                $('#fstu-personal-rank-alert').removeClass('fstu-hidden').addClass('fstu-alert--error').text(res.data.message || 'Помилка');
+            }
+        }).fail(function(xhr) {
+            $('#fstu-personal-rank-alert').removeClass('fstu-hidden').addClass('fstu-alert--error').text(getAjaxErrorMessage(xhr, 'Помилка збереження.'));
+        }).always(function() {
+            $btn.prop('disabled', false).text('Зберегти');
+        });
+    });
+
+    $(document).on('click', '.fstu-delete-rank-btn', function() {
+        if (!confirm('Видалити цей спортивний розряд?')) return;
+        $.post(l10n.ajaxUrl, {
+            action: 'fstu_personal_cabinet_delete_rank',
+            nonce: l10n.nonce,
+            profile_user_id: state.profileUserId,
+            rank_id: $(this).data('id')
+        }).done(function(res) {
+            if(res.success) {
+                state.flashAlert = { type: 'success', message: 'Розряд видалено.' };
+                loadProfile();
+            } else {
+                alert(res.data && res.data.message ? res.data.message : 'Помилка видалення');
+            }
+        }).fail(function(xhr) {
+            alert(getAjaxErrorMessage(xhr, 'Помилка видалення.'));
+        });
+    });
+    // Логіка Суддівство (Judging)
+    var allJudgingCategories = [];
+
+    $(document).on('click', '.fstu-personal-tab-actions__item-button[data-action-key="add_judging"]', function() {
+        $('#fstu-personal-judging-alert').addClass('fstu-hidden');
+        $('#fstu-personal-judging-form')[0].reset();
+        $('#fstu-personal-judging-modal').removeClass('fstu-hidden');
+        
+        if (!allJudgingCategories.length) {
+            var $select = $('#fstu-judging-category-id');
+            $select.html('<option value="">Завантаження...</option>').prop('disabled', true);
+            $.post(l10n.ajaxUrl, { action: 'fstu_personal_cabinet_get_all_referee_categories', nonce: l10n.nonce }).done(function(res) {
+                if (res && res.success) {
+                    allJudgingCategories = res.data || [];
+                    var opts = '<option value="">Оберіть зі списку...</option>';
+                    $.each(allJudgingCategories, function(_, r) { opts += '<option value="'+r.id+'">'+escHtml(r.name)+'</option>'; });
+                    $select.html(opts).prop('disabled', false);
+                }
+            });
+        }
+    });
+
+    $(document).on('click', '#fstu-personal-judging-cancel, #fstu-personal-judging-cancel-icon', function() {
+        $('#fstu-personal-judging-modal').addClass('fstu-hidden');
+    });
+
+    $(document).on('submit', '#fstu-personal-judging-form', function(e) {
+        e.preventDefault();
+        var $btn = $('#fstu-personal-judging-submit');
+        var $alert = $('#fstu-personal-judging-alert');
+
+        $btn.prop('disabled', true).text('Збереження...');
+        $alert.addClass('fstu-hidden').text(''); 
+
+        $.post(l10n.ajaxUrl, {
+            action: 'fstu_personal_cabinet_add_judging',
+            nonce: l10n.nonce,
+            profile_user_id: state.profileUserId,
+            // Передаємо ТІЛЬКИ категорію
+            category_id: $('#fstu-judging-category-id').val()
+        }).done(function(res) {
+            if(res.success) {
+                $('#fstu-personal-judging-modal').addClass('fstu-hidden');
+                state.flashAlert = { type: 'success', message: 'Суддівську категорію додано.' };
+                loadProfile();
+            } else {
+                $alert.removeClass('fstu-hidden').addClass('fstu-alert--error').text(res.data.message || 'Помилка');
+            }
+        }).fail(function(xhr) {
+            $alert.removeClass('fstu-hidden').addClass('fstu-alert--error').text(getAjaxErrorMessage(xhr, 'Помилка збереження.'));
+        }).always(function() {
+            $btn.prop('disabled', false).text('Додати');
+        });
+    });
+
+    $(document).on('click', '.fstu-delete-judging-btn', function() {
+        if (!confirm('Видалити цю суддівську категорію?')) return;
+        $.post(l10n.ajaxUrl, {
+            action: 'fstu_personal_cabinet_delete_judging',
+            nonce: l10n.nonce,
+            profile_user_id: state.profileUserId,
+            judging_id: $(this).data('id')
+        }).done(function(res) {
+            if(res.success) {
+                state.flashAlert = { type: 'success', message: 'Категорію видалено.' };
+                loadProfile();
+            } else {
+                alert(res.data && res.data.message ? res.data.message : 'Помилка видалення');
+            }
+        }).fail(function(xhr) {
+            alert(getAjaxErrorMessage(xhr, 'Помилка видалення.'));
+        });
+    });
+    // Логіка швидкого переходу до реєстру суддів
+    $(document).on('click', '.fstu-personal-tab-actions__item-button[data-action-key="open_referee_registry"]', function() {
+        window.open('/referee', '_blank');
     });
     // Ініціалізація профілю при завантаженні сторінки
     loadProfile();

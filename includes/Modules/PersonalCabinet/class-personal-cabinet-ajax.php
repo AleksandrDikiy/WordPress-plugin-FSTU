@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * AJAX-обробники модуля «Особистий кабінет ФСТУ».
  *
  * Version:     1.5.0
- * Date_update: 2026-04-10
+ * Date_update: 2026-04-12
  */
 class Personal_Cabinet_Ajax {
 
@@ -49,6 +49,20 @@ class Personal_Cabinet_Ajax {
         add_action( 'wp_ajax_fstu_personal_cabinet_get_all_units', [ $this, 'handle_get_all_units' ] );
         add_action( 'wp_ajax_fstu_personal_cabinet_add_unit', [ $this, 'handle_add_unit' ] );
         add_action( 'wp_ajax_fstu_personal_cabinet_delete_unit', [ $this, 'handle_delete_unit' ] );
+		// Методи для роботи з видами туризму
+		add_action( 'wp_ajax_fstu_personal_cabinet_get_all_tourism', [ $this, 'handle_get_all_tourism' ] );
+		add_action( 'wp_ajax_fstu_personal_cabinet_add_tourism', [ $this, 'handle_add_tourism' ] );
+		add_action( 'wp_ajax_fstu_personal_cabinet_delete_tourism', [ $this, 'handle_delete_tourism' ] );
+		// Методи для роботи з Досвідом (Довідки)
+		add_action( 'wp_ajax_fstu_personal_cabinet_update_experience_url', [ $this, 'handle_update_experience_url' ] );
+		// Методи для роботи з розрядами
+		add_action( 'wp_ajax_fstu_personal_cabinet_get_all_ranks', [ $this, 'handle_get_all_ranks' ] );
+		add_action( 'wp_ajax_fstu_personal_cabinet_add_rank', [ $this, 'handle_add_rank' ] );
+		add_action( 'wp_ajax_fstu_personal_cabinet_delete_rank', [ $this, 'handle_delete_rank' ] );
+		// Методи для роботи з Суддівством
+		add_action( 'wp_ajax_fstu_personal_cabinet_get_all_referee_categories', [ $this, 'handle_get_all_referee_categories' ] );
+		add_action( 'wp_ajax_fstu_personal_cabinet_add_judging', [ $this, 'handle_add_judging' ] );
+		add_action( 'wp_ajax_fstu_personal_cabinet_delete_judging', [ $this, 'handle_delete_judging' ] );
 	}
 
 	public function handle_get_profile(): void {
@@ -133,15 +147,52 @@ class Personal_Cabinet_Ajax {
 		$search = sanitize_text_field( $_POST['search'] ?? '' );
 		wp_send_json_success( $this->service->get_protocol_payload( $search, $page, $per_page ) );
 	}
-
+	// Новий метод для отримання даних для Portmone
 	public function handle_get_portmone_payload(): void {
 		$this->verify_nonce();
 		$profile_user_id = $this->sanitize_profile_user_id();
-		$permissions = Capabilities::get_personal_cabinet_permissions( $profile_user_id );
-		$payload = $this->payments_service->build_portmone_payload( $profile_user_id, $permissions );
-		is_wp_error( $payload ) ? $this->send_safe_error( $payload->get_error_message() ) : wp_send_json_success( $payload );
-	}
+		$year = absint($_POST['year'] ?? current_time('Y')); // Отримуємо рік з кнопки
+		
+		if ($profile_user_id <= 0) {
+			$this->send_safe_error('Користувача не знайдено');
+		}
 
+		global $wpdb;
+		// Отримуємо суму як у старому плагіні
+		$amount = floatval( $wpdb->get_var( "SELECT GetParamValueSettings('AnnualFee') as 'AnnualFee'" ) );
+		if ($amount <= 0) $amount = 25; // Страховка
+		
+		// Рахуємо комісію еквайрингу 2.3%
+		$bill_amount = $amount + round(($amount * 0.023), 2);
+		
+		// ФІО
+		$fio = trim( get_user_meta($profile_user_id, 'last_name', true) . ' ' . get_user_meta($profile_user_id, 'first_name', true) . ' ' . get_user_meta($profile_user_id, 'Patronymic', true) );
+
+		// Формуємо payload
+		$payload = [
+			'gatewayUrl' => 'https://www.portmone.com.ua/gateway/',
+			'method' => 'POST',
+			'fields' => [
+				'payee_id'          => '28935',
+				'shop_order_number' => $year . $profile_user_id,
+				'bill_amount'       => $bill_amount,
+				'description'       => 'Благодійна допомога у вигляді реєстраційних членських внесків за ' . $year . ' рік, платник ' . $fio,
+				
+				// ВИПРАВЛЕННЯ: Відправляємо на системний обробник (webhook)
+				'success_url'       => admin_url('admin-post.php?action=fstu_personal_cabinet_portmone_return&result=success&user_id=' . $profile_user_id),
+				'failure_url'       => admin_url('admin-post.php?action=fstu_personal_cabinet_portmone_return&result=failure&user_id=' . $profile_user_id),
+				
+				'attribute1'        => $year,
+				'attribute2'        => get_current_user_id(),
+				'lang'              => 'uk',
+				'encoding'          => 'UTF-8',
+				'exp_time'          => '400'
+			]
+		];
+
+		wp_send_json_success($payload);
+	}
+	// Новий метод для обробки завантаження квитанції про внесок
 	public function handle_upload_dues_receipt(): void {
 		$this->verify_nonce();
 		$profile_user_id = $this->sanitize_profile_user_id();
@@ -628,5 +679,365 @@ class Personal_Cabinet_Ajax {
             $this->send_safe_error('Помилка БД.', 500);
         }
     }
+	public function handle_get_all_tourism(): void {
+		$this->verify_nonce();
+		global $wpdb;
+		$wpdb->suppress_errors(true);
+		
+		$results = $wpdb->get_results( "SELECT TourismType_ID as id, TourismType_Name as name FROM S_TourismType ORDER BY TourismType_Name ASC", ARRAY_A );
+		if ( $wpdb->last_error ) { $this->send_safe_error( 'Помилка SQL', 500 ); }
+		wp_send_json_success( $results ?: [] );
+	}
+
+	public function handle_add_tourism(): void {
+		$this->verify_nonce();
+		$this->assert_authenticated();
+		$profile_user_id = $this->sanitize_profile_user_id();
+		
+		if ( empty( \FSTU\Core\Capabilities::get_personal_cabinet_permissions( $profile_user_id )['canManageTourism'] ) ) {
+			$this->send_safe_error('Немає прав для керування.', 403);
+		}
+		
+		$tourism_id = absint($_POST['tourism_id'] ?? 0);
+		if ( $tourism_id <= 0 ) { $this->send_safe_error( 'Некоректний ID.', 400 ); }
+
+		global $wpdb;
+		$exists = $wpdb->get_var( $wpdb->prepare( "SELECT UserTourismType_ID FROM UserTourismType WHERE User_ID = %d AND TourismType_ID = %d", $profile_user_id, $tourism_id ) );
+		if ( $exists ) { $this->send_safe_error( 'Цей вид туризму вже додано.', 400 ); }
+
+		$tourism_name = $wpdb->get_var( $wpdb->prepare( "SELECT TourismType_Name FROM S_TourismType WHERE TourismType_ID = %d", $tourism_id ) ) ?: "ID $tourism_id";
+
+		$wpdb->query('START TRANSACTION');
+		try {
+			$inserted = $wpdb->insert('UserTourismType', [
+				'User_ID' => $profile_user_id,
+				'TourismType_ID' => $tourism_id,
+				'UserTourismType_DateCreate' => current_time('mysql')
+			]);
+			
+			if ( false === $inserted ) { throw new \Exception('Помилка вставки в БД'); }
+			
+			$this->service->get_protocol_service()->log_action_for_user( get_current_user_id(), 'I', "Додано вид туризму: \"$tourism_name\" (профіль ID $profile_user_id)", '✓' );
+			$wpdb->query('COMMIT');
+			wp_send_json_success( [ 'message' => 'Вид туризму додано.' ] );
+		} catch (\Exception $e) { 
+			$wpdb->query('ROLLBACK'); 
+			$this->send_safe_error('Помилка збереження в базу даних.', 500); 
+		}
+	}
+
+	public function handle_delete_tourism(): void {
+		$this->verify_nonce();
+		$this->assert_authenticated();
+		$profile_user_id = $this->sanitize_profile_user_id();
+		
+		if ( empty( \FSTU\Core\Capabilities::get_personal_cabinet_permissions( $profile_user_id )['canManageTourism'] ) ) {
+			$this->send_safe_error('Немає прав для видалення.', 403);
+		}
+
+		$identifier = sanitize_text_field( wp_unslash( $_POST['tourism_id'] ?? '' ) );
+		$passed_id = absint( $identifier );
+		global $wpdb;
+
+		// Шукаємо за первинним ключем (UserTourismType_ID)
+		$row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM UserTourismType WHERE UserTourismType_ID = %d AND User_ID = %d", $passed_id, $profile_user_id ) );
+		
+		// Шукаємо за TourismType_ID
+		if ( ! $row && $passed_id > 0 ) {
+			$row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM UserTourismType WHERE TourismType_ID = %d AND User_ID = %d LIMIT 1", $passed_id, $profile_user_id ) );
+		}
+		
+		// Шукаємо за текстом
+		if ( ! $row && $passed_id === 0 && '' !== $identifier ) {
+			$sql = "SELECT ut.* FROM UserTourismType ut JOIN S_TourismType t ON ut.TourismType_ID = t.TourismType_ID WHERE t.TourismType_Name = %s AND ut.User_ID = %d LIMIT 1";
+			$row = $wpdb->get_row( $wpdb->prepare( $sql, $identifier, $profile_user_id ) );
+		}
+
+		if ( ! $row ) { $this->send_safe_error( 'Помилка: неможливо знайти запис для видалення.', 400 ); }
+
+		$target_id = (int) $row->UserTourismType_ID;
+		$tourism_id = (int) $row->TourismType_ID;
+		$tourism_name = $wpdb->get_var( $wpdb->prepare( "SELECT TourismType_Name FROM S_TourismType WHERE TourismType_ID = %d", $tourism_id ) ) ?: "ID $tourism_id";
+
+		$wpdb->query('START TRANSACTION');
+		try {
+			$deleted = $wpdb->delete('UserTourismType', [ 'UserTourismType_ID' => $target_id ]);
+			if ( $deleted ) {
+				$this->service->get_protocol_service()->log_action_for_user( get_current_user_id(), 'D', "Видалено вид туризму: \"$tourism_name\" (профіль ID $profile_user_id)", '✓' );
+			}
+			$wpdb->query('COMMIT');
+			wp_send_json_success( [ 'message' => 'Вид туризму видалено.' ] );
+		} catch (\Exception $e) { 
+			$wpdb->query('ROLLBACK'); 
+			$this->send_safe_error('Помилка БД.', 500); 
+		}
+	}
+	public function handle_update_experience_url(): void {
+		$this->verify_nonce();
+		$this->assert_authenticated();
+		$profile_user_id = $this->sanitize_profile_user_id();
+
+		$is_owner  = $profile_user_id === get_current_user_id();
+		$is_admin  = current_user_can( 'administrator' );
+		$is_global = current_user_can( 'globalregistrar' );
+
+		if ( ! $is_owner && ! $is_admin && ! $is_global ) {
+			$this->send_safe_error('Немає прав для редагування.', 403);
+		}
+
+		$passed_id = absint($_POST['experience_id'] ?? 0);
+		$url = esc_url_raw($_POST['url'] ?? '');
+
+		if ( $passed_id <= 0 ) {
+			$this->send_safe_error('Некоректний ID запису.', 400);
+		}
+
+		global $wpdb;
+
+		// РОЗУМНИЙ ПОШУК ID
+		// 1. Припускаємо, що нам прислали прямий UserHikingCategory_ID
+		$target_id = (int) $wpdb->get_var( $wpdb->prepare( "SELECT UserHikingCategory_ID FROM UserHikingCategory WHERE UserHikingCategory_ID = %d AND User_ID = %d", $passed_id, $profile_user_id ) );
+
+		// 2. Якщо не знайдено, значить прислали Calendar_ID. Шукаємо зв'язок через в'юху!
+		if ( ! $target_id ) {
+			$sql_cal = "SELECT h.UserHikingCategory_ID FROM vUserHikingCategory h JOIN UserCalendar uc ON h.UserCalendar_ID = uc.UserCalendar_ID WHERE uc.Calendar_ID = %d AND h.User_ID = %d LIMIT 1";
+			$target_id = (int) $wpdb->get_var( $wpdb->prepare( $sql_cal, $passed_id, $profile_user_id ) );
+		}
+
+		if ( ! $target_id ) {
+			$this->send_safe_error('Помилка: неможливо знайти похід у базі даних.', 400);
+		}
+
+		// Дістаємо назву походу для Протоколу
+		$sql_name = "SELECT c.Calendar_Name FROM UserHikingCategory u LEFT JOIN UserCalendar uc ON u.UserCalendar_ID = uc.UserCalendar_ID LEFT JOIN Calendar c ON uc.Calendar_ID = c.Calendar_ID WHERE u.UserHikingCategory_ID = %d";
+		$event_name = $wpdb->get_var($wpdb->prepare($sql_name, $target_id)) ?: "ID $target_id";
+
+		$wpdb->query('START TRANSACTION');
+		try {
+			// Оновлюємо посилання за точним цільовим ID
+			$updated = $wpdb->update('UserHikingCategory', 
+				[ 'UserHikingCategory_UrlDivodka' => $url ], 
+				[ 'UserHikingCategory_ID' => $target_id ]
+			);
+
+			if ( false === $updated ) { throw new \Exception('Помилка оновлення БД.'); }
+
+			$this->service->get_protocol_service()->log_action_for_user( 
+				get_current_user_id(), 'U', 
+				"Оновлено довідку за похід: \"$event_name\" (профіль ID $profile_user_id)", '✓' 
+			);
+
+			$wpdb->query('COMMIT');
+			wp_send_json_success(['message' => 'Посилання успішно оновлено.']);
+		} catch (\Exception $e) {
+			$wpdb->query('ROLLBACK');
+			$this->send_safe_error('Помилка збереження в базу даних.', 500);
+		}
+	}
+	public function handle_get_all_ranks(): void {
+		$this->verify_nonce();
+		global $wpdb;
+		$wpdb->suppress_errors(true);
+		$results = $wpdb->get_results( "SELECT SportsCategories_ID as id, SportsCategories_Name as name FROM S_SportsCategories ORDER BY SportsCategories_Order ASC", ARRAY_A );
+		wp_send_json_success( $results ?: [] );
+	}
+	// Цей метод підтримує видалення розрядів за різними типами ідентифікаторів: UserSportCategories_ID, Calendar_ID, SportsCategories_ID або навіть текстовою назвою розряду.
+	public function handle_add_rank(): void {
+		$this->verify_nonce();
+		$this->assert_authenticated();
+		$profile_user_id = $this->sanitize_profile_user_id();
+
+		$is_owner  = $profile_user_id === get_current_user_id();
+		$can_manage = ! empty( \FSTU\Core\Capabilities::get_personal_cabinet_permissions( $profile_user_id )['canManageRanks'] );
+		if ( ! $is_owner && ! $can_manage && ! current_user_can('administrator') && ! current_user_can('globalregistrar') ) {
+			$this->send_safe_error('Немає прав.', 403);
+		}
+
+		$rank_id = absint($_POST['rank_id'] ?? 0);
+		$tourism_id = absint($_POST['tourism_id'] ?? 0);
+		$prikaz_num = sanitize_text_field(wp_unslash($_POST['prikaz_num'] ?? ''));
+		$prikaz_date = sanitize_text_field(wp_unslash($_POST['prikaz_date'] ?? ''));
+		$prikaz_url = esc_url_raw($_POST['prikaz_url'] ?? '');
+
+		if ( $rank_id <= 0 ) { $this->send_safe_error('Некоректний розряд.', 400); }
+
+		global $wpdb;
+		
+		// УВІМКНЕМО ВИВЕДЕННЯ РЕАЛЬНИХ ПОМИЛОК MySQL
+		$wpdb->show_errors(true);
+
+		$rank_name = $wpdb->get_var($wpdb->prepare("SELECT SportsCategories_Name FROM S_SportsCategories WHERE SportsCategories_ID = %d", $rank_id)) ?: "ID $rank_id";
+
+		$data = [
+			'User_ID' => $profile_user_id,
+			'SportsCategories_ID' => $rank_id,
+			'UserSportCategories_DateCreate' => current_time('mysql'),
+			'UserCreate' => get_current_user_id(),
+			'UserSportCategories_PrikazNumber' => $prikaz_num,
+			'UserSportCategories_UrlPrikaz' => $prikaz_url,
+		];
+		if ($prikaz_date) { $data['UserSportCategories_DatePrikaz'] = $prikaz_date; }
+		if ($tourism_id > 0) { $data['TourismType_ID'] = $tourism_id; }
+
+		// Вставляємо без транзакцій, щоб уникнути конфліктів рушіїв InnoDB/MyISAM
+		$inserted = $wpdb->insert('UserSportCategories', $data);
+		
+		if ( false === $inserted ) { 
+			// Віддаємо точну помилку бази прямо в червоний алерт!
+			$this->send_safe_error('Помилка БД: ' . $wpdb->last_error, 500); 
+		}
+
+		$this->service->get_protocol_service()->log_action_for_user(
+			get_current_user_id(), 'I', "Додано спортивний розряд: \"$rank_name\" (профіль ID $profile_user_id)", '✓'
+		);
+
+		wp_send_json_success(['message' => 'Розряд успішно додано.']);
+	}
+	// Цей метод підтримує видалення розрядів за різними типами ідентифікаторів: UserSportCategories_ID, Calendar_ID, SportsCategories_ID або навіть текстовою назвою розряду.
+	public function handle_delete_rank(): void {
+		$this->verify_nonce();
+		$this->assert_authenticated();
+		$profile_user_id = $this->sanitize_profile_user_id();
+
+		$is_owner  = $profile_user_id === get_current_user_id();
+		$can_manage = ! empty( \FSTU\Core\Capabilities::get_personal_cabinet_permissions( $profile_user_id )['canManageRanks'] );
+		if ( ! $is_owner && ! $can_manage && ! current_user_can('administrator') && ! current_user_can('globalregistrar') ) {
+			$this->send_safe_error('Немає прав.', 403);
+		}
+
+		$identifier = sanitize_text_field( wp_unslash( $_POST['rank_id'] ?? '' ) );
+		$passed_id  = absint( $identifier );
+		global $wpdb;
+
+		$target_id = 0;
+		
+		// 1. Шукаємо за точним UserSportCategories_ID
+		if ( $passed_id > 0 ) {
+			$target_id = (int) $wpdb->get_var( $wpdb->prepare( "SELECT UserSportCategories_ID FROM UserSportCategories WHERE UserSportCategories_ID = %d AND User_ID = %d", $passed_id, $profile_user_id ) );
+		}
+		
+		// 2. Якщо це Calendar_ID (розряд отриманий за змагання)
+		if ( ! $target_id && $passed_id > 0 ) {
+			$sql_cal = "SELECT s.UserSportCategories_ID FROM vUserSportCategories s JOIN UserCalendar u ON s.UserCalendar_ID = u.UserCalendar_ID WHERE u.Calendar_ID = %d AND s.User_ID = %d LIMIT 1";
+			$target_id = (int) $wpdb->get_var( $wpdb->prepare( $sql_cal, $passed_id, $profile_user_id ) );
+		}
+
+		// 3. Якщо це SportsCategories_ID (ID самого розряду з довідника)
+		if ( ! $target_id && $passed_id > 0 ) {
+			$target_id = (int) $wpdb->get_var( $wpdb->prepare( "SELECT UserSportCategories_ID FROM UserSportCategories WHERE SportsCategories_ID = %d AND User_ID = %d LIMIT 1", $passed_id, $profile_user_id ) );
+		}
+
+		// 4. Fallback по текстовій назві розряду (наприклад, "КМСУ")
+		if ( ! $target_id && '' !== $identifier ) {
+			$sql_name = "SELECT usc.UserSportCategories_ID FROM UserSportCategories usc JOIN S_SportsCategories sc ON usc.SportsCategories_ID = sc.SportsCategories_ID WHERE sc.SportsCategories_Name = %s AND usc.User_ID = %d LIMIT 1";
+			$target_id = (int) $wpdb->get_var( $wpdb->prepare( $sql_name, $identifier, $profile_user_id ) );
+		}
+
+		if ( ! $target_id ) {
+			$this->send_safe_error('Запис не знайдено у базі.', 400);
+		}
+
+		$rank_id = (int) $wpdb->get_var( $wpdb->prepare("SELECT SportsCategories_ID FROM UserSportCategories WHERE UserSportCategories_ID = %d", $target_id) );
+		$rank_name = $wpdb->get_var($wpdb->prepare("SELECT SportsCategories_Name FROM S_SportsCategories WHERE SportsCategories_ID = %d", $rank_id)) ?: "ID $rank_id";
+		
+		$wpdb->query('START TRANSACTION');
+		try {
+			$deleted = $wpdb->delete('UserSportCategories', ['UserSportCategories_ID' => $target_id]);
+			if ($deleted) {
+				$this->service->get_protocol_service()->log_action_for_user(get_current_user_id(), 'D', "Видалено спортивний розряд: \"$rank_name\" (профіль ID $profile_user_id)", '✓');
+			}
+			$wpdb->query('COMMIT');
+			wp_send_json_success(['message' => 'Розряд видалено.']);
+		} catch (\Exception $e) {
+			$wpdb->query('ROLLBACK');
+			$this->send_safe_error('Помилка видалення', 500);
+		}
+	}
+	// Цей метод підтримує видалення категорій за різними типами ідентифікаторів: Referee_ID, Calendar_ID, RefereeCategory_ID або навіть текстовою назвою категорії.
+	public function handle_get_all_referee_categories(): void {
+		$this->verify_nonce();
+		global $wpdb;
+		$wpdb->suppress_errors(true);
+		$results = $wpdb->get_results( "SELECT RefereeCategory_ID as id, RefereeCategory_Name as name FROM vRefereeCategory ORDER BY RefereeCategory_Order ASC", ARRAY_A );
+		wp_send_json_success( $results ?: [] );
+	}
+	// Цей метод підтримує видалення категорій за різними типами ідентифікаторів: Referee_ID, Calendar_ID, RefereeCategory_ID або навіть текстовою назвою категорії.
+	public function handle_add_judging(): void {
+		$this->verify_nonce();
+		$this->assert_authenticated();
+		$profile_user_id = $this->sanitize_profile_user_id();
+
+		$is_owner  = $profile_user_id === get_current_user_id();
+		$can_manage = ! empty( \FSTU\Core\Capabilities::get_personal_cabinet_permissions( $profile_user_id )['canManageJudging'] );
+		if ( ! $is_owner && ! $can_manage && ! current_user_can('administrator') && ! current_user_can('globalregistrar') ) {
+			$this->send_safe_error('Немає прав.', 403);
+		}
+
+		$category_id = absint($_POST['category_id'] ?? 0);
+
+		if ( $category_id <= 0 ) { $this->send_safe_error('Некоректна категорія.', 400); }
+
+		global $wpdb;
+		$wpdb->suppress_errors(true);
+
+		$category_name = $wpdb->get_var($wpdb->prepare("SELECT RefereeCategory_Name FROM vRefereeCategory WHERE RefereeCategory_ID = %d", $category_id)) ?: "ID $category_id";
+
+		// Вставляємо ВИКЛЮЧНО ті поля, які є у старій базі даних
+		$data = [
+			'User_ID'            => $profile_user_id,
+			'RefereeCategory_ID' => $category_id,
+			'Referee_DateCreate' => current_time('mysql'),
+		];
+
+		$inserted = $wpdb->insert('Referee', $data);
+		
+		if ( false === $inserted ) { 
+			$this->send_safe_error('Помилка БД: ' . $wpdb->last_error, 500); 
+		}
+
+		$this->service->get_protocol_service()->log_action_for_user(
+			get_current_user_id(), 'I', "Додано суддівську категорію: \"$category_name\" (профіль ID $profile_user_id)", '✓'
+		);
+
+		wp_send_json_success(['message' => 'Суддівську категорію успішно додано.']);
+	}
+	// Цей метод підтримує видалення категорій за різними типами ідентифікаторів: Referee_ID, Calendar_ID, RefereeCategory_ID або навіть текстовою назвою категорії.
+	public function handle_delete_judging(): void {
+		$this->verify_nonce();
+		$this->assert_authenticated();
+		$profile_user_id = $this->sanitize_profile_user_id();
+
+		$is_owner  = $profile_user_id === get_current_user_id();
+		$can_manage = ! empty( \FSTU\Core\Capabilities::get_personal_cabinet_permissions( $profile_user_id )['canManageJudging'] );
+		if ( ! $is_owner && ! $can_manage && ! current_user_can('administrator') && ! current_user_can('globalregistrar') ) {
+			$this->send_safe_error('Немає прав.', 403);
+		}
+
+		$passed_id = absint( $_POST['judging_id'] ?? 0 );
+		global $wpdb;
+
+		if ($passed_id > 0) {
+			$target_id = (int) $wpdb->get_var( $wpdb->prepare( "SELECT Referee_ID FROM Referee WHERE Referee_ID = %d AND User_ID = %d", $passed_id, $profile_user_id ) );
+			if (!$target_id) { $this->send_safe_error('Запис не знайдено.', 400); }
+			
+			$cat_id = (int) $wpdb->get_var( $wpdb->prepare("SELECT RefereeCategory_ID FROM Referee WHERE Referee_ID = %d", $target_id) );
+			$cat_name = $wpdb->get_var($wpdb->prepare("SELECT RefereeCategory_Name FROM vRefereeCategory WHERE RefereeCategory_ID = %d", $cat_id)) ?: "ID $cat_id";
+			
+			$wpdb->query('START TRANSACTION');
+			try {
+				$deleted = $wpdb->delete('Referee', ['Referee_ID' => $target_id]);
+				if ($deleted) {
+					$this->service->get_protocol_service()->log_action_for_user(get_current_user_id(), 'D', "Видалено суддівську категорію: \"$cat_name\" (профіль ID $profile_user_id)", '✓');
+				}
+				$wpdb->query('COMMIT');
+				wp_send_json_success(['message' => 'Категорію видалено.']);
+			} catch (\Exception $e) {
+				$wpdb->query('ROLLBACK');
+				$this->send_safe_error('Помилка видалення', 500);
+			}
+		} else {
+			$this->send_safe_error('Некоректний ID', 400);
+		}
+	}
 	//-----------------
 }

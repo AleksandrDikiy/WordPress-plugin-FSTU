@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Бізнес-сервіс модуля «Особистий кабінет ФСТУ».
  *
  * Version:     1.14.0
- * Date_update: 2026-04-10
+ * Date_update: 2026-04-12
  *
  * @package FSTU\Modules\PersonalCabinet
  */
@@ -87,7 +87,24 @@ class Personal_Cabinet_Service {
 		$units        = $this->repository->get_user_units( $user_id );
 		$tourism      = $this->repository->get_user_tourism_types( $user_id );
 		$experience   = $this->repository->get_user_experience( $user_id );
-		$ranks        = $this->repository->get_user_ranks( $user_id );
+		// --- ВИПРАВЛЕННЯ БАГА СТАРОЇ СИСТЕМИ ---
+		// Репозиторій тягнув розряди тільки через UserCalendar, ігноруючи ручні.
+		// Робимо правильний запит, що захоплює абсолютно всі розряди:
+		global $wpdb;
+		$ranks = $wpdb->get_results( $wpdb->prepare( "
+			SELECT s.*, 
+			       c.Calendar_ID, c.Calendar_Name, c.Calendar_DateBegin, c.Calendar_DateEnd
+			FROM vUserSportCategories s
+			LEFT JOIN UserCalendar u ON s.UserCalendar_ID = u.UserCalendar_ID
+			LEFT JOIN Calendar c ON c.Calendar_ID = u.Calendar_ID
+			WHERE s.User_ID = %d
+			ORDER BY s.UserSportCategories_DatePrikaz DESC
+		", $user_id ), ARRAY_A );
+		
+		if ( ! is_array( $ranks ) ) {
+			$ranks = [];
+		}
+		// ---------------------------------------
 		$judging      = $this->repository->get_user_judging( $user_id );
 		$dues         = $this->repository->get_user_dues( $user_id );
 		$dues_sail    = $this->repository->get_user_dues_sail( $user_id );
@@ -345,14 +362,116 @@ class Personal_Cabinet_Service {
 		$unit_sections    = $this->build_unit_sections( isset( $collections['units'] ) && is_array( $collections['units'] ) ? $collections['units'] : [] );
 		$tourism_sections = $this->build_tourism_sections( isset( $collections['tourism'] ) && is_array( $collections['tourism'] ) ? $collections['tourism'] : [] );
 		$experience_sections = $this->build_experience_sections( isset( $collections['experience'] ) && is_array( $collections['experience'] ) ? $collections['experience'] : [] );
-		$rank_sections       = $this->build_rank_sections( isset( $collections['ranks'] ) && is_array( $collections['ranks'] ) ? $collections['ranks'] : [] );
-		$judging_sections    = $this->build_judging_sections( isset( $collections['judging'] ) && is_array( $collections['judging'] ) ? $collections['judging'] : [] );
+		
+		global $wpdb;
+		$profile_user_id = isset( $profile['userId'] ) ? (int) $profile['userId'] : 0;
+		$user = get_userdata( $profile_user_id );
+
+		// --- РОЗРЯДИ ---
+		$db_ranks = $wpdb->get_results( $wpdb->prepare( "
+			SELECT s.*, 
+			       t.TourismType_Name,
+			       c.Calendar_ID, c.Calendar_Name, c.Calendar_DateBegin, c.Calendar_DateEnd
+			FROM vUserSportCategories s
+			LEFT JOIN S_TourismType t ON s.TourismType_ID = t.TourismType_ID
+			LEFT JOIN UserCalendar u ON s.UserCalendar_ID = u.UserCalendar_ID
+			LEFT JOIN Calendar c ON c.Calendar_ID = u.Calendar_ID
+			WHERE s.User_ID = %d
+			ORDER BY s.UserSportCategories_DateCreate DESC
+		", $profile_user_id ), ARRAY_A );
+		if ( ! is_array( $db_ranks ) ) { $db_ranks = []; }
+
+		// --- СУДДІВСТВО ---
+		$db_judging = $wpdb->get_results( $wpdb->prepare( "
+			SELECT r.*, c.RefereeCategory_Name 
+			FROM Referee r 
+			LEFT JOIN vRefereeCategory c ON r.RefereeCategory_ID = c.RefereeCategory_ID 
+			WHERE r.User_ID = %d 
+			ORDER BY c.RefereeCategory_Order ASC
+		", $profile_user_id ), ARRAY_A );
+		if ( ! is_array( $db_judging ) ) { $db_judging = []; }
+
+		// --- ВНЕСКИ (Новий оптимізований SQL-запит) ---
+		$db_dues = $wpdb->get_results( $wpdb->prepare( "
+			SELECT 
+				d.Dues_ID, d.User_ID, d.DuesType_ID, d.Year_ID, d.Year_ID AS Year_Name, 
+				d.Dues_Summa, d.Dues_URL, d.Dues_DateCreate, d.UserCreate, 
+				d.Dues_ShopBillid, d.Dues_ShopOrderNumber, d.Dues_ApprovalCode, d.Dues_CardMask, 
+				t.DuesType_Name,
+				CONCAT(
+					COALESCE(m1.meta_value, ''), ' ', 
+					LEFT(COALESCE(m2.meta_value, ''), 1), '.', 
+					LEFT(COALESCE(m3.meta_value, ''), 1), '.'
+				) AS Financier
+			FROM Dues d
+			JOIN {$wpdb->users} u ON u.ID = d.UserCreate
+			JOIN S_DuesType t ON t.DuesType_ID = d.DuesType_ID
+			LEFT JOIN {$wpdb->usermeta} m1 ON m1.user_id = u.ID AND m1.meta_key = 'last_name'
+			LEFT JOIN {$wpdb->usermeta} m2 ON m2.user_id = u.ID AND m2.meta_key = 'first_name'
+			LEFT JOIN {$wpdb->usermeta} m3 ON m3.user_id = u.ID AND m3.meta_key = 'Patronymic'
+			WHERE d.User_ID = %d
+			ORDER BY d.Year_ID DESC, d.Dues_DateCreate DESC
+		", $profile_user_id ), ARRAY_A );
+		if ( ! is_array( $db_dues ) ) { $db_dues = []; }
+
+		// Групуємо внески по роках
+		$dues_by_year = [];
+		foreach ($db_dues as $due) {
+			$y = (int) ($due['Year_ID'] ?? 0);
+			if ($y > 0) { $dues_by_year[$y][] = $due; }
+		}
+
+		$reg_date = $user->user_registered ?? current_time('mysql');
+		$year_reg = (int) gmdate('Y', strtotime($reg_date));
+		if ($year_reg < 2000) $year_reg = (int) current_time('Y');
+		$current_year = (int) current_time('Y');
+		
+		$is_owner = ! empty( $permissions['isOwner'] );
+
+		// Формуємо рядки таблиці внесків (включаючи порожні роки)
+		$dues_table_rows = [];
+		for ($y = $current_year; $y >= $year_reg; $y--) {
+			if (!empty($dues_by_year[$y])) {
+				// Беремо найновіший запис за рік, щоб точно не було дублікатів
+				$due = $dues_by_year[$y][0]; 
+				$has_receipt   = '' !== trim( (string) ( $due['Dues_URL'] ?? '' ) );
+				$has_acquiring = '' !== trim( (string) ( $due['Dues_ShopBillid'] ?? '' ) );
+				$status        = $has_receipt ? 'Квитанція додана' : ( $has_acquiring ? 'Еквайринг' : 'Квитанція відсутня' );
+				
+				$dues_table_rows[] = [
+					'id'           => $due['Dues_ID'] ?? '',
+					'year'         => $y,
+					'sum'          => $this->normalize_sum( (string) ($due['Dues_Summa'] ?? '') ),
+					'type'         => $this->normalize_value( $due['DuesType_Name'] ?? '' ),
+					'date'         => $this->format_date( $due['Dues_DateCreate'] ?? '' ),
+					'financier'    => $this->normalize_value( $due['Financier'] ?? '' ),
+					'status'       => $status,
+					'receipt_url'  => $this->normalize_integration_url( (string) ( $due['Dues_URL'] ?? '' ) ),
+					'_actions'     => '', 
+				];
+			} else {
+				// Порожній рядок + Кнопка ОПЛАТИТИ
+				$dues_table_rows[] = [
+					'id'           => '',
+					'year'         => $y,
+					'sum'          => '—',
+					'type'         => '—',
+					'date'         => '—',
+					'financier'    => '—',
+					'status'       => 'Не сплачено',
+					'receipt_url'  => '',
+					'_actions'     => ($is_owner || current_user_can('administrator')) ? 'pay_portmone' : '',
+				];
+			}
+		}
+
+		$rank_sections       = $this->build_rank_sections( $db_ranks );
+		$judging_sections    = $this->build_judging_sections( $db_judging );
 		$dues_sections       = $this->build_dues_sections(
 			$dues_items_raw,
 			$settings_values,
 			isset( $collections['unit_payment'] ) && is_array( $collections['unit_payment'] ) ? $collections['unit_payment'] : []
 		);
-		$dues_table_rows     = $this->build_dues_table_rows( $dues_items_raw );
 		$sailing_sections    = $this->build_sailing_sections(
 			isset( $collections['vessels'] ) && is_array( $collections['vessels'] ) ? $collections['vessels'] : [],
 			isset( $collections['certs'] ) && is_array( $collections['certs'] ) ? $collections['certs'] : []
@@ -364,8 +483,7 @@ class Personal_Cabinet_Service {
 		$dues_sail_table_rows = $this->build_dues_sail_table_rows( $dues_sail_items_raw );
 		$integration_urls    = $this->get_integration_urls();
 		$member_card_permissions = \FSTU\Core\Capabilities::get_member_card_applications_permissions();
-		$profile_user_id     = isset( $profile['userId'] ) ? (int) $profile['userId'] : 0;
-		$is_owner            = ! empty( $permissions['isOwner'] );
+		
 		$can_edit_profile   = ! empty( $permissions['canEditProfile'] );
 		$can_manage_clubs   = ! empty( $permissions['canManageClubs'] );
 		$can_manage_cities  = ! empty( $permissions['canManageCities'] );
@@ -376,7 +494,7 @@ class Personal_Cabinet_Service {
 		$can_manage_judging = ! empty( $permissions['canManageJudging'] );
 		$can_manage_dues    = ! empty( $permissions['canManageDues'] );
 		$can_pay_online     = ! empty( $permissions['canPayOnline'] );
-		$can_view_dues      = $can_manage_dues || $can_pay_online || ! empty( $permissions['isOwner'] );
+		$can_view_dues      = $can_manage_dues || $can_pay_online || $is_owner;
 		$can_manage_sailing = ! empty( $permissions['canManageSailing'] );
 		$can_manage_sail_dues = ! empty( $permissions['canManageSailDues'] );
 
@@ -453,7 +571,6 @@ class Personal_Cabinet_Service {
 				'visible' => true,
 				'sections' => $general_sections,
 				'actions' => $general_actions,
-				// Текст "Ви зможете редагувати..." прибрано:
 				'accessNotice' => '',
 				'isReadOnly' => ! $can_edit_profile,
 				'note'    => $general_note,
@@ -463,7 +580,7 @@ class Personal_Cabinet_Service {
 				'visible' => $can_view_private,
 				'sections' => [
 					[
-						'title' => '', // Прибрали заголовок "Додаткова інформація"
+						'title' => '', 
 						'items' => [
 							[ 'label' => 'Адреса проживання', 'value' => (string) ( $profile['address'] ?? '' ), 'key' => 'Adr' ],
 							[ 'label' => 'Місце роботи, посада', 'value' => (string) ( $profile['job'] ?? '' ), 'key' => 'Job' ],
@@ -475,8 +592,8 @@ class Personal_Cabinet_Service {
 					],
 				],
 				'actions' => [],
-				'accessNotice' => '', // Прибрали сповіщення "Ви авторизовані як адміністратор..."
-				'isReadOnly' => true, // Тепер завжди тільки для перегляду
+				'accessNotice' => '', 
+				'isReadOnly' => true, 
 				'note'    => '* Для оформлення документів (доступна тільки Реєстраторам, Адміністраторам та власнику)',
 			],
 			'service' => [
@@ -527,7 +644,7 @@ class Personal_Cabinet_Service {
 				'note'    => '',
 			],
 			'clubs' => [
-				'title'   => '', // Прибрано заголовок
+				'title'   => '',
 				'visible' => true,
 				'table'   => [
 					'columns' => [
@@ -535,7 +652,7 @@ class Personal_Cabinet_Service {
 						[ 'key' => 'site', 'label' => 'Сайт', 'type' => 'link' ],
 						[ 'key' => 'address', 'label' => 'Адреса' ],
 						[ 'key' => 'date', 'label' => 'Дата додавання' ],
-						[ 'key' => '_actions', 'label' => 'Дії', 'type' => 'actions' ], // Нова колонка для кнопок
+						[ 'key' => '_actions', 'label' => 'Дії', 'type' => 'actions' ],
 					],
 					'rows' => array_map( function( $club ) use ( $can_manage_clubs ) {
 						return [
@@ -544,7 +661,7 @@ class Personal_Cabinet_Service {
 							'site'    => $this->normalize_value( $club['Club_WWW'] ?? '' ),
 							'address' => $this->normalize_value( $club['Club_Adr'] ?? '' ),
 							'date'    => $this->format_date( $club['UserClub_Date'] ?? '' ),
-							'_actions'=> $can_manage_clubs ? 'delete' : '', // Дозвіл на видалення
+							'_actions'=> $can_manage_clubs ? 'delete' : '',
 						];
 					}, isset( $collections['clubs'] ) && is_array( $collections['clubs'] ) ? $collections['clubs'] : [] ),
 					'defaultPerPage' => 10,
@@ -557,12 +674,12 @@ class Personal_Cabinet_Service {
 						'actionKey' => 'add_club',
 					]
 				], '' ),
-				'accessNotice' => '', // Прибрано текст-сповіщення
+				'accessNotice' => '',
 				'isReadOnly' => ! $can_manage_clubs,
 				'note'    => 'Показано історію членства у спортивних клубах у вигляді компактної таблиці.',
 			],
 			'city' => [
-				'title'   => '', // Прибрано заголовок
+				'title'   => '',
 				'visible' => true,
 				'table'   => [
 					'columns' => [
@@ -573,7 +690,6 @@ class Personal_Cabinet_Service {
 					],
 					'rows' => array_map( function( $city ) use ( $can_manage_cities ) {
 						return [
-							// ЗМІНЕНО: Якщо City_ID немає, передаємо назву
 							'id'      => ! empty( $city['City_ID'] ) ? $city['City_ID'] : ( $city['City_Name'] ?? '' ),
 							'city'    => $this->normalize_value( $city['City_Name'] ?? '' ),
 							'region'  => $this->normalize_value( $city['Region_Name'] ?? '' ),
@@ -596,7 +712,7 @@ class Personal_Cabinet_Service {
 				'note'    => 'Показано актуальне місто проживання та історію змін у вигляді таблиці.',
 			],
             'units' => [
-                'title'   => '', // Прибрано заголовок
+                'title'   => '',
                 'visible' => true,
                 'table'   => [
                     'columns' => [
@@ -607,10 +723,7 @@ class Personal_Cabinet_Service {
                     ],
                     'rows' => array_map( function( $unit ) use ( $can_manage_units ) {
                         return [
-                            // ВАЖЛИВО: Використовуємо правильний первинний ключ або Fallback на назву
                             'id'      => ! empty( $unit['UserRegistationOFST_ID'] ) ? $unit['UserRegistationOFST_ID'] : ( ! empty( $unit['Unit_ID'] ) ? $unit['Unit_ID'] : ( $unit['Region_Name'] ?? '' ) ),
-
-                            // Fallback для старих записів, де немає Unit_Name
                             'unit'    => $this->normalize_value( $unit['Unit_Name'] ?? $unit['Region_Name'] ?? '' ),
                             'region'  => $this->normalize_value( $unit['Region_Name'] ?? '' ),
                             'date'    => $this->format_date( $unit['UserRegistationOFST_DateCreate'] ?? '' ),
@@ -632,78 +745,162 @@ class Personal_Cabinet_Service {
                 'note'    => 'Показано актуальний осередок та історію членства в осередках ФСТУ.',
             ],
 			'tourism' => [
-				'title'   => 'Види туризму',
+				'title'   => '',
 				'visible' => true,
-				'sections' => $tourism_sections,
-				'actions' => $this->build_tab_actions(
-					[
-						'Додати вид туризму' => $can_manage_tourism,
-						'Видалити вид туризму' => $can_manage_tourism,
+				'table'   => [
+					'columns' => [
+						[ 'key' => 'tourism_type', 'label' => 'Вид туризму' ],
+						[ 'key' => 'date', 'label' => 'Дата додавання' ],
+						[ 'key' => '_actions', 'label' => 'Дії', 'type' => 'actions' ],
 					],
-					'Mutation-flow для видів туризму буде підключено окремим етапом.'
-				),
-				'accessNotice' => $can_manage_tourism ? 'Ви маєте право керувати видами туризму після підключення mutation-flow.' : 'Вкладка доступна лише для перегляду.',
+					'rows' => array_map( function( $item ) use ( $can_manage_tourism ) {
+						return [
+							'id'           => ! empty( $item['UserTourismType_ID'] ) ? $item['UserTourismType_ID'] : ( ! empty( $item['TourismType_ID'] ) ? $item['TourismType_ID'] : ( $item['TourismType_Name'] ?? '' ) ),
+							'tourism_type' => $this->normalize_value( $item['TourismType_Name'] ?? '' ),
+							'date'         => $this->format_date( $item['UserTourismType_DateCreate'] ?? '' ),
+							'_actions'     => $can_manage_tourism ? 'delete_tourism' : '',
+						];
+					}, isset( $collections['tourism'] ) && is_array( $collections['tourism'] ) ? $collections['tourism'] : [] ),
+					'defaultPerPage' => 10,
+					'emptyMessage'   => __( 'Види туризму для користувача поки не визначені.', 'fstu' ),
+				],
+				'actions' => $this->build_tab_actions( [
+					[
+						'label'   => 'Додати вид туризму',
+						'enabled' => $can_manage_tourism,
+						'actionKey' => 'add_tourism',
+					]
+				], '' ),
+				'accessNotice' => '',
 				'isReadOnly' => ! $can_manage_tourism,
-				'note'    => empty( $tourism_sections ) ? 'Види туризму для користувача поки не визначені.' : 'Показано історію прив’язки видів туризму. Mutation-flow буде перенесено окремим етапом.',
+				'note'    => 'Показано історію прив’язки видів туризму.',
 			],
 			'experience' => [
-				'title'   => 'Досвід',
+				'title'   => '',
 				'visible' => true,
-				'sections' => $experience_sections,
-				'actions' => $this->build_tab_actions(
-					[
-						'Додати / оновити довідку' => $can_manage_experience,
+				'table'   => [
+					'columns' => [
+						[ 'key' => 'category', 'label' => 'Категорія' ],
+						[ 'key' => 'type', 'label' => 'Участь' ],
+						[ 'key' => 'event', 'label' => 'Захід' ],
+						[ 'key' => 'tourism', 'label' => 'Вид туризму' ],
+						[ 'key' => 'dates', 'label' => 'Терміни' ],
+						[ 'key' => 'divodka', 'label' => 'Довідка', 'type' => 'link' ],
+						[ 'key' => '_actions', 'label' => 'Дії', 'type' => 'actions' ],
 					],
-					'Редагування довідки за похід буде підключено окремим етапом.'
-				),
-				'accessNotice' => $can_manage_experience ? 'Ви маєте право керувати довідками за похід після підключення mutation-flow.' : 'Вкладка доступна лише для перегляду.',
-				'isReadOnly' => ! $can_manage_experience,
-				'note'    => empty( $experience_sections ) ? 'Спортивний туристський досвід поки не вказаний.' : 'Показано read-only дані про досвід участі у спортивних походах. Додавання або редагування довідки буде перенесено окремим етапом.',
+					'rows' => array_map( function( $item ) use ( $can_manage_experience, $is_owner ) {
+						$can_edit = $is_owner || $can_manage_experience || current_user_can('administrator') || current_user_can('globalregistrar');
+						$row_id = $item['UserHikingCategory_ID'] ?? $item['UserCalendar_ID'] ?? $item['Calendar_ID'] ?? $item['id'] ?? '';
+
+						return [
+							'id'       => $row_id,
+							'category' => $this->normalize_value( $item['HikingCategory_Name'] ?? $item['CategoriesName'] ?? '' ),
+							'type'     => $this->normalize_value( $item['ParticipationType_Name'] ?? '' ),
+							'event'    => $this->normalize_value( $item['Calendar_Name'] ?? '' ),
+							'tourism'  => $this->normalize_value( $item['TourismType_Name'] ?? '' ),
+							'dates'    => $this->format_period( $item['Calendar_DateBegin'] ?? '', $item['Calendar_DateEnd'] ?? '' ),
+							'divodka'  => $this->normalize_value( $item['UserHikingCategory_UrlDivodka'] ?? '' ),
+							'_actions' => $can_edit ? 'edit_divodka' : '',
+						];
+					}, isset( $collections['experience'] ) && is_array( $collections['experience'] ) ? $collections['experience'] : [] ),
+					'defaultPerPage' => 10,
+					'emptyMessage'   => __( 'Спортивний туристський досвід поки не вказаний.', 'fstu' ),
+				],
+				'actions' => [], 
+				'accessNotice' => '',
+				'isReadOnly' => !( $is_owner || $can_manage_experience || current_user_can('administrator') || current_user_can('globalregistrar') ),
+				'note'    => 'Показано історію участі у спортивних походах. Ви можете додати або оновити посилання на довідку (копію документа попередньо завантажте на Google Диск).',
 			],
 			'ranks' => [
-				'title'   => 'Розряди',
+				'title'   => '',
 				'visible' => true,
-				'sections' => $rank_sections,
-				'actions' => $this->build_tab_actions(
-					[
-						'Додати розряд' => $can_manage_ranks,
+				'table'   => [
+					'columns' => [
+						[ 'key' => 'rank', 'label' => 'Розряд / звання' ],
+						[ 'key' => 'date', 'label' => 'Дата присвоєння' ],
+						[ 'key' => 'tourism', 'label' => 'Вид туризму' ],
+						[ 'key' => 'calendar', 'label' => 'Календар', 'type' => 'html' ],
+						[ 'key' => 'dates', 'label' => 'Терміни' ],
+						[ 'key' => 'prikaz', 'label' => 'Наказ', 'type' => 'link' ],
+						[ 'key' => '_actions', 'label' => 'Дії', 'type' => 'actions' ],
 					],
-					'Mutation-flow для розрядів буде підключено окремим етапом.'
-				),
-				'accessNotice' => $can_manage_ranks ? 'Ви маєте право керувати розрядами після підключення mutation-flow.' : 'Вкладка доступна лише для перегляду.',
-				'isReadOnly' => ! $can_manage_ranks,
-				'note'    => empty( $rank_sections ) ? 'Спортивні розряди або звання поки не вказані.' : 'Показано read-only дані про спортивні розряди та звання. Mutation-flow буде перенесено окремим етапом.',
+					'rows' => array_map( function( $item ) use ( $is_owner, $can_manage_ranks ) {
+						$can_edit = $is_owner || $can_manage_ranks || current_user_can('administrator') || current_user_can('globalregistrar');
+						$row_id = $item['UserSportCategories_ID'] ?? $item['id'] ?? $item['ID'] ?? $item['Calendar_ID'] ?? $item['SportsCategories_Name'] ?? $item['CategoriesName'] ?? '';
+						
+						$calendar_name = $this->normalize_value( $item['Calendar_Name'] ?? '' );
+						$calendar_url  = $this->build_calendar_url( $item['Calendar_ID'] ?? '' );
+						$calendar_html = $calendar_url ? '<a href="' . esc_url($calendar_url) . '" target="_blank" style="color:#b5473a;text-decoration:underline;">Змагання: ' . esc_html($calendar_name) . '</a>' : $calendar_name;
+
+						return [
+							'id'       => $row_id,
+							'rank'     => $this->normalize_value( $item['SportsCategories_Name'] ?? $item['CategoriesName'] ?? '' ),
+							'date'     => $this->format_date( $item['UserSportCategories_DatePrikaz'] ?? '' ),
+							'tourism'  => $this->normalize_value( $item['TourismType_Name'] ?? '' ),
+							'calendar' => $calendar_html, 
+							'dates'    => $this->format_period( $item['Calendar_DateBegin'] ?? '', $item['Calendar_DateEnd'] ?? '' ),
+							'prikaz'   => $this->normalize_value( $item['UserSportCategories_UrlPrikaz'] ?? '' ),
+							'_actions' => $can_edit && ! empty( $row_id ) ? 'delete_rank' : '',
+						];
+					}, $db_ranks ),
+					'defaultPerPage' => 10,
+					'emptyMessage'   => __( 'Спортивні розряди або звання поки не вказані.', 'fstu' ),
+				],
+				'actions' => $this->build_tab_actions( [
+					[
+						'label'     => 'Додати розряд',
+						'enabled'   => false, 
+						'actionKey' => 'add_rank',
+						'pending'   => 'Додавання розрядів тимчасово заблоковано і буде реалізовано через модуль Календаря змагань.'
+					]
+				], '' ),
+				'accessNotice' => '',
+				'isReadOnly' => !( $is_owner || $can_manage_ranks || current_user_can('administrator') || current_user_can('globalregistrar') ),
+				'note'    => 'Показано історію присвоєння спортивних розрядів та звань. Додавання нових записів здійснюватиметься через підсумкові протоколи Календаря змагань.',
 			],
 			'judging' => [
-				'title'   => 'Суддівство',
+				'title'   => '',
 				'visible' => true,
-				'sections' => $judging_sections,
-				'actions' => $this->build_tab_actions(
-					[
-						[
-							'label'   => 'Додати суддівську категорію',
-							'enabled' => $can_manage_judging && '' !== ( $integration_urls['referees'] ?? '' ) && $profile_user_id > 0,
-							'url'     => $this->build_referees_manage_url( (string) ( $integration_urls['referees'] ?? '' ), $profile_user_id ),
-							'pending' => 'Модальна форма суддівства буде доступна після визначення сторінки Referees та прав керування.',
-						],
-						[
-							'label'   => 'Відкрити реєстр суддів ФСТУ',
-							'enabled' => '' !== ( $integration_urls['referees'] ?? '' ),
-							'url'     => (string) ( $integration_urls['referees'] ?? '' ),
-							'target'  => '_blank',
-							'pending' => 'Сторінка реєстру суддів поки не визначена через shortcode або налаштування модуля.',
-						],
+				'table'   => [
+					'columns' => [
+						[ 'key' => 'category', 'label' => 'Категорія' ],
+						[ 'key' => 'date', 'label' => 'Дата додавання' ],
+						[ 'key' => '_actions', 'label' => 'Дії', 'type' => 'actions' ],
 					],
-					'Reuse інтеграція з модулем Referees буде підключена окремим етапом.'
-				),
-				'accessNotice' => $can_manage_judging ? 'Ви маєте право керувати суддівськими категоріями після підключення reuse-flow.' : 'Вкладка доступна лише для перегляду.',
-				'isReadOnly' => ! $can_manage_judging,
-				'note'    => empty( $judging_sections ) ? 'Суддівська категорія поки не вказана.' : 'Показано read-only дані про суддівські категорії. Reuse інтеграція з модулем Referees для додавання/редагування буде виконана окремим етапом.',
+					'rows' => array_map( function( $item ) use ( $is_owner, $can_manage_judging ) {
+						$can_edit = $is_owner || $can_manage_judging || current_user_can('administrator') || current_user_can('globalregistrar');
+						$row_id = $item['Referee_ID'] ?? $item['id'] ?? $item['ID'] ?? '';
+
+						return [
+							'id'         => $row_id,
+							'category'   => $this->normalize_value( $item['RefereeCategory_Name'] ?? '' ),
+							'date'       => $this->format_date( $item['Referee_DateCreate'] ?? '' ),
+							'_actions'   => $can_edit && ! empty( $row_id ) ? 'delete_judging' : '',
+						];
+					}, $db_judging ),
+					'defaultPerPage' => 10,
+					'emptyMessage'   => __( 'Суддівська категорія поки не вказана.', 'fstu' ),
+				],
+				'actions' => $this->build_tab_actions( [
+					[
+						'label'     => 'Додати суддівську категорію',
+						'enabled'   => $is_owner || $can_manage_judging || current_user_can('administrator') || current_user_can('globalregistrar'),
+						'actionKey' => 'add_judging',
+					],
+					[
+						'label'     => 'Відкрити реєстр суддів ФСТУ',
+						'enabled'   => true,
+						'actionKey' => 'open_referee_registry', 
+					]
+				], '' ),
+				'accessNotice' => '',
+				'isReadOnly' => !( $is_owner || $can_manage_judging || current_user_can('administrator') || current_user_can('globalregistrar') ),
+				'note'    => 'Показано історію суддівських категорій.',
 			],
 			'dues' => [
-				'title'   => 'Внески',
+				'title'   => '', 
 				'visible' => $can_view_dues,
-				'sections' => $dues_sections,
+				'sections' => $dues_sections, 
 				'table'    => [
 					'columns' => [
 						[ 'key' => 'year', 'label' => 'Рік' ],
@@ -713,41 +910,30 @@ class Personal_Cabinet_Service {
 						[ 'key' => 'financier', 'label' => 'Фінансист' ],
 						[ 'key' => 'status', 'label' => 'Статус' ],
 						[ 'key' => 'receipt_url', 'label' => 'Квитанція', 'type' => 'link' ],
+						[ 'key' => '_actions', 'label' => 'Дії', 'type' => 'actions' ],
 					],
-					'rows'           => $dues_table_rows,
-					'defaultPerPage' => 10,
+					'rows'           => $dues_table_rows, 
+					'defaultPerPage' => 15,
 					'emptyMessage'   => __( 'Записи членських внесків відсутні.', 'fstu' ),
 				],
 				'actions' => $this->build_tab_actions(
 					[
 						[
 							'label'   => 'Додати квитанцію',
-							'enabled' => $can_manage_dues,
+							'enabled' => $can_manage_dues || $is_owner, 
 							'actionKey' => 'upload_dues_receipt',
-							'pending' => 'Додавання квитанції доступне лише користувачам із правом керування внесками.',
 						],
-						'ОПЛАТА' => $can_pay_online,
 						[
 							'label'   => 'Відкрити реєстр платіжних документів',
-							'enabled' => '' !== ( $integration_urls['payment_docs'] ?? '' ),
-							'url'     => (string) ( $integration_urls['payment_docs'] ?? '' ),
-							'target'  => '_blank',
-							'pending' => 'Сторінка реєстру платіжних документів поки не визначена через shortcode [fstu_payment_docs].',
-						],
-						[
-							'label'   => 'PORTMONE',
-							'enabled' => $can_pay_online && ! $this->has_paid_due_for_current_year( isset( $collections['dues'] ) && is_array( $collections['dues'] ) ? $collections['dues'] : [] ),
-							'actionKey' => 'portmone',
-							'pending' => $this->has_paid_due_for_current_year( isset( $collections['dues'] ) && is_array( $collections['dues'] ) ? $collections['dues'] : [] )
-								? sprintf( 'Внесок за %d рік уже зафіксовано.', (int) current_time( 'Y' ) )
-								: 'Portmone-flow готується сервером і запускається без inline-форм у шаблоні.',
+							'enabled' => true,
+							'actionKey' => 'open_payment_docs', // ЗМІНЕНО: Прибрали url, додали actionKey, щоб малювалася <button>
 						],
 					],
-					'Додавання квитанції та онлайн-оплата працюють через окремі контрольовані сценарії без inline-форм у шаблоні.'
+					''
 				),
-				'accessNotice' => $can_manage_dues || $can_pay_online ? 'Ви можете оплачувати внески online через Portmone та додавати квитанції згідно з вашими правами.' : 'Вкладка доступна лише для перегляду.',
-				'isReadOnly' => ! ( $can_manage_dues || $can_pay_online ),
-				'note'    => empty( $dues_sections ) ? 'Членські внески або реквізити поки відсутні.' : 'Показано історію членських внесків і базові реквізити для сплати. Portmone запускається через окремий безпечний payment payload, а квитанція додається через контрольований mutation-flow.',
+				'accessNotice' => '',
+				'isReadOnly' => ! ( $can_manage_dues || $can_pay_online || $is_owner ),
+				'note'    => 'Показано історію членських внесків. Якщо внесок за рік відсутній, ви можете оплатити його онлайн.',
 			],
 			'sailing' => [
 				'title'   => 'Вітрильництво',
@@ -810,6 +996,8 @@ class Personal_Cabinet_Service {
 			],
 		];
 	}
+//...
+//...
 
 	private function get_photo_url( int $user_id ): string {
 		$photo_path = ABSPATH . 'photo/' . $user_id . '.jpg';
@@ -1091,24 +1279,50 @@ class Personal_Cabinet_Service {
 		$sections = [];
 
 		$annual_fee = $this->normalize_sum( $settings['AnnualFee'] ?? '' );
-		$payment_info_items = [
-			[ 'label' => 'Річний внесок ФСТУ', 'value' => $annual_fee ],
-			[ 'label' => 'Реквізити для сплати членських внесків', 'value' => 'https://www.fstu.com.ua/rekviziti-dlya-oplati-organizacijnix-vneskiv-fstu/', 'type' => 'link' ],
-		];
+		$unit_fee   = !empty($unit_payment['Unit_AnnualFee']) ? $this->normalize_sum( $unit_payment['Unit_AnnualFee'] ) : '—';
+		
+		$fstu_link = 'https://www.fstu.com.ua/rekviziti-dlya-oplati-organizacijnix-vneskiv-fstu/';
+		$unit_link = !empty($unit_payment['Unit_UrlPay']) ? $this->normalize_value($unit_payment['Unit_UrlPay']) : '';
+		$unit_card = !empty($unit_payment['Unit_PaymentCard']) ? $this->normalize_value($unit_payment['Unit_PaymentCard']) : '';
 
-		if ( ! empty( $unit_payment['Unit_AnnualFee'] ) ) {
-			$payment_info_items[] = [ 'label' => 'Річний внесок в осередок', 'value' => $this->normalize_sum( $unit_payment['Unit_AnnualFee'] ) ];
+		// Формуємо 3-колонкову таблицю у вигляді сирого HTML
+		$html = '<div class="fstu-table-wrap" style="margin-top: 20px;"><table class="fstu-table"><tbody class="fstu-tbody">';
+		
+		// Рядок 1: ФСТУ
+		$html .= '<tr class="fstu-row">';
+		$html .= '<td class="fstu-td" style="width: 33%;">Річний внесок ФСТУ</td>';
+		$html .= '<td class="fstu-td" style="width: 33%; font-weight: 600;">' . esc_html($annual_fee) . '</td>';
+		$html .= '<td class="fstu-td" style="width: 33%;"><a href="' . esc_url($fstu_link) . '" target="_blank" style="color: #1d4ed8; text-decoration: underline;">Реквізити для сплати членських внесків</a></td>';
+		$html .= '</tr>';
+
+		// Рядок 2: Осередок (Посилання)
+		if ( $unit_fee !== '—' || $unit_link ) {
+			$html .= '<tr class="fstu-row">';
+			$html .= '<td class="fstu-td">Річний внесок в осередок</td>';
+			$html .= '<td class="fstu-td" style="font-weight: 600;">' . esc_html($unit_fee) . '</td>';
+			if ($unit_link) {
+				$html .= '<td class="fstu-td"><a href="' . esc_url($unit_link) . '" target="_blank" style="color: #1d4ed8; text-decoration: underline;">Посилання для сплати в осередок</a></td>';
+			} else {
+				$html .= '<td class="fstu-td">—</td>';
+			}
+			$html .= '</tr>';
 		}
-		if ( ! empty( $unit_payment['Unit_UrlPay'] ) ) {
-			$payment_info_items[] = [ 'label' => 'Посилання для сплати в осередок', 'value' => $this->normalize_value( $unit_payment['Unit_UrlPay'] ), 'type' => 'link' ];
+
+		// Рядок 3: Осередок (Карта)
+		if ( $unit_card ) {
+			$html .= '<tr class="fstu-row">';
+			$html .= '<td class="fstu-td">Карта для сплати в осередок</td>';
+			$html .= '<td class="fstu-td" style="font-weight: 600;">' . esc_html($unit_card) . '</td>';
+			$html .= '<td class="fstu-td"></td>';
+			$html .= '</tr>';
 		}
-		if ( ! empty( $unit_payment['Unit_PaymentCard'] ) ) {
-			$payment_info_items[] = [ 'label' => 'Карта для сплати в осередок', 'value' => $this->normalize_value( $unit_payment['Unit_PaymentCard'] ) ];
-		}
+
+		$html .= '</tbody></table></div>';
 
 		$sections[] = [
 			'title' => 'Реквізити та сплата',
-			'items' => $payment_info_items,
+			'type'  => 'raw_html', // Використовуємо новий тип для рендерингу
+			'html'  => $html,
 		];
 
 		return $sections;

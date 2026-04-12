@@ -1,0 +1,614 @@
+/**
+ * CSS модуля «Склад керівних органів ФСТУ».
+ *
+ * Version:     1.0.2
+ * Date_update: 2026-04-12
+ */
+
+.fstu-guidance-wrap {
+	max-width: 100%;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+	font-size: 13px;
+	color: #2c3e50;
+}
+
+.fstu-guidance-title {
+	margin: 0 0 12px;
+	font-size: 24px;
+	font-weight: 700;
+	color: #1f2d3d;
+}
+
+.fstu-page-message {
+	margin: 0 0 16px;
+	padding: 12px 14px;
+	border: 1px solid #d1d5db;
+	border-radius: 8px;
+	background: #f8f9fa;
+	color: #243447;
+}
+
+.fstu-page-message--success {
+	background: #ecfdf3;
+	border-color: #86efac;
+	color: #166534;
+}
+
+.fstu-page-message--error {
+	background: #fef2f2;
+	border-color: #fca5a5;
+	color: #991b1b;
+}
+
+.fstu-action-bar {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 12px;
+	padding: 10px 12px;
+	margin-bottom: 12px;
+	background: #f8f9fa;
+	border: 1px solid #d1d5db;
+	border-radius: 4px;
+	flex-wrap: wrap;
+}
+
+.fstu-guidance-action-bar__actions,
+.fstu-guidance-action-bar__filters {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	flex-wrap: wrap;
+}
+
+.fstu-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	height: 36px;
+	padding: 0 14px;
+	border: 1px solid #d1d5db;
+	border-radius: 4px;
+	background: #f8f9fa;
+	color: #374151;
+	cursor: pointer;
+	text-decoration: none;
+	box-shadow: none;
+	font-size: 13px;
+	font-weight: 500;
+	line-height: 1;
+}
+
+.fstu-btn:hover,
+.fstu-btn:focus {
+	background: #c65b41;
+	color: #fff;
+}
+
+.fstu-btn--save {
+	background: #d9534f;
+	border-color: #d9534f;
+	color: #fff;
+}
+
+.fstu-btn--cancel {
+	background: #e9ecef;
+}
+
+.fstu-btn__icon {
+	font-style: normal;
+	font-size: 13px;
+}
+
+.fstu-label--compact {
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.fstu-select,
+.fstu-input,
+.fstu-textarea,
+.fstu-input--in-header {
+	border: 1px solid #cbd5e1;
+	border-radius: 6px;
+	background: #fff;
+	color: #243447;
+	box-sizing: border-box;
+}
+
+.fstu-select--compact,
+.fstu-input--compact {
+	height: 26px;
+	padding: 2px 6px;
+	font-size: 12px;
+}
+
+.fstu-th-with-search {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	white-space: nowrap;
+}
+
+.fstu-input--in-header {
+	height: 24px;
+	padding: 2px 8px;
+	min-width: 180px;
+	background: rgba( 255, 255, 255, 0.85 );
+}
+
+.fstu-table-wrap {
+	position: relative;
+	overflow-x: auto;
+	margin: 0 0 12px;
+	border: 1px solid #d7dfd0;
+	border-radius: 4px;
+	background: #fff;
+}
+
+.fstu-table {
+	width: 100%;
+	border-collapse: collapse;
+	table-layout: fixed;
+}
+
+.fstu-thead .fstu-th {
+	padding: 10px 8px;
+	background: #dcead6;
+	border: 1px solid #c8d7c1;
+	text-align: left;
+	font-weight: 600;
+	vertical-align: middle;
+	color: #2c3328;
+}
+
+.fstu-tbody .fstu-row:nth-child(even) .fstu-td {
+	background: #f8faf6;
+}
+
+.fstu-td {
+	padding: 8px;
+	border: 1px solid #d9dee4;
+	vertical-align: middle;
+}
+
+.fstu-th--num,
+.fstu-td--num {
+	width: 66px;
+	text-align: center;
+}
+
+.fstu-th--wide-name {
+	width: 24%;
+}
+
+.fstu-th--actions,
+.fstu-td--actions {
+	width: 82px;
+	text-align: center;
+	white-space: nowrap;
+	overflow: visible;
+}
+
+.fstu-td--name,
+.fstu-td--phones,
+.fstu-td--email {
+	word-break: break-word;
+}
+
+.fstu-td--actions,
+.fstu-th--actions,
+.fstu-th--type,
+.fstu-th--status,
+.fstu-td--type,
+.fstu-td--status {
+	text-align: center;
+}
+
+.fstu-no-results {
+	text-align: center;
+	padding: 24px;
+	color: #5b6777;
+}
+
+.fstu-guidance-link {
+	color: #1d4ed8;
+	text-decoration: none;
+}
+
+.fstu-guidance-link:hover {
+	color: #c65b41;
+}
+
+.fstu-pagination {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	margin-top: 0;
+	padding: 10px 12px;
+	background: #f8f9fa;
+	border: 1px solid #d1d5db;
+	border-radius: 4px;
+	flex-wrap: wrap;
+}
+
+.fstu-pagination__left,
+.fstu-pagination__controls,
+.fstu-pagination__info {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.fstu-pagination__left {
+	justify-content: flex-start;
+}
+
+.fstu-pagination__controls {
+	justify-content: center;
+}
+
+.fstu-pagination__info {
+	justify-content: flex-end;
+	font-size: 12px;
+	color: #4b5563;
+}
+
+.fstu-pagination__per-page-label {
+	font-size: 12px;
+	color: #6b7280;
+	white-space: nowrap;
+}
+
+.fstu-pagination .fstu-select--compact {
+	width: 70px !important;
+}
+
+.fstu-btn--page {
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	min-width: 32px !important;
+	height: 32px !important;
+	min-height: 0 !important;
+	padding: 0 10px !important;
+	margin: 0 2px !important;
+	border: 1px solid #d1d5db !important;
+	border-radius: 4px !important;
+	background: #f8f9fa !important;
+	color: #374151 !important;
+	box-shadow: none !important;
+	cursor: pointer !important;
+}
+
+.fstu-btn--page:hover,
+.fstu-btn--page.is-active {
+	background: #c65b41 !important;
+	border-color: #c65b41 !important;
+	color: #fff !important;
+}
+
+.fstu-btn--page:disabled {
+	opacity: 0.55 !important;
+	cursor: default !important;
+	background: #eef1f3 !important;
+	border-color: #d1d5db !important;
+	color: #94a3b8 !important;
+}
+
+.fstu-dropdown {
+	display: inline-block;
+	position: relative;
+}
+
+.fstu-dropdown-toggle {
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	border: 1px solid #d1d5db;
+	border-radius: 4px;
+	background: #f8f9fa;
+	color: #374151;
+	cursor: pointer;
+	font-size: 12px;
+	line-height: 1;
+	transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+}
+
+.fstu-dropdown--open .fstu-dropdown-toggle,
+.fstu-dropdown-toggle:hover {
+	background: #c65b41;
+	border-color: #c65b41;
+	color: #fff;
+}
+
+.fstu-dropdown-menu {
+	display: none;
+	min-width: 180px;
+	padding: 6px 0;
+	background: #fff;
+	border: 1px solid #d1d5db;
+	border-radius: 6px;
+	box-shadow: 0 8px 24px rgba( 15, 23, 42, 0.12 );
+}
+
+.fstu-dropdown--open .fstu-dropdown-menu {
+	display: block;
+}
+
+.fstu-dropdown-item {
+	display: flex;
+	width: 100%;
+	padding: 9px 12px;
+	border: none;
+	background: transparent;
+	text-align: left;
+	cursor: pointer;
+	color: #374151 !important;
+	font-size: 13px;
+}
+
+.fstu-dropdown-item:hover {
+	background: #f9fafb;
+	color: #c65b41 !important;
+}
+
+.fstu-dropdown-item--danger {
+	color: #b42318;
+}
+
+.fstu-dropdown-item--danger:hover {
+	color: #b91c1c !important;
+}
+
+.fstu-modal-overlay {
+	position: fixed;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 20px;
+	background: rgba( 0, 0, 0, 0.6 );
+	z-index: 100000;
+}
+
+.fstu-hidden {
+	display: none !important;
+}
+
+.fstu-modal {
+	width: min( 980px, 100% );
+	max-height: calc( 100vh - 40px );
+	background: #fff;
+	border-radius: 12px;
+	overflow: hidden;
+	box-shadow: 0 20px 40px rgba( 15, 23, 42, 0.3 );
+}
+
+.fstu-modal--compact {
+	max-width: 960px;
+}
+
+.fstu-modal__header,
+.fstu-modal__footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 14px 18px;
+	background: #f8f9fa;
+	border-bottom: 1px solid #e5e7eb;
+}
+
+.fstu-modal__footer {
+	border-top: 1px solid #e5e7eb;
+	border-bottom: none;
+	justify-content: flex-end;
+}
+
+.fstu-modal__body {
+	padding: 16px 18px;
+	max-height: 70vh;
+	overflow-y: auto;
+}
+
+.fstu-modal__title {
+	margin: 0;
+	font-size: 18px;
+}
+
+.fstu-modal__close {
+	background: transparent !important;
+	border: none !important;
+	box-shadow: none !important;
+	min-width: 0 !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	font-size: 22px;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.fstu-modal__close:hover {
+	color: #d9534f;
+}
+
+.fstu-form-grid,
+.fstu-view-grid {
+	display: grid;
+	grid-template-columns: repeat( 2, minmax( 0, 1fr ) );
+	gap: 12px 16px;
+}
+
+.fstu-form-group,
+.fstu-view-row {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.fstu-form-group--full,
+.fstu-view-row--full {
+	grid-column: 1 / -1;
+}
+
+.fstu-label {
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.fstu-label--required::after {
+	content: ' *';
+	color: #d9534f;
+}
+
+.fstu-input,
+.fstu-textarea {
+	width: 100%;
+	padding: 8px 10px;
+	font-size: 14px;
+	color: #243447;
+}
+
+.fstu-input:focus,
+.fstu-select:focus,
+.fstu-input--in-header:focus,
+.fstu-textarea:focus {
+	border-color: #c65b41;
+	box-shadow: 0 0 0 2px rgba(198, 91, 65, 0.12);
+	outline: none;
+}
+
+#fstu-guidance-user-input,
+#fstu-guidance-user-input:read-only,
+#fstu-guidance-user-input::placeholder,
+.fstu-guidance-form .fstu-input,
+.fstu-guidance-form .fstu-textarea {
+	color: #243447 !important;
+	-webkit-text-fill-color: #243447;
+}
+
+#fstu-guidance-user-input:read-only {
+	background: #f8fafc;
+}
+
+.fstu-textarea {
+	min-height: 72px;
+	resize: vertical;
+}
+
+.fstu-hint {
+	font-size: 12px;
+	color: #64748b;
+}
+
+.fstu-form-message {
+	padding: 10px 12px;
+	margin-bottom: 12px;
+	border-radius: 8px;
+}
+
+.fstu-form-message--error {
+	background: #fef2f2;
+	color: #991b1b;
+}
+
+.fstu-form-message--success {
+	background: #ecfdf3;
+	color: #166534;
+}
+
+.fstu-autocomplete-results {
+	margin-top: 6px;
+	border: 1px solid #d1d5db;
+	border-radius: 8px;
+	background: #fff;
+	max-height: 180px;
+	overflow-y: auto;
+}
+
+.fstu-autocomplete-item,
+.fstu-autocomplete-empty {
+	display: block;
+	width: 100%;
+	padding: 8px 10px;
+	border: none;
+	background: transparent;
+	text-align: left;
+	color: #243447 !important;
+}
+
+.fstu-autocomplete-item {
+	cursor: pointer;
+}
+
+.fstu-autocomplete-item:hover {
+	background: #f3f4f6;
+	color: #c65b41 !important;
+}
+
+.fstu-view-label {
+	font-size: 12px;
+	font-weight: 700;
+	text-transform: uppercase;
+	color: #64748b;
+}
+
+.fstu-view-value {
+	font-size: 14px;
+	color: #243447;
+}
+
+.fstu-badge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 4px 10px;
+	border-radius: 999px;
+	font-size: 12px;
+	font-weight: 700;
+}
+
+.fstu-badge--insert {
+	background: #dcfce7;
+	color: #166534;
+}
+
+.fstu-badge--update {
+	background: #fef3c7;
+	color: #92400e;
+}
+
+.fstu-badge--delete {
+	background: #fee2e2;
+	color: #991b1b;
+}
+
+.fstu-badge--default {
+	background: #e2e8f0;
+	color: #334155;
+}
+
+.fstu-loader-inline {
+	margin: 0;
+	color: #475569;
+}
+
+.fstu-honeypot {
+	display: none;
+}
+
+@media ( max-width: 767px ) {
+	.fstu-form-grid,
+	.fstu-view-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.fstu-input--in-header {
+		min-width: 130px;
+	}
+}
+

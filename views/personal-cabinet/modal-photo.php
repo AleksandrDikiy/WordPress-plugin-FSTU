@@ -2,6 +2,7 @@
 /**
  * View: Модальне вікно оновлення фото профілю.
  * Version: 1.0.0
+ * Date_update: 2026-04-11
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 ?>

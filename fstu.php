@@ -3,7 +3,7 @@
  * Plugin Name:  FSTU Portal
  * Plugin URI:   https://www.fstu.com.ua/
  * Description:  Офіційний плагін Федерації спортивного туризму України. Enterprise ERP/CRM система управління реєстрами, структурою та фінансами федерації.
- * Version:      1.14.0
+ * Version:      1.15.1
  * Author:       Oleksandr Dykyi
  * Author URI:   https://www.fstu.com.ua/
  * Text Domain:  fstu
@@ -11,7 +11,7 @@
  * Requires PHP: 8.0
  * Requires at least: 6.0
  *
- * Date_update: 2026-04-11
+ * Date_update: 2026-04-12
  *
  * @package FSTU
  */
@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // ─── Константи плагіна ────────────────────────────────────────────────────────
 
-define( 'FSTU_VERSION',      '1.14.0' );
+define( 'FSTU_VERSION',      '1.15.1' );
 define( 'FSTU_DB_VERSION',   '1.0.0' );
 define( 'FSTU_PLUGIN_FILE',  __FILE__ );
 define( 'FSTU_PLUGIN_DIR',   plugin_dir_path( __FILE__ ) );
@@ -195,6 +195,23 @@ if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Recorders/class-r
 	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Recorders/class-recorders-ajax.php';
 }
 
+// MKK — Реєстр членів МКК ФСТУ (2026-04-12)
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/MKK/class-mkk-repository.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/MKK/class-mkk-repository.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/MKK/class-mkk-protocol-service.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/MKK/class-mkk-protocol-service.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/MKK/class-mkk-service.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/MKK/class-mkk-service.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/MKK/class-mkk-list.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/MKK/class-mkk-list.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/MKK/class-mkk-ajax.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/MKK/class-mkk-ajax.php';
+}
+
 // Steering — Реєстр стернових ФСТУ (2026-04-08)
 if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Steering/class-steering-repository.php' ) ) {
 	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Steering/class-steering-repository.php';
@@ -251,6 +268,22 @@ if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Merilkas/class-me
 }
 if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Merilkas/class-merilkas-protocol-service.php' ) ) {
 	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Merilkas/class-merilkas-protocol-service.php';
+}
+// Guidance — Склад керівних органів ФСТУ (2026-04-12)
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Guidance/class-guidance-repository.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Guidance/class-guidance-repository.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Guidance/class-guidance-protocol-service.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Guidance/class-guidance-protocol-service.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Guidance/class-guidance-service.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Guidance/class-guidance-service.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Guidance/class-guidance-list.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Guidance/class-guidance-list.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Guidance/class-guidance-ajax.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Guidance/class-guidance-ajax.php';
 }
 // PersonalCabinet — Особистий кабінет ФСТУ (2026-04-09)
 if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/PersonalCabinet/class-personal-cabinet-repository.php' ) ) {
@@ -378,41 +411,57 @@ function fstu_init(): void {
 	}
 
 	// ── Реєстратори ФСТУ ─────────────────────────────────────────────────────
-	if ( class_exists( 'FSTU\\Modules\\Registry\\Recorders\\Recorders_List' ) ) {
+	if ( class_exists( 'FSTU\Modules\Registry\Recorders\Recorders_List' ) ) {
 		( new FSTU\Modules\Registry\Recorders\Recorders_List() )->init();
 	}
-	if ( class_exists( 'FSTU\\Modules\\Registry\\Recorders\\Recorders_Ajax' ) ) {
+	if ( class_exists( 'FSTU\Modules\Registry\Recorders\Recorders_Ajax' ) ) {
 		( new FSTU\Modules\Registry\Recorders\Recorders_Ajax() )->init();
 	}
 
+	// ── Реєстр членів МКК ФСТУ ───────────────────────────────────────────────
+	if ( class_exists( 'FSTU\Modules\Registry\MKK\MKK_List' ) ) {
+		( new FSTU\Modules\Registry\MKK\MKK_List() )->init();
+	}
+	if ( class_exists( 'FSTU\Modules\Registry\MKK\MKK_Ajax' ) ) {
+		( new FSTU\Modules\Registry\MKK\MKK_Ajax() )->init();
+	}
+
+	// ── Склад керівних органів ФСТУ ──────────────────────────────────────────
+	if ( class_exists( 'FSTU\Modules\Registry\Guidance\Guidance_List' ) ) {
+		( new FSTU\Modules\Registry\Guidance\Guidance_List() )->init();
+	}
+	if ( class_exists( 'FSTU\Modules\Registry\Guidance\Guidance_Ajax' ) ) {
+		( new FSTU\Modules\Registry\Guidance\Guidance_Ajax() )->init();
+	}
+
 	// ── Реєстр стернових ФСТУ ─────────────────────────────────────────────────
-	if ( class_exists( 'FSTU\\Modules\\Registry\\Steering\\Steering_List' ) ) {
+	if ( class_exists( 'FSTU\Modules\Registry\Steering\Steering_List' ) ) {
 		( new FSTU\Modules\Registry\Steering\Steering_List() )->init();
 	}
-	if ( class_exists( 'FSTU\\Modules\\Registry\\Steering\\Steering_Ajax' ) ) {
+	if ( class_exists( 'FSTU\Modules\Registry\Steering\Steering_Ajax' ) ) {
 		( new FSTU\Modules\Registry\Steering\Steering_Ajax() )->init();
 	}
 
 	// ── Посвідчення членів ФСТУ ──────────────────────────────────────────────
-	if ( class_exists( 'FSTU\\Modules\\Registry\\MemberCardApplications\\Member_Card_Applications_List' ) ) {
+	if ( class_exists( 'FSTU\Modules\Registry\MemberCardApplications\Member_Card_Applications_List' ) ) {
 		( new FSTU\Modules\Registry\MemberCardApplications\Member_Card_Applications_List() )->init();
 	}
-	if ( class_exists( 'FSTU\\Modules\\Registry\\MemberCardApplications\\Member_Card_Applications_Ajax' ) ) {
+	if ( class_exists( 'FSTU\Modules\Registry\MemberCardApplications\Member_Card_Applications_Ajax' ) ) {
 		( new FSTU\Modules\Registry\MemberCardApplications\Member_Card_Applications_Ajax() )->init();
 	}
 
 	// ── Особистий кабінет ФСТУ ───────────────────────────────────────────────
-	if ( class_exists( 'FSTU\\Modules\\PersonalCabinet\\Personal_Cabinet_List' ) ) {
+	if ( class_exists( 'FSTU\Modules\PersonalCabinet\Personal_Cabinet_List' ) ) {
 		( new FSTU\Modules\PersonalCabinet\Personal_Cabinet_List() )->init();
 	}
-	if ( class_exists( 'FSTU\\Modules\\PersonalCabinet\\Personal_Cabinet_Ajax' ) ) {
+	if ( class_exists( 'FSTU\Modules\PersonalCabinet\Personal_Cabinet_Ajax' ) ) {
 		( new FSTU\Modules\PersonalCabinet\Personal_Cabinet_Ajax() )->init();
 	}
     // ── Реєстр мерилок ФСТУ ────────────────────────────────────────────────────
-    if ( class_exists( 'FSTU\\Modules\\Registry\\Merilkas\\Merilkas_List' ) ) {
+    if ( class_exists( 'FSTU\Modules\Registry\Merilkas\Merilkas_List' ) ) {
         ( new FSTU\Modules\Registry\Merilkas\Merilkas_List() )->init();
     }
-    if ( class_exists( 'FSTU\\Modules\\Registry\\Merilkas\\Merilkas_Ajax' ) ) {
+    if ( class_exists( 'FSTU\Modules\Registry\Merilkas\Merilkas_Ajax' ) ) {
         ( new FSTU\Modules\Registry\Merilkas\Merilkas_Ajax() )->init();
     }
 }

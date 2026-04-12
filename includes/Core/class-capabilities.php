@@ -2,8 +2,8 @@
 /**
  * Клас централізованого керування capability-моделлю ФСТУ.
  *
- * Version:     1.15.0
- * Date_update: 2026-04-11
+ * Version:     1.17.1
+ * Date_update: 2026-04-12
  *
  * @package FSTU\Core
  */
@@ -64,6 +64,15 @@ class Capabilities {
 	public const MANAGE_RECORDERS              = 'fstu_manage_recorders';
 	public const DELETE_RECORDERS              = 'fstu_delete_recorders';
 	public const VIEW_RECORDERS_PROTOCOL       = 'fstu_view_recorders_protocol';
+	public const VIEW_MKK                      = 'fstu_view_mkk';
+	public const MANAGE_MKK                    = 'fstu_manage_mkk';
+	public const DELETE_MKK                    = 'fstu_delete_mkk';
+	public const VIEW_MKK_PROTOCOL             = 'fstu_view_mkk_protocol';
+	public const VIEW_GUIDANCE                 = 'fstu_view_guidance';
+	public const VIEW_GUIDANCE_CARD            = 'fstu_view_guidance_card';
+	public const MANAGE_GUIDANCE               = 'fstu_manage_guidance';
+	public const DELETE_GUIDANCE               = 'fstu_delete_guidance';
+	public const VIEW_GUIDANCE_PROTOCOL        = 'fstu_view_guidance_protocol';
 	public const VIEW_STEERING                 = 'fstu_view_steering';
 	public const SUBMIT_STEERING_APPLICATIONS  = 'fstu_submit_steering_applications';
 	public const MANAGE_STEERING               = 'fstu_manage_steering';
@@ -169,6 +178,15 @@ class Capabilities {
 				self::MANAGE_RECORDERS              => true,
 				self::DELETE_RECORDERS              => true,
 				self::VIEW_RECORDERS_PROTOCOL       => true,
+				self::VIEW_MKK                      => true,
+				self::MANAGE_MKK                    => true,
+				self::DELETE_MKK                    => true,
+				self::VIEW_MKK_PROTOCOL             => true,
+				self::VIEW_GUIDANCE                 => true,
+				self::VIEW_GUIDANCE_CARD            => true,
+				self::MANAGE_GUIDANCE               => true,
+				self::DELETE_GUIDANCE               => true,
+				self::VIEW_GUIDANCE_PROTOCOL        => true,
 				self::VIEW_STEERING                 => true,
 				self::SUBMIT_STEERING_APPLICATIONS  => true,
 				self::MANAGE_STEERING               => true,
@@ -250,6 +268,15 @@ class Capabilities {
 				self::MANAGE_RECORDERS              => true,
 				self::DELETE_RECORDERS              => true,
 				self::VIEW_RECORDERS_PROTOCOL       => true,
+				self::VIEW_MKK                      => true,
+				self::MANAGE_MKK                    => true,
+				self::DELETE_MKK                    => true,
+				self::VIEW_MKK_PROTOCOL             => true,
+				self::VIEW_GUIDANCE                 => true,
+				self::VIEW_GUIDANCE_CARD            => true,
+				self::MANAGE_GUIDANCE               => true,
+				self::DELETE_GUIDANCE               => true,
+				self::VIEW_GUIDANCE_PROTOCOL        => true,
 			],
 			'userregistrar' => [
 				self::ACCESS_ADMIN             => true,
@@ -288,6 +315,12 @@ class Capabilities {
 				self::MANAGE_PERSONAL_TOURISM_TYPES => true,
 				self::MANAGE_PERSONAL_EXPERIENCE => true,
 				self::MANAGE_PERSONAL_RANKS      => true,
+				self::VIEW_MKK                   => true,
+				self::MANAGE_MKK                 => true,
+				self::DELETE_MKK                 => true,
+				self::VIEW_MKK_PROTOCOL          => true,
+				self::VIEW_GUIDANCE              => true,
+				self::VIEW_GUIDANCE_CARD         => true,
 			],
 			'userfstu' => [
 				self::SELF_MANAGE_MEMBER_CARD_APPLICATIONS => true,
@@ -303,6 +336,8 @@ class Capabilities {
 				self::VIEW_PERSONAL_CABINET => true,
 				self::VIEW_OWN_PERSONAL_PRIVATE => true,
 				self::PAY_PERSONAL_DUES_ONLINE => true,
+				self::VIEW_GUIDANCE => true,
+				self::VIEW_GUIDANCE_CARD => true,
 			],
 			'referee' => [
 				self::VIEW_REFEREES               => true,
@@ -528,6 +563,36 @@ class Capabilities {
 			'canManage'   => self::current_user_can_manage_recorders(),
 			'canDelete'   => self::current_user_can_delete_recorders(),
 			'canProtocol' => self::current_user_can_view_recorders_protocol(),
+		];
+	}
+
+	/**
+	 * Повертає прапорці прав для модуля реєстру членів МКК.
+	 *
+	 * @return array<string,bool>
+	 */
+	public static function get_mkk_permissions(): array {
+		return [
+			'canView'     => self::current_user_can_view_mkk(),
+			'canManage'   => self::current_user_can_manage_mkk(),
+			'canDelete'   => self::current_user_can_delete_mkk(),
+			'canProtocol' => self::current_user_can_view_mkk_protocol(),
+		];
+	}
+
+	/**
+	 * Повертає прапорці прав для модуля складу керівних органів ФСТУ.
+	 *
+	 * @return array<string,bool>
+	 */
+	public static function get_guidance_permissions(): array {
+		return [
+			'canViewList' => self::current_user_can_view_guidance(),
+			'canViewCard' => self::current_user_can_view_guidance_card(),
+			'canManage'   => self::current_user_can_manage_guidance(),
+			'canDelete'   => self::current_user_can_delete_guidance(),
+			'canProtocol' => self::current_user_can_view_guidance_protocol(),
+			'canViewContactsInList' => self::current_user_can_view_guidance_contacts_in_list(),
 		];
 	}
 
@@ -1010,6 +1075,89 @@ class Capabilities {
 	 */
 	public static function current_user_can_view_recorders_protocol(): bool {
 		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_RECORDERS_PROTOCOL );
+	}
+
+	/**
+	 * Чи може користувач переглядати реєстр членів МКК.
+	 */
+	public static function current_user_can_view_mkk(): bool {
+		return true;
+	}
+
+	/**
+	 * Чи може користувач керувати реєстром членів МКК.
+	 */
+	public static function current_user_can_manage_mkk(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_MKK );
+	}
+
+	/**
+	 * Чи може користувач видаляти записи реєстру членів МКК.
+	 */
+	public static function current_user_can_delete_mkk(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::DELETE_MKK );
+	}
+
+	/**
+	 * Чи може користувач переглядати протокол реєстру членів МКК.
+	 */
+	public static function current_user_can_view_mkk_protocol(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_MKK_PROTOCOL );
+	}
+
+	/**
+	 * Чи може користувач переглядати список складу керівних органів.
+	 */
+	public static function current_user_can_view_guidance(): bool {
+		return true;
+	}
+
+	/**
+	 * Чи може користувач переглядати картку запису Guidance.
+	 */
+	public static function current_user_can_view_guidance_card(): bool {
+		return is_user_logged_in() || current_user_can( self::VIEW_GUIDANCE_CARD );
+	}
+
+	/**
+	 * Чи може користувач керувати записами Guidance.
+	 */
+	public static function current_user_can_manage_guidance(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_GUIDANCE );
+	}
+
+	/**
+	 * Чи може користувач видаляти записи Guidance.
+	 */
+	public static function current_user_can_delete_guidance(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::DELETE_GUIDANCE );
+	}
+
+	/**
+	 * Чи може користувач переглядати протокол модуля Guidance.
+	 */
+	public static function current_user_can_view_guidance_protocol(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_GUIDANCE_PROTOCOL );
+	}
+
+	/**
+	 * Чи може користувач бачити телефони та email у таблиці Guidance.
+	 */
+	public static function current_user_can_view_guidance_contacts_in_list(): bool {
+		if ( current_user_can( 'manage_options' ) ) {
+			return true;
+		}
+
+		$current_user = wp_get_current_user();
+		$user_roles   = $current_user instanceof \WP_User ? array_map( 'strval', (array) $current_user->roles ) : [];
+
+		foreach ( [ 'administrator', 'globalregistrar', 'userregistrar' ] as $role ) {
+			if ( in_array( $role, $user_roles, true ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**

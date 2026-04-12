@@ -3,7 +3,7 @@
  * View: Головна сторінка модуля «Особистий кабінет ФСТУ».
  *
  * Version:     1.6.0
- * Date_update: 2026-04-10
+ * Date_update: 2026-04-12
  */
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -93,6 +93,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 		<?php include FSTU_PLUGIN_DIR . 'views/personal-cabinet/modal-club.php'; ?>
 		<?php include FSTU_PLUGIN_DIR . 'views/personal-cabinet/modal-city.php'; ?>
         <?php include FSTU_PLUGIN_DIR . 'views/personal-cabinet/modal-unit.php'; ?>
+		<?php include FSTU_PLUGIN_DIR . 'views/personal-cabinet/modal-tourism.php'; ?>
+		<?php include FSTU_PLUGIN_DIR . 'views/personal-cabinet/modal-experience.php'; ?>
+		<?php include FSTU_PLUGIN_DIR . 'views/personal-cabinet/modal-rank.php'; ?>
+		<?php include FSTU_PLUGIN_DIR . 'views/personal-cabinet/modal-judging.php'; ?>
 
 	<?php endif; ?>
 </div>

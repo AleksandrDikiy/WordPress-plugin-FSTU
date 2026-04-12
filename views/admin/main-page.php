@@ -2,8 +2,8 @@
 /**
  * View: Головна сторінка плагіна в адмінці.
  *
- * Version:     1.11.0
- * Date_update: 2026-04-11
+ * Version:     1.12.2
+ * Date_update: 2026-04-12
  */
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -21,6 +21,8 @@ $eventtype_page_url = isset( $eventtype_page_url ) ? (string) $eventtype_page_ur
 $tourismtype_page_url = isset( $tourismtype_page_url ) ? (string) $tourismtype_page_url : '';
 $referees_page_url = isset( $referees_page_url ) ? (string) $referees_page_url : '';
 $recorders_page_url = isset( $recorders_page_url ) ? (string) $recorders_page_url : '';
+$mkk_page_url = isset( $mkk_page_url ) ? (string) $mkk_page_url : '';
+$guidance_page_url = isset( $guidance_page_url ) ? (string) $guidance_page_url : '';
 $member_card_applications_page_url = isset( $member_card_applications_page_url ) ? (string) $member_card_applications_page_url : '';
 $steering_page_url = isset( $steering_page_url ) ? (string) $steering_page_url : '';
 $personal_cabinet_page_url = isset( $personal_cabinet_page_url ) ? (string) $personal_cabinet_page_url : '';
@@ -90,6 +92,26 @@ $personal_cabinet_page_url = isset( $personal_cabinet_page_url ) ? (string) $per
                                     Виводить службовий реєстр призначень реєстраторів по осередках ФСТУ з фільтром по осередку, пошуком по ПІБ у шапці таблиці, compact-пагінацією, dropdown-меню «Дії», модальними вікнами перегляду/редагування та окремим розділом «ПРОТОКОЛ». Для ролей administrator і globalregistrar доступне повне керування, а колонка ПІБ веде на legacy-сторінку профілю `/Personal?ViewID=...`.
                                     <?php if ( '' !== $recorders_page_url ) : ?>
                                         <br><a href="<?php echo esc_url( $recorders_page_url ); ?>">Відкрити сторінку реєстру →</a>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_mkk]</code></th>
+                                <td>
+                                    <strong>Реєстр членів МКК ФСТУ</strong><br>
+                                                  Публічний модуль нового покоління для ведення складу МКК: список з фільтрами за областю, типом комісії та видом туризму, пошук по ПІБ у шапці таблиці, compact-пагінація, dropdown-меню «Дії», картка запису, CRUD для службових ролей та окремий розділ «ПРОТОКОЛ». Публічний перегляд доступний навіть гостям, але `ПРОТОКОЛ`, додавання, редагування та видалення залишаються тільки для ролей `administrator`, `globalregistrar` і `userregistrar`. Для гостей показується скорочене ПІБ, для авторизованих — повне ПІБ, а перехід у legacy-профіль веде на `/Personal/?ViewID=...`.
+                                    <?php if ( '' !== $mkk_page_url ) : ?>
+                                        <br><a href="<?php echo esc_url( $mkk_page_url ); ?>">Відкрити сторінку реєстру →</a>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_guidance]</code></th>
+                                <td>
+                                    <strong>Склад керівних органів ФСТУ</strong><br>
+                                    Публічний модуль нового покоління для ведення складу керівних органів ФСТУ: список із фільтром по керівному органу, пошуком у шапці таблиці, compact-пагінацією, dropdown-меню «Дії», карткою запису з колонки «Посада» та окремим розділом «ПРОТОКОЛ». Гості бачать основний список, усі авторизовані користувачі можуть відкривати картку запису, а CRUD і протокол доступні лише ролям `administrator` і `globalregistrar`.
+                                    <?php if ( '' !== $guidance_page_url ) : ?>
+                                        <br><a href="<?php echo esc_url( $guidance_page_url ); ?>">Відкрити сторінку модуля →</a>
                                     <?php endif; ?>
                                 </td>
                             </tr>
