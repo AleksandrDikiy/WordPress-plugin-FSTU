@@ -108,6 +108,10 @@ require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/ParticipationType/class-pa
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/TourType/class-tourtype-list.php';
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/TourType/class-tourtype-ajax.php';
 
+// HikingCategory — Довідник категорій походів ФСТУ (2026-04-13)
+require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/HikingCategory/class-hikingcategory-list.php';
+require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/HikingCategory/class-hikingcategory-ajax.php';
+
 // EventType — Довідник типів заходів ФСТУ (2026-04-07)
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/EventType/class-eventtype-list.php';
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/EventType/class-eventtype-ajax.php';
@@ -381,6 +385,10 @@ function fstu_init(): void {
 	// ── Довідник видів походів ФСТУ ───────────────────────────────────────────
 	( new FSTU\Dictionaries\TourType\TourType_List() )->init();
 	( new FSTU\Dictionaries\TourType\TourType_Ajax() )->init();
+
+	// ── Довідник категорій походів ФСТУ ───────────────────────────────────────
+	( new FSTU\Dictionaries\HikingCategory\HikingCategory_List() )->init();
+	( new FSTU\Dictionaries\HikingCategory\HikingCategory_Ajax() )->init();
 
 	// ── Довідник типів заходів ФСТУ ───────────────────────────────────────────
 	( new FSTU\Dictionaries\EventType\EventType_List() )->init();

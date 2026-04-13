@@ -9,8 +9,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Клас-контролер для Хабу довідників (Dashboard).
- * Version:     1.10.0
- * Date_update: 2026-04-12
+ * Version:     1.11.0
+ * Date_update: 2026-04-13
  */
 class Dictionaries_Hub {
 
@@ -57,6 +57,7 @@ class Dictionaries_Hub {
         $region_list_class = 'FSTU\\Dictionaries\\Region\\Region_List';
         $city_list_class = 'FSTU\\Dictionaries\\City\\City_List';
         $tourtype_list_class = 'FSTU\\Dictionaries\\TourType\\TourType_List';
+            $hikingcategory_list_class = 'FSTU\\Dictionaries\\HikingCategory\\HikingCategory_List';
             $participationtype_list_class = 'FSTU\\Dictionaries\\ParticipationType\\ParticipationType_List';
         $commission_url = class_exists( Commission_List::class )
             ? Commission_List::get_module_url( 'hub' )
@@ -85,6 +86,9 @@ class Dictionaries_Hub {
             $tourtype_url = class_exists( $tourtype_list_class )
               ? $tourtype_list_class::get_module_url( 'hub' )
               : '';
+              $hikingcategory_url = class_exists( $hikingcategory_list_class )
+                ? $hikingcategory_list_class::get_module_url( 'hub' )
+                : '';
             $participationtype_url = class_exists( $participationtype_list_class )
               ? $participationtype_list_class::get_module_url( 'hub' )
               : '';
@@ -128,6 +132,10 @@ class Dictionaries_Hub {
               $participationtype_url = '/adm/ParticipationType/';
             }
 
+              if ( '' === $hikingcategory_url ) {
+                $hikingcategory_url = '/adm/HikingCategory/';
+              }
+
         return [
             'structure' => [
                 'title' => 'Структура та Кадри ФСТУ',
@@ -160,7 +168,7 @@ class Dictionaries_Hub {
                     [ 'title' => 'Типи заходів', 'desc' => 'Довідник типів заходів', 'url' => '/adm/EventType/' ],
                               [ 'title' => 'Види участі в заходах', 'desc' => 'Довідник видів участі', 'url' => $participationtype_url ],
                           [ 'title' => 'Види походів', 'desc' => 'Довідник видів походів', 'url' => $tourtype_url ],
-                    [ 'title' => 'Категорії походів', 'desc' => 'Довідник категорій походів', 'url' => '/adm/HikingCategory/' ],
+                              [ 'title' => 'Категорії походів', 'desc' => 'Довідник категорій походів', 'url' => $hikingcategory_url ],
                     [ 'title' => 'Види складності походів', 'desc' => 'Довідник складності', 'url' => '/adm/HourCategories/' ],
                     [ 'title' => 'Спортивні розряди', 'desc' => 'Довідник спортивних розрядів', 'url' => '/adm/SportsCategories/' ],
                     [ 'title' => 'Суддівські категорії', 'desc' => 'Довідник суддівських категорій', 'url' => '/adm/RefereeCategory/' ],

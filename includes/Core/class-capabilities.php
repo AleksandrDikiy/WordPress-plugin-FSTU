@@ -2,8 +2,8 @@
 /**
  * Клас централізованого керування capability-моделлю ФСТУ.
  *
- * Version:     1.19.1
- * Date_update: 2026-04-12
+ * Version:     1.20.0
+ * Date_update: 2026-04-13
  *
  * @package FSTU\Core
  */
@@ -28,6 +28,10 @@ class Capabilities {
 	public const MANAGE_TOURTYPE          = 'fstu_manage_tourtype';
 	public const DELETE_TOURTYPE          = 'fstu_delete_tourtype';
 	public const VIEW_TOURTYPE_PROTOCOL   = 'fstu_view_tourtype_protocol';
+	public const VIEW_HIKING_CATEGORY     = 'fstu_view_hiking_category';
+	public const MANAGE_HIKING_CATEGORY   = 'fstu_manage_hiking_category';
+	public const DELETE_HIKING_CATEGORY   = 'fstu_delete_hiking_category';
+	public const VIEW_HIKING_CATEGORY_PROTOCOL = 'fstu_view_hiking_category_protocol';
 	public const VIEW_TYPEGUIDANCE        = 'fstu_view_typeguidance';
 	public const MANAGE_TYPEGUIDANCE      = 'fstu_manage_typeguidance';
 	public const DELETE_TYPEGUIDANCE      = 'fstu_delete_typeguidance';
@@ -151,6 +155,10 @@ class Capabilities {
 				self::MANAGE_TOURTYPE          => true,
 				self::DELETE_TOURTYPE          => true,
 				self::VIEW_TOURTYPE_PROTOCOL   => true,
+				self::VIEW_HIKING_CATEGORY     => true,
+				self::MANAGE_HIKING_CATEGORY   => true,
+				self::DELETE_HIKING_CATEGORY   => true,
+				self::VIEW_HIKING_CATEGORY_PROTOCOL => true,
 				self::VIEW_TYPEGUIDANCE        => true,
 				self::MANAGE_TYPEGUIDANCE      => true,
 				self::DELETE_TYPEGUIDANCE      => true,
@@ -272,6 +280,10 @@ class Capabilities {
 				self::MANAGE_TOURTYPE              => true,
 				self::DELETE_TOURTYPE              => true,
 				self::VIEW_TOURTYPE_PROTOCOL       => true,
+				self::VIEW_HIKING_CATEGORY         => true,
+				self::MANAGE_HIKING_CATEGORY       => true,
+				self::DELETE_HIKING_CATEGORY       => true,
+				self::VIEW_HIKING_CATEGORY_PROTOCOL => true,
 				self::VIEW_MEMBER_CARD_APPLICATIONS => true,
 				self::MANAGE_MEMBER_CARD_APPLICATIONS => true,
 				self::VIEW_MEMBER_CARD_APPLICATIONS_PROTOCOL => true,
@@ -623,6 +635,20 @@ class Capabilities {
 			'canManage'   => self::current_user_can_manage_tourtype(),
 			'canDelete'   => self::current_user_can_delete_tourtype(),
 			'canProtocol' => self::current_user_can_view_tourtype_protocol(),
+		];
+	}
+
+	/**
+	 * Повертає прапорці прав для довідника категорій походів.
+	 *
+	 * @return array<string,bool>
+	 */
+	public static function get_hikingcategory_permissions(): array {
+		return [
+			'canView'     => self::current_user_can_view_hikingcategory(),
+			'canManage'   => self::current_user_can_manage_hikingcategory(),
+			'canDelete'   => self::current_user_can_delete_hikingcategory(),
+			'canProtocol' => self::current_user_can_view_hikingcategory_protocol(),
 		];
 	}
 
@@ -1152,10 +1178,24 @@ class Capabilities {
 	}
 
 	/**
+	 * Чи може користувач переглядати довідник категорій походів.
+	 */
+	public static function current_user_can_view_hikingcategory(): bool {
+		return true;
+	}
+
+	/**
 	 * Чи може користувач керувати довідником видів походів.
 	 */
 	public static function current_user_can_manage_tourtype(): bool {
 		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_TOURTYPE );
+	}
+
+	/**
+	 * Чи може користувач керувати довідником категорій походів.
+	 */
+	public static function current_user_can_manage_hikingcategory(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_HIKING_CATEGORY );
 	}
 
 	/**
@@ -1166,10 +1206,24 @@ class Capabilities {
 	}
 
 	/**
+	 * Чи може користувач видаляти записи довідника категорій походів.
+	 */
+	public static function current_user_can_delete_hikingcategory(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::DELETE_HIKING_CATEGORY );
+	}
+
+	/**
 	 * Чи може користувач переглядати протокол довідника видів походів.
 	 */
 	public static function current_user_can_view_tourtype_protocol(): bool {
 		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_TOURTYPE_PROTOCOL );
+	}
+
+	/**
+	 * Чи може користувач переглядати протокол довідника категорій походів.
+	 */
+	public static function current_user_can_view_hikingcategory_protocol(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_HIKING_CATEGORY_PROTOCOL );
 	}
 
 	/**

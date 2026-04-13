@@ -2,8 +2,8 @@
 /**
  * View: Головна сторінка плагіна в адмінці.
  *
- * Version:     1.14.0
- * Date_update: 2026-04-12
+ * Version:     1.15.0
+ * Date_update: 2026-04-13
  */
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -20,6 +20,7 @@ $city_page_url = isset( $city_page_url ) ? (string) $city_page_url : '';
 $eventtype_page_url = isset( $eventtype_page_url ) ? (string) $eventtype_page_url : '';
   $participationtype_page_url = isset( $participationtype_page_url ) ? (string) $participationtype_page_url : '';
 $tourtype_page_url = isset( $tourtype_page_url ) ? (string) $tourtype_page_url : '';
+    $hikingcategory_page_url = isset( $hikingcategory_page_url ) ? (string) $hikingcategory_page_url : '';
 $tourismtype_page_url = isset( $tourismtype_page_url ) ? (string) $tourismtype_page_url : '';
 $referees_page_url = isset( $referees_page_url ) ? (string) $referees_page_url : '';
 $recorders_page_url = isset( $recorders_page_url ) ? (string) $recorders_page_url : '';
@@ -272,6 +273,16 @@ $personal_cabinet_page_url = isset( $personal_cabinet_page_url ) ? (string) $per
                                     Виводить публічний довідник видів походів з фільтром по категорії складності, пошуком у шапці таблиці, compact-пагінацією, dropdown-меню «Дії», модальними вікнами перегляду/редагування та окремим розділом «ПРОТОКОЛ». Перегляд списку і картки доступний гостям та авторизованим користувачам, а create/update/delete/protocol — лише ролям `administrator` і `globalregistrar`.
                                     <?php if ( '' !== ( $tourtype_page_url ?? '' ) ) : ?>
                                         <br><a href="<?php echo esc_url( (string) ( $tourtype_page_url ?? '' ) ); ?>">Відкрити сторінку довідника →</a>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_hikingcategory]</code></th>
+                                <td>
+                                    <strong>Довідник категорій походів</strong><br>
+                                    Виводить публічний довідник категорій походів з пошуком у шапці таблиці, compact-пагінацією, drag-and-drop сортуванням, dropdown-меню «Дії», модальними вікнами перегляду/редагування та окремим розділом «ПРОТОКОЛ». Перегляд списку і картки доступний гостям та авторизованим користувачам, а create/update/delete/protocol/reorder — лише ролям `administrator` і `globalregistrar`.
+                                    <?php if ( '' !== ( $hikingcategory_page_url ?? '' ) ) : ?>
+                                        <br><a href="<?php echo esc_url( (string) ( $hikingcategory_page_url ?? '' ) ); ?>">Відкрити сторінку довідника →</a>
                                     <?php endif; ?>
                                 </td>
                             </tr>

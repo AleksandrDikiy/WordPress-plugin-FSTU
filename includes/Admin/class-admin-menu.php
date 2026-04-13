@@ -2,8 +2,8 @@
 /**
  * Реєстрація меню плагіна в адмін-панелі WordPress.
  *
- * Version:     1.16.0
- * Date_update: 2026-04-12
+ * Version:     1.17.0
+ * Date_update: 2026-04-13
  *
  * @package FSTU\Admin
  */
@@ -79,6 +79,7 @@ class Admin_Menu {
         $typeguidance_list_class = 'FSTU\\Dictionaries\\TypeGuidance\\TypeGuidance_List';
         $participationtype_list_class = 'FSTU\\Dictionaries\\ParticipationType\\ParticipationType_List';
         $tourtype_list_class = 'FSTU\\Dictionaries\\TourType\\TourType_List';
+            $hikingcategory_list_class = 'FSTU\\Dictionaries\\HikingCategory\\HikingCategory_List';
         $member_regional_list_class = 'FSTU\\Dictionaries\\MemberRegional\\Member_Regional_List';
         $member_guidance_list_class = 'FSTU\\Dictionaries\\MemberGuidance\\Member_Guidance_List';
         $country_list_class = 'FSTU\\Dictionaries\\Country\\Country_List';
@@ -106,6 +107,9 @@ class Admin_Menu {
             $tourtype_page_url = class_exists( $tourtype_list_class )
               ? $tourtype_list_class::get_module_url( 'admin' )
               : '/adm/tourtype/';
+              $hikingcategory_page_url = class_exists( $hikingcategory_list_class )
+                ? $hikingcategory_list_class::get_module_url( 'admin' )
+                : '/adm/HikingCategory/';
         $typeguidance_page_url = class_exists( $typeguidance_list_class )
           ? $typeguidance_list_class::get_module_url( 'admin' )
           : '';
