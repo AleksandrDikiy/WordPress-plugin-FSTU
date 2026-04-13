@@ -1,21 +1,21 @@
 <?php
+namespace FSTU\Dictionaries\Clubs;
+
 /**
  * Контролер відображення модуля "Довідник клубів ФСТУ".
  * Реєструє шорткод [fstu_clubs], підключає скрипти/стилі.
  *
  * Доступ:
  *   Всі відвідувачі   → перегляд списку
- *   userfstu           → перегляд + деталі
- *   userregistrar      → + додавання, редагування
- *   administrator      → + видалення
+ *   userfstu         → перегляд + деталі
+ *   userregistrar    → + додавання, редагування
+ *   administrator    → + видалення
  *
- * Version:     1.1.1
- * Date_update: 2026-04-06
+ * Version:     1.2.0
+ * Date_update: 2026-04-13
  *
- * @package FSTU\Clubs
+ * @package FSTU\Dictionaries\Clubs
  */
-
-namespace FSTU\Clubs;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -25,9 +25,32 @@ class Clubs_List {
 
 	private const ASSET_HANDLE = 'fstu-clubs';
 	public const  NONCE_ACTION  = 'fstu_clubs_nonce';
+	public const  SHORTCODE      = 'fstu_clubs';
+	private const ROUTE_OPTION   = 'fstu_clubs_page_url';
+	private const LEGACY_PATH    = '/adm/Club/';
 
 	public function init(): void {
-		add_shortcode( 'fstu_clubs', [ $this, 'render_shortcode' ] );
+		add_shortcode( self::SHORTCODE, [ $this, 'render_shortcode' ] );
+	}
+
+	/**
+	 * Повертає канонічний URL модуля.
+	 */
+	public static function get_module_url( string $context = 'default' ): string {
+		$configured_url = get_option( self::ROUTE_OPTION, '' );
+		$url            = self::resolve_configured_url( is_string( $configured_url ) ? $configured_url : '' );
+
+		if ( '' === $url ) {
+			$url = self::discover_shortcode_page_url();
+		}
+
+		if ( '' === $url ) {
+			$url = home_url( self::LEGACY_PATH );
+		}
+
+		$filtered_url = apply_filters( 'fstu_clubs_module_url', $url, $context );
+
+		return is_string( $filtered_url ) && '' !== $filtered_url ? $filtered_url : $url;
 	}
 
 	/**
@@ -38,7 +61,7 @@ class Clubs_List {
 
 		ob_start();
 		include FSTU_PLUGIN_DIR . 'views/clubs/main-page.php';
-		return ob_get_clean();
+		return (string) ob_get_clean();
 	}
 
 	/**
@@ -93,4 +116,52 @@ class Clubs_List {
 			]
 		);
 	}
+
+	/**
+	 * Нормалізує URL, збережений в опції маршруту.
+	 */
+	private static function resolve_configured_url( string $configured_url ): string {
+		$configured_url = trim( $configured_url );
+
+		if ( '' === $configured_url ) {
+			return '';
+		}
+
+		if ( str_starts_with( $configured_url, '/' ) ) {
+			return home_url( $configured_url );
+		}
+
+		return wp_http_validate_url( $configured_url ) ? $configured_url : '';
+	}
+
+	/**
+	 * Автоматично знаходить опубліковану сторінку з shortcode модуля.
+	 */
+	private static function discover_shortcode_page_url(): string {
+		global $wpdb;
+
+		$shortcode_like = '%' . $wpdb->esc_like( '[' . self::SHORTCODE ) . '%';
+		$post_types     = [ 'page', 'post' ];
+		$placeholders   = implode( ', ', array_fill( 0, count( $post_types ), '%s' ) );
+
+		$sql = "SELECT ID
+			FROM {$wpdb->posts}
+			WHERE post_status = 'publish'
+				AND post_type IN ({$placeholders})
+				AND post_content LIKE %s
+			ORDER BY CASE WHEN post_type = 'page' THEN 0 ELSE 1 END ASC, menu_order ASC, ID ASC
+			LIMIT 1";
+
+		$params  = array_merge( $post_types, [ $shortcode_like ] );
+		$page_id = (int) $wpdb->get_var( $wpdb->prepare( $sql, ...$params ) );
+
+		if ( $page_id <= 0 ) {
+			return '';
+		}
+
+		$permalink = get_permalink( $page_id );
+
+		return is_string( $permalink ) ? $permalink : '';
+	}
 }
+

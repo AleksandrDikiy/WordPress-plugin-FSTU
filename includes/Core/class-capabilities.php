@@ -2,7 +2,7 @@
 /**
  * Клас централізованого керування capability-моделлю ФСТУ.
  *
- * Version:     1.22.0
+ * Version:     1.23.0
  * Date_update: 2026-04-13
  *
  * @package FSTU\Core
@@ -40,6 +40,10 @@ class Capabilities {
 	public const MANAGE_SPORTSCATEGORIES  = 'fstu_manage_sportscategories';
 	public const DELETE_SPORTSCATEGORIES  = 'fstu_delete_sportscategories';
 	public const VIEW_SPORTSCATEGORIES_PROTOCOL = 'fstu_view_sportscategories_protocol';
+	public const VIEW_REFEREE_CATEGORY    = 'fstu_view_referee_category';
+	public const MANAGE_REFEREE_CATEGORY  = 'fstu_manage_referee_category';
+	public const DELETE_REFEREE_CATEGORY  = 'fstu_delete_referee_category';
+	public const VIEW_REFEREE_CATEGORY_PROTOCOL = 'fstu_view_referee_category_protocol';
 	public const VIEW_TYPEGUIDANCE        = 'fstu_view_typeguidance';
 	public const MANAGE_TYPEGUIDANCE      = 'fstu_manage_typeguidance';
 	public const DELETE_TYPEGUIDANCE      = 'fstu_delete_typeguidance';
@@ -175,6 +179,10 @@ class Capabilities {
 				self::MANAGE_SPORTSCATEGORIES  => true,
 				self::DELETE_SPORTSCATEGORIES  => true,
 				self::VIEW_SPORTSCATEGORIES_PROTOCOL => true,
+				self::VIEW_REFEREE_CATEGORY    => true,
+				self::MANAGE_REFEREE_CATEGORY  => true,
+				self::DELETE_REFEREE_CATEGORY  => true,
+				self::VIEW_REFEREE_CATEGORY_PROTOCOL => true,
 				self::VIEW_TYPEGUIDANCE        => true,
 				self::MANAGE_TYPEGUIDANCE      => true,
 				self::DELETE_TYPEGUIDANCE      => true,
@@ -308,6 +316,10 @@ class Capabilities {
 				self::MANAGE_SPORTSCATEGORIES     => true,
 				self::DELETE_SPORTSCATEGORIES     => true,
 				self::VIEW_SPORTSCATEGORIES_PROTOCOL => true,
+				self::VIEW_REFEREE_CATEGORY       => true,
+				self::MANAGE_REFEREE_CATEGORY     => true,
+				self::DELETE_REFEREE_CATEGORY     => true,
+				self::VIEW_REFEREE_CATEGORY_PROTOCOL => true,
 				self::VIEW_MEMBER_CARD_APPLICATIONS => true,
 				self::MANAGE_MEMBER_CARD_APPLICATIONS => true,
 				self::VIEW_MEMBER_CARD_APPLICATIONS_PROTOCOL => true,
@@ -345,6 +357,7 @@ class Capabilities {
 				self::VIEW_PARTICIPATION_TYPE_PROTOCOL => true,
 				self::VIEW_TOURTYPE            => true,
 				self::VIEW_HOURCATEGORIES      => true,
+				self::VIEW_REFEREE_CATEGORY    => true,
 				self::VIEW_MEMBER_CARD_APPLICATIONS => true,
 				self::MANAGE_MEMBER_CARD_APPLICATIONS => true,
 				self::VIEW_MEMBER_CARD_APPLICATIONS_PROTOCOL => true,
@@ -391,6 +404,7 @@ class Capabilities {
 				self::VIEW_PARTICIPATION_TYPE => true,
 				self::VIEW_TOURTYPE => true,
 				self::VIEW_HOURCATEGORIES => true,
+				self::VIEW_REFEREE_CATEGORY => true,
 				self::SELF_MANAGE_MEMBER_CARD_APPLICATIONS => true,
 				self::REISSUE_MEMBER_CARD_APPLICATIONS => true,
 				self::UPDATE_MEMBER_CARD_APPLICATIONS_PHOTO => true,
@@ -409,6 +423,7 @@ class Capabilities {
 			],
 			'referee' => [
 				self::VIEW_REFEREES               => true,
+				self::VIEW_REFEREE_CATEGORY       => true,
 				self::MANAGE_REFEREES             => true,
 				self::DELETE_REFEREES             => true,
 				self::VIEW_REFEREES_PROTOCOL      => true,
@@ -703,6 +718,21 @@ class Capabilities {
 			'canManage'   => self::current_user_can_manage_sportscategories(),
 			'canDelete'   => self::current_user_can_delete_sportscategories(),
 			'canProtocol' => self::current_user_can_view_sportscategories_protocol(),
+		];
+	}
+
+	/**
+	 * Повертає прапорці прав для довідника суддівських категорій.
+	 *
+	 * @return array<string,bool>
+	 */
+	public static function get_referee_category_permissions(): array {
+		return [
+			'canView'      => self::current_user_can_view_referee_category(),
+			'canManage'    => self::current_user_can_manage_referee_category(),
+			'canDelete'    => self::current_user_can_delete_referee_category(),
+			'canProtocol'  => self::current_user_can_view_referee_category_protocol(),
+			'canAdminMeta' => self::current_user_can_manage_referee_category(),
 		];
 	}
 
@@ -1253,6 +1283,13 @@ class Capabilities {
 	}
 
 	/**
+	 * Чи може користувач переглядати довідник суддівських категорій.
+	 */
+	public static function current_user_can_view_referee_category(): bool {
+		return true;
+	}
+
+	/**
 	 * Чи може користувач керувати довідником видів походів.
 	 */
 	public static function current_user_can_manage_tourtype(): bool {
@@ -1278,6 +1315,13 @@ class Capabilities {
 	 */
 	public static function current_user_can_manage_sportscategories(): bool {
 		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_SPORTSCATEGORIES );
+	}
+
+	/**
+	 * Чи може користувач керувати довідником суддівських категорій.
+	 */
+	public static function current_user_can_manage_referee_category(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_REFEREE_CATEGORY );
 	}
 
 	/**
@@ -1309,6 +1353,13 @@ class Capabilities {
 	}
 
 	/**
+	 * Чи може користувач видаляти записи довідника суддівських категорій.
+	 */
+	public static function current_user_can_delete_referee_category(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::DELETE_REFEREE_CATEGORY );
+	}
+
+	/**
 	 * Чи може користувач переглядати протокол довідника видів походів.
 	 */
 	public static function current_user_can_view_tourtype_protocol(): bool {
@@ -1334,6 +1385,13 @@ class Capabilities {
 	 */
 	public static function current_user_can_view_sportscategories_protocol(): bool {
 		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_SPORTSCATEGORIES_PROTOCOL );
+	}
+
+	/**
+	 * Чи може користувач переглядати протокол довідника суддівських категорій.
+	 */
+	public static function current_user_can_view_referee_category_protocol(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_REFEREE_CATEGORY_PROTOCOL );
 	}
 
 	/**

@@ -2,7 +2,7 @@
 /**
  * View: Головна сторінка плагіна в адмінці.
  *
- * Version:     1.17.0
+ * Version:     1.18.1
  * Date_update: 2026-04-13
  */
 if ( ! defined( 'ABSPATH' ) ) {
@@ -23,6 +23,7 @@ $tourtype_page_url = isset( $tourtype_page_url ) ? (string) $tourtype_page_url :
 $hikingcategory_page_url = isset( $hikingcategory_page_url ) ? (string) $hikingcategory_page_url : '';
 $hourcategories_page_url = isset( $hourcategories_page_url ) ? (string) $hourcategories_page_url : '';
 $sportscategories_page_url = isset( $sportscategories_page_url ) ? (string) $sportscategories_page_url : '';
+$referee_category_page_url = isset( $referee_category_page_url ) ? (string) $referee_category_page_url : '';
 $tourismtype_page_url = isset( $tourismtype_page_url ) ? (string) $tourismtype_page_url : '';
 $referees_page_url = isset( $referees_page_url ) ? (string) $referees_page_url : '';
 $recorders_page_url = isset( $recorders_page_url ) ? (string) $recorders_page_url : '';
@@ -31,6 +32,7 @@ $guidance_page_url = isset( $guidance_page_url ) ? (string) $guidance_page_url :
 $member_card_applications_page_url = isset( $member_card_applications_page_url ) ? (string) $member_card_applications_page_url : '';
 $steering_page_url = isset( $steering_page_url ) ? (string) $steering_page_url : '';
 $personal_cabinet_page_url = isset( $personal_cabinet_page_url ) ? (string) $personal_cabinet_page_url : '';
+$clubs_page_url = isset( $clubs_page_url ) ? (string) $clubs_page_url : '';
 ?>
 
 <div class="wrap">
@@ -152,6 +154,9 @@ $personal_cabinet_page_url = isset( $personal_cabinet_page_url ) ? (string) $per
                                 <td>
                                     <strong>Довідник клубів ФСТУ</strong><br>
                                     Виводить таблицю з переліком спортивних клубів, їхніми адресами та сайтами. Користувачі можуть переглядати детальну інформацію про клуб та кількість його учасників. Дозволяє адміністраторам та реєстраторам додавати, редагувати та безпечно видаляти клуби.
+                                      <?php if ( '' !== $clubs_page_url ) : ?>
+                                          <br><a href="<?php echo esc_url( $clubs_page_url ); ?>">Відкрити сторінку довідника →</a>
+                                      <?php endif; ?>
                                 </td>
                             </tr>
                             <tr>
@@ -298,6 +303,16 @@ $personal_cabinet_page_url = isset( $personal_cabinet_page_url ) ? (string) $per
                                     <?php endif; ?>
                                 </td>
                             </tr>
+                              <tr>
+                                  <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_referee_category]</code></th>
+                                  <td>
+                                      <strong>Довідник суддівських категорій</strong><br>
+                                      Виводить публічний довідник суддівських категорій з пошуком у шапці таблиці, compact-пагінацією, drag-and-drop сортуванням, dropdown-меню «Дії», модальними вікнами перегляду/редагування та окремим розділом «ПРОТОКОЛ». Перегляд списку і картки доступний гостям та авторизованим користувачам, а create/update/delete/protocol/reorder — лише ролям `administrator` і `globalregistrar`.
+                                      <?php if ( '' !== $referee_category_page_url ) : ?>
+                                          <br><a href="<?php echo esc_url( $referee_category_page_url ); ?>">Відкрити сторінку довідника →</a>
+                                      <?php endif; ?>
+                                  </td>
+                              </tr>
                                                                                                     <tr>
                                                                                                         <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_sportscategories]</code></th>
                                                                                                         <td>

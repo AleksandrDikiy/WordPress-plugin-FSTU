@@ -4,10 +4,10 @@
  * Використовується для обох операцій (заголовок та club_id змінюються через JS).
  * Містить: nonce (через wp_localize_script), honeypot поле.
  *
- * Version:     1.0.1
- * Date_update: 2026-04-05
+ * Version:     1.0.2
+ * Date_update: 2026-04-13
  *
- * @package FSTU\Clubs\Views
+ * @package FSTU\Dictionaries\Clubs\Views
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

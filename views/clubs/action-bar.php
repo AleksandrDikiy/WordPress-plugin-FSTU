@@ -2,10 +2,10 @@
 /**
  * View: Панель дій — довідник клубів.
  *
- * Version:     1.1.0
- * Date_update: 2026-04-06
+ * Version:     1.1.1
+ * Date_update: 2026-04-13
  *
- * @package FSTU\Clubs\Views
+ * @package FSTU\Dictionaries\Clubs\Views
  *
  * @var bool $can_edit     Чи може поточний користувач редагувати.
  * @var bool $can_protocol Чи може поточний користувач переглядати протокол.

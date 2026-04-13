@@ -3,10 +3,10 @@
  * View: Головний каркас модуля "Довідник клубів ФСТУ".
  * Тільки HTML-розмітка. Жодних запитів до БД.
  *
- * Version:     1.2.0
- * Date_update: 2026-04-06
+ * Version:     1.2.1
+ * Date_update: 2026-04-13
  *
- * @package FSTU\Clubs\Views
+ * @package FSTU\Dictionaries\Clubs\Views
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

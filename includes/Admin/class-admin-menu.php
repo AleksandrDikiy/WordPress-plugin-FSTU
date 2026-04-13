@@ -2,7 +2,7 @@
 /**
  * Реєстрація меню плагіна в адмін-панелі WordPress.
  *
- * Version:     1.19.0
+ * Version:     1.20.1
  * Date_update: 2026-04-13
  *
  * @package FSTU\Admin
@@ -12,6 +12,8 @@ namespace FSTU\Admin;
 
 use FSTU\Core\Capabilities;
 use FSTU\Dictionaries\Commission\Commission_List;
+use FSTU\Dictionaries\Clubs\Clubs_List;
+use FSTU\Dictionaries\RefereeCategory\RefereeCategory_List;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -78,10 +80,12 @@ class Admin_Menu {
     public function render_main_page(): void {
         $typeguidance_list_class = 'FSTU\\Dictionaries\\TypeGuidance\\TypeGuidance_List';
         $participationtype_list_class = 'FSTU\\Dictionaries\\ParticipationType\\ParticipationType_List';
+            $clubs_list_class = Clubs_List::class;
         $tourtype_list_class = 'FSTU\\Dictionaries\\TourType\\TourType_List';
             $hikingcategory_list_class = 'FSTU\\Dictionaries\\HikingCategory\\HikingCategory_List';
               $hourcategories_list_class = 'FSTU\\Dictionaries\\HourCategories\\HourCategories_List';
                   $sportscategories_list_class = 'FSTU\\Dictionaries\\SportsCategories\\SportsCategories_List';
+            $referee_category_list_class = RefereeCategory_List::class;
         $member_regional_list_class = 'FSTU\\Dictionaries\\MemberRegional\\Member_Regional_List';
         $member_guidance_list_class = 'FSTU\\Dictionaries\\MemberGuidance\\Member_Guidance_List';
         $country_list_class = 'FSTU\\Dictionaries\\Country\\Country_List';
@@ -103,6 +107,9 @@ class Admin_Menu {
         $commission_page_url = class_exists( Commission_List::class )
           ? Commission_List::get_module_url( 'admin' )
           : '';
+            $clubs_page_url = class_exists( $clubs_list_class )
+              ? $clubs_list_class::get_module_url( 'admin' )
+              : '/adm/Club/';
             $participationtype_page_url = class_exists( $participationtype_list_class )
               ? $participationtype_list_class::get_module_url( 'admin' )
               : '/adm/ParticipationType/';
@@ -118,6 +125,9 @@ class Admin_Menu {
                           $sportscategories_page_url = class_exists( $sportscategories_list_class )
                             ? $sportscategories_list_class::get_module_url( 'admin' )
                             : '/adm/SportsCategories/';
+            $referee_category_page_url = class_exists( $referee_category_list_class )
+              ? $referee_category_list_class::get_module_url( 'admin' )
+              : '/adm/RefereeCategory/';
         $typeguidance_page_url = class_exists( $typeguidance_list_class )
           ? $typeguidance_list_class::get_module_url( 'admin' )
           : '';

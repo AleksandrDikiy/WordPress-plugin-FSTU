@@ -4,10 +4,10 @@
  * Пошук перенесено у шапку таблиці.
  * Per-page selector перенесено у нижню пагінацію.
  *
- * Version:     1.1.0
- * Date_update: 2026-04-06
+ * Version:     1.1.1
+ * Date_update: 2026-04-13
  *
- * @package FSTU\Clubs\Views
+ * @package FSTU\Dictionaries\Clubs\Views
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

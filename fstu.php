@@ -3,7 +3,7 @@
  * Plugin Name:  FSTU Portal
  * Plugin URI:   https://www.fstu.com.ua/
  * Description:  Офіційний плагін Федерації спортивного туризму України. Enterprise ERP/CRM система управління реєстрами, структурою та фінансами федерації.
- * Version:      1.19.0
+ * Version:      1.20.1
  * Author:       Oleksandr Dykyi
  * Author URI:   https://www.fstu.com.ua/
  * Text Domain:  fstu
@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // ─── Константи плагіна ────────────────────────────────────────────────────────
 
-define( 'FSTU_VERSION',      '1.19.0' );
+define( 'FSTU_VERSION',      '1.20.1' );
 define( 'FSTU_DB_VERSION',   '1.2.0' );
 define( 'FSTU_PLUGIN_FILE',  __FILE__ );
 define( 'FSTU_PLUGIN_DIR',   plugin_dir_path( __FILE__ ) );
@@ -58,9 +58,9 @@ require_once FSTU_PLUGIN_DIR . 'includes/Registry/class-registry-list.php';
 require_once FSTU_PLUGIN_DIR . 'includes/Registry/class-registry-ajax.php';
 require_once FSTU_PLUGIN_DIR . 'includes/Registry/class-registry-modals-ajax.php';
 
-// Clubs — Довідник клубів (2026-04-05)
-require_once FSTU_PLUGIN_DIR . 'includes/Clubs/class-clubs-list.php';
-require_once FSTU_PLUGIN_DIR . 'includes/Clubs/class-clubs-ajax.php';
+// Clubs — Довідник клубів (2026-04-13)
+require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/Clubs/class-clubs-list.php';
+require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/Clubs/class-clubs-ajax.php';
 
 // Units — Довідник осередків ФСТУ (2026-04-06)
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/Units/class-units-repository.php';
@@ -119,6 +119,10 @@ require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/HourCategories/class-hourc
 // SportsCategories — Довідник спортивних розрядів ФСТУ (2026-04-13)
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/SportsCategories/class-sportscategories-list.php';
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/SportsCategories/class-sportscategories-ajax.php';
+
+// RefereeCategory — Довідник суддівських категорій ФСТУ (2026-04-13)
+require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/RefereeCategory/class-referee-category-list.php';
+require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/RefereeCategory/class-referee-category-ajax.php';
 
 // EventType — Довідник типів заходів ФСТУ (2026-04-07)
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/EventType/class-eventtype-list.php';
@@ -347,8 +351,8 @@ function fstu_init(): void {
 	( new FSTU\Registry\Registry_Modals_Ajax() )->init();
 
 	// ── Довідник клубів ФСТУ ─────────────────────────────────────────────────
-	( new FSTU\Clubs\Clubs_List() )->init();
-	( new FSTU\Clubs\Clubs_Ajax() )->init();
+	( new FSTU\Dictionaries\Clubs\Clubs_List() )->init();
+	( new FSTU\Dictionaries\Clubs\Clubs_Ajax() )->init();
 
 	// ── Довідник осередків ФСТУ ───────────────────────────────────────────────
 	( new FSTU\Dictionaries\Units\Units_List() )->init();
@@ -405,6 +409,10 @@ function fstu_init(): void {
 	// ── Довідник спортивних розрядів ФСТУ ─────────────────────────────────────
 	( new FSTU\Dictionaries\SportsCategories\SportsCategories_List() )->init();
 	( new FSTU\Dictionaries\SportsCategories\SportsCategories_Ajax() )->init();
+
+	// ── Довідник суддівських категорій ФСТУ ───────────────────────────────────
+	( new FSTU\Dictionaries\RefereeCategory\RefereeCategory_List() )->init();
+	( new FSTU\Dictionaries\RefereeCategory\RefereeCategory_Ajax() )->init();
 
 	// ── Довідник типів заходів ФСТУ ───────────────────────────────────────────
 	( new FSTU\Dictionaries\EventType\EventType_List() )->init();

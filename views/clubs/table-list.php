@@ -4,10 +4,10 @@
  * Пошук вбудовано у шапку (колонка «Назва клубу»).
  * <tbody> заповнюється через AJAX.
  *
- * Version:     1.1.0
- * Date_update: 2026-04-06
+ * Version:     1.1.1
+ * Date_update: 2026-04-13
  *
- * @package FSTU\Clubs\Views
+ * @package FSTU\Dictionaries\Clubs\Views
  *
  * @var bool $can_edit   Чи показувати колонку дій.
  * @var bool $is_admin   Чи є адміністратор.

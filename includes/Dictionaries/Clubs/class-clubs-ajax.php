@@ -1,4 +1,6 @@
 <?php
+namespace FSTU\Dictionaries\Clubs;
+
 /**
  * AJAX-обробники модуля "Довідник клубів ФСТУ".
  * Таблиця S_Club: Club_ID, Club_Name, Club_Adr, Club_WWW.
@@ -10,13 +12,11 @@
  *   fstu_clubs_save       — додати / оновити (userregistrar, administrator)
  *   fstu_clubs_delete     — видалити (тільки administrator)
  *
-	 * Version:     1.2.0
- * Date_update: 2026-04-06
+ * Version:     1.2.1
+ * Date_update: 2026-04-13
  *
- * @package FSTU\Clubs
+ * @package FSTU\Dictionaries\Clubs
  */
-
-namespace FSTU\Clubs;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -437,3 +437,4 @@ class Clubs_Ajax {
 		return $html;
 	}
 }
+

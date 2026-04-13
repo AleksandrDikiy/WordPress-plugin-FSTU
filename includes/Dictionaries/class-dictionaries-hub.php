@@ -2,6 +2,8 @@
 namespace FSTU\Modules\Dictionaries;
 
 use FSTU\Dictionaries\Commission\Commission_List;
+use FSTU\Dictionaries\Clubs\Clubs_List;
+use FSTU\Dictionaries\RefereeCategory\RefereeCategory_List;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -9,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Клас-контролер для Хабу довідників (Dashboard).
- * Version:     1.13.0
+ * Version:     1.14.1
  * Date_update: 2026-04-13
  */
 class Dictionaries_Hub {
@@ -56,10 +58,12 @@ class Dictionaries_Hub {
         $country_list_class = 'FSTU\\Dictionaries\\Country\\Country_List';
         $region_list_class = 'FSTU\\Dictionaries\\Region\\Region_List';
         $city_list_class = 'FSTU\\Dictionaries\\City\\City_List';
+            $clubs_list_class = Clubs_List::class;
         $tourtype_list_class = 'FSTU\\Dictionaries\\TourType\\TourType_List';
             $hikingcategory_list_class = 'FSTU\\Dictionaries\\HikingCategory\\HikingCategory_List';
               $hourcategories_list_class = 'FSTU\\Dictionaries\\HourCategories\\HourCategories_List';
                   $sportscategories_list_class = 'FSTU\\Dictionaries\\SportsCategories\\SportsCategories_List';
+        		$referee_category_list_class = RefereeCategory_List::class;
             $participationtype_list_class = 'FSTU\\Dictionaries\\ParticipationType\\ParticipationType_List';
         $commission_url = class_exists( Commission_List::class )
             ? Commission_List::get_module_url( 'hub' )
@@ -79,6 +83,9 @@ class Dictionaries_Hub {
         $country_url = class_exists( $country_list_class )
           ? $country_list_class::get_module_url( 'hub' )
           : '';
+            $clubs_url = class_exists( $clubs_list_class )
+              ? $clubs_list_class::get_module_url( 'hub' )
+              : '';
         $region_url = class_exists( $region_list_class )
           ? $region_list_class::get_module_url( 'hub' )
           : '';
@@ -97,6 +104,9 @@ class Dictionaries_Hub {
                           $sportscategories_url = class_exists( $sportscategories_list_class )
                             ? $sportscategories_list_class::get_module_url( 'hub' )
                             : '';
+            $referee_category_url = class_exists( $referee_category_list_class )
+              ? $referee_category_list_class::get_module_url( 'hub' )
+              : '';
             $participationtype_url = class_exists( $participationtype_list_class )
               ? $participationtype_list_class::get_module_url( 'hub' )
               : '';
@@ -125,6 +135,10 @@ class Dictionaries_Hub {
           $country_url = '#';
         }
 
+            if ( '' === $clubs_url ) {
+              $clubs_url = '/adm/Club/';
+            }
+
         if ( '' === $region_url ) {
           $region_url = '#';
         }
@@ -152,13 +166,17 @@ class Dictionaries_Hub {
                                 $sportscategories_url = '/adm/SportsCategories/';
                                 }
 
+                        if ( '' === $referee_category_url ) {
+                          $referee_category_url = '/adm/RefereeCategory/';
+                        }
+
         return [
             'structure' => [
                 'title' => 'Структура та Кадри ФСТУ',
                 'icon'  => '🏢',
                 'items' => [
                     [ 'title' => 'Осередки ФСТУ', 'desc' => 'Довідник регіональних осередків', 'url' => '/adm/Unit/' ],
-                    [ 'title' => 'Клуби', 'desc' => 'Довідник туристичних клубів', 'url' => '/adm/Club/' ],
+                              [ 'title' => 'Клуби', 'desc' => 'Довідник туристичних клубів', 'url' => $clubs_url ],
                     [ 'title' => 'Комісії та колегії', 'desc' => 'Довідник комісій ФСТУ', 'url' => $commission_url ],
                           [ 'title' => 'Склад керівних органів ФСТУ', 'desc' => 'Реєстр складу керівних органів', 'url' => $guidance_url ],
                               [ 'title' => 'Керівні органи ФСТУ', 'desc' => 'Довідник керівних органів', 'url' => $typeguidance_url ],
@@ -187,7 +205,7 @@ class Dictionaries_Hub {
                               [ 'title' => 'Категорії походів', 'desc' => 'Довідник категорій походів', 'url' => $hikingcategory_url ],
                               [ 'title' => 'Види складності походів', 'desc' => 'Довідник складності походів', 'url' => $hourcategories_url ],
                               [ 'title' => 'Спортивні розряди', 'desc' => 'Довідник спортивних розрядів', 'url' => $sportscategories_url ],
-                    [ 'title' => 'Суддівські категорії', 'desc' => 'Довідник суддівських категорій', 'url' => '/adm/RefereeCategory/' ],
+                      [ 'title' => 'Суддівські категорії', 'desc' => 'Довідник суддівських категорій', 'url' => $referee_category_url ],
                 ],
             ],
             'cards_tickets' => [
