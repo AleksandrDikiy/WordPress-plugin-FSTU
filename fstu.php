@@ -3,7 +3,7 @@
  * Plugin Name:  FSTU Portal
  * Plugin URI:   https://www.fstu.com.ua/
  * Description:  Офіційний плагін Федерації спортивного туризму України. Enterprise ERP/CRM система управління реєстрами, структурою та фінансами федерації.
- * Version:      1.18.0
+ * Version:      1.19.0
  * Author:       Oleksandr Dykyi
  * Author URI:   https://www.fstu.com.ua/
  * Text Domain:  fstu
@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // ─── Константи плагіна ────────────────────────────────────────────────────────
 
-define( 'FSTU_VERSION',      '1.18.0' );
+define( 'FSTU_VERSION',      '1.19.0' );
 define( 'FSTU_DB_VERSION',   '1.2.0' );
 define( 'FSTU_PLUGIN_FILE',  __FILE__ );
 define( 'FSTU_PLUGIN_DIR',   plugin_dir_path( __FILE__ ) );
@@ -115,6 +115,10 @@ require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/HikingCategory/class-hikin
 // HourCategories — Довідник видів складності походів ФСТУ (2026-04-13)
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/HourCategories/class-hourcategories-list.php';
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/HourCategories/class-hourcategories-ajax.php';
+
+// SportsCategories — Довідник спортивних розрядів ФСТУ (2026-04-13)
+require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/SportsCategories/class-sportscategories-list.php';
+require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/SportsCategories/class-sportscategories-ajax.php';
 
 // EventType — Довідник типів заходів ФСТУ (2026-04-07)
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/EventType/class-eventtype-list.php';
@@ -397,6 +401,10 @@ function fstu_init(): void {
 	// ── Довідник видів складності походів ФСТУ ────────────────────────────────
 	( new FSTU\Dictionaries\HourCategories\HourCategories_List() )->init();
 	( new FSTU\Dictionaries\HourCategories\HourCategories_Ajax() )->init();
+
+	// ── Довідник спортивних розрядів ФСТУ ─────────────────────────────────────
+	( new FSTU\Dictionaries\SportsCategories\SportsCategories_List() )->init();
+	( new FSTU\Dictionaries\SportsCategories\SportsCategories_Ajax() )->init();
 
 	// ── Довідник типів заходів ФСТУ ───────────────────────────────────────────
 	( new FSTU\Dictionaries\EventType\EventType_List() )->init();

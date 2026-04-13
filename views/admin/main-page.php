@@ -2,7 +2,7 @@
 /**
  * View: Головна сторінка плагіна в адмінці.
  *
- * Version:     1.16.0
+ * Version:     1.17.0
  * Date_update: 2026-04-13
  */
 if ( ! defined( 'ABSPATH' ) ) {
@@ -18,10 +18,11 @@ $country_page_url = isset( $country_page_url ) ? (string) $country_page_url : ''
 $region_page_url = isset( $region_page_url ) ? (string) $region_page_url : '';
 $city_page_url = isset( $city_page_url ) ? (string) $city_page_url : '';
 $eventtype_page_url = isset( $eventtype_page_url ) ? (string) $eventtype_page_url : '';
-  $participationtype_page_url = isset( $participationtype_page_url ) ? (string) $participationtype_page_url : '';
+$participationtype_page_url = isset( $participationtype_page_url ) ? (string) $participationtype_page_url : '';
 $tourtype_page_url = isset( $tourtype_page_url ) ? (string) $tourtype_page_url : '';
-    $hikingcategory_page_url = isset( $hikingcategory_page_url ) ? (string) $hikingcategory_page_url : '';
+$hikingcategory_page_url = isset( $hikingcategory_page_url ) ? (string) $hikingcategory_page_url : '';
 $hourcategories_page_url = isset( $hourcategories_page_url ) ? (string) $hourcategories_page_url : '';
+$sportscategories_page_url = isset( $sportscategories_page_url ) ? (string) $sportscategories_page_url : '';
 $tourismtype_page_url = isset( $tourismtype_page_url ) ? (string) $tourismtype_page_url : '';
 $referees_page_url = isset( $referees_page_url ) ? (string) $referees_page_url : '';
 $recorders_page_url = isset( $recorders_page_url ) ? (string) $recorders_page_url : '';
@@ -167,16 +168,16 @@ $personal_cabinet_page_url = isset( $personal_cabinet_page_url ) ? (string) $per
                                     Виводить таблицю видів змагань з пошуком, пагінацією та модальними вікнами перегляду/редагування. Дозволяє адміністраторам та реєстраторам додавати й редагувати записи, а адміністраторам — видаляти їх без inline-коду та з AJAX-захистом nonce.
                                 </td>
                             </tr>
-                                            <tr>
-                                              <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_participationtype]</code></th>
-                                              <td>
-                                                <strong>Довідник видів участі в заходах ФСТУ</strong><br>
-                                                Виводить довідник видів участі з пошуком у шапці таблиці, колонкою «Тип», compact-пагінацією, drag-and-drop сортуванням, dropdown-меню «Дії», модальними вікнами перегляду/редагування та окремим розділом «ПРОТОКОЛ». Для всіх авторизованих користувачів доступний перегляд списку й картки, для ролей `administrator`, `globalregistrar`, `userregistrar` — create/update, а delete залишено лише для `administrator` і `globalregistrar`.
-                                                <?php if ( '' !== $participationtype_page_url ) : ?>
-                                                  <br><a href="<?php echo esc_url( $participationtype_page_url ); ?>">Відкрити сторінку довідника →</a>
-                                                <?php endif; ?>
-                                              </td>
-                                            </tr>
+                                                                                        <tr>
+                                                                                            <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_participationtype]</code></th>
+                                                                                            <td>
+                                                                                                <strong>Довідник видів участі в заходах ФСТУ</strong><br>
+                                                                                                Виводить довідник видів участі з пошуком у шапці таблиці, колонкою «Тип», compact-пагінацією, drag-and-drop сортуванням, dropdown-меню «Дії», модальними вікнами перегляду/редагування та окремим розділом «ПРОТОКОЛ». Для всіх авторизованих користувачів доступний перегляд списку й картки, для ролей `administrator`, `globalregistrar`, `userregistrar` — create/update, а delete залишено лише для `administrator` і `globalregistrar`.
+                                                                                                <?php if ( '' !== $participationtype_page_url ) : ?>
+                                                                                                    <br><a href="<?php echo esc_url( $participationtype_page_url ); ?>">Відкрити сторінку довідника →</a>
+                                                                                                <?php endif; ?>
+                                                                                            </td>
+                                                                                        </tr>
                             <tr>
                                 <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_commission]</code></th>
                                 <td>
@@ -297,6 +298,16 @@ $personal_cabinet_page_url = isset( $personal_cabinet_page_url ) ? (string) $per
                                     <?php endif; ?>
                                 </td>
                             </tr>
+                                                                                                    <tr>
+                                                                                                        <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_sportscategories]</code></th>
+                                                                                                        <td>
+                                                                                                            <strong>Довідник спортивних розрядів</strong><br>
+                                                                                                            Виводить публічний довідник спортивних розрядів з пошуком у шапці таблиці, compact-пагінацією, dropdown-меню «Дії», модальними вікнами перегляду/редагування та окремим розділом «ПРОТОКОЛ». Перегляд списку і картки доступний гостям та авторизованим користувачам, а create/update/delete/protocol — лише ролям `administrator` і `globalregistrar`.
+                                                                                                            <?php if ( '' !== $sportscategories_page_url ) : ?>
+                                                                                                                <br><a href="<?php echo esc_url( $sportscategories_page_url ); ?>">Відкрити сторінку довідника →</a>
+                                                                                                            <?php endif; ?>
+                                                                                                        </td>
+                                                                                                    </tr>
                             <tr>
                                 <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_dictionaries_hub]</code></th>
                                 <td>
@@ -306,10 +317,10 @@ $personal_cabinet_page_url = isset( $personal_cabinet_page_url ) ? (string) $per
                             </tr>
                             </tbody>
                         </table>
-                    </div>
-                </div>
+                                </div>
+                              </div>
 
-            </div> <div id="postbox-container-1" class="postbox-container">
+                              <div id="postbox-container-1" class="postbox-container">
 
                 <div class="postbox">
                     <h2 class="hndle" style="padding: 12px 15px;"><span>Про плагін</span></h2>
@@ -321,6 +332,7 @@ $personal_cabinet_page_url = isset( $personal_cabinet_page_url ) ? (string) $per
                     </div>
                 </div>
 
-            </div> </div>
+                  </div>
+                </div>
     </div>
 </div>

@@ -2,7 +2,7 @@
 /**
  * Клас централізованого керування capability-моделлю ФСТУ.
  *
- * Version:     1.21.0
+ * Version:     1.22.0
  * Date_update: 2026-04-13
  *
  * @package FSTU\Core
@@ -36,6 +36,10 @@ class Capabilities {
 	public const MANAGE_HOURCATEGORIES    = 'fstu_manage_hourcategories';
 	public const DELETE_HOURCATEGORIES    = 'fstu_delete_hourcategories';
 	public const VIEW_HOURCATEGORIES_PROTOCOL = 'fstu_view_hourcategories_protocol';
+	public const VIEW_SPORTSCATEGORIES    = 'fstu_view_sportscategories';
+	public const MANAGE_SPORTSCATEGORIES  = 'fstu_manage_sportscategories';
+	public const DELETE_SPORTSCATEGORIES  = 'fstu_delete_sportscategories';
+	public const VIEW_SPORTSCATEGORIES_PROTOCOL = 'fstu_view_sportscategories_protocol';
 	public const VIEW_TYPEGUIDANCE        = 'fstu_view_typeguidance';
 	public const MANAGE_TYPEGUIDANCE      = 'fstu_manage_typeguidance';
 	public const DELETE_TYPEGUIDANCE      = 'fstu_delete_typeguidance';
@@ -167,6 +171,10 @@ class Capabilities {
 				self::MANAGE_HOURCATEGORIES    => true,
 				self::DELETE_HOURCATEGORIES    => true,
 				self::VIEW_HOURCATEGORIES_PROTOCOL => true,
+				self::VIEW_SPORTSCATEGORIES    => true,
+				self::MANAGE_SPORTSCATEGORIES  => true,
+				self::DELETE_SPORTSCATEGORIES  => true,
+				self::VIEW_SPORTSCATEGORIES_PROTOCOL => true,
 				self::VIEW_TYPEGUIDANCE        => true,
 				self::MANAGE_TYPEGUIDANCE      => true,
 				self::DELETE_TYPEGUIDANCE      => true,
@@ -296,6 +304,10 @@ class Capabilities {
 				self::MANAGE_HOURCATEGORIES       => true,
 				self::DELETE_HOURCATEGORIES       => true,
 				self::VIEW_HOURCATEGORIES_PROTOCOL => true,
+				self::VIEW_SPORTSCATEGORIES       => true,
+				self::MANAGE_SPORTSCATEGORIES     => true,
+				self::DELETE_SPORTSCATEGORIES     => true,
+				self::VIEW_SPORTSCATEGORIES_PROTOCOL => true,
 				self::VIEW_MEMBER_CARD_APPLICATIONS => true,
 				self::MANAGE_MEMBER_CARD_APPLICATIONS => true,
 				self::VIEW_MEMBER_CARD_APPLICATIONS_PROTOCOL => true,
@@ -677,6 +689,20 @@ class Capabilities {
 			'canManage'   => self::current_user_can_manage_hourcategories(),
 			'canDelete'   => self::current_user_can_delete_hourcategories(),
 			'canProtocol' => self::current_user_can_view_hourcategories_protocol(),
+		];
+	}
+
+	/**
+	 * Повертає прапорці прав для довідника спортивних розрядів.
+	 *
+	 * @return array<string,bool>
+	 */
+	public static function get_sportscategories_permissions(): array {
+		return [
+			'canView'     => self::current_user_can_view_sportscategories(),
+			'canManage'   => self::current_user_can_manage_sportscategories(),
+			'canDelete'   => self::current_user_can_delete_sportscategories(),
+			'canProtocol' => self::current_user_can_view_sportscategories_protocol(),
 		];
 	}
 
@@ -1220,6 +1246,13 @@ class Capabilities {
 	}
 
 	/**
+	 * Чи може користувач переглядати довідник спортивних розрядів.
+	 */
+	public static function current_user_can_view_sportscategories(): bool {
+		return true;
+	}
+
+	/**
 	 * Чи може користувач керувати довідником видів походів.
 	 */
 	public static function current_user_can_manage_tourtype(): bool {
@@ -1238,6 +1271,13 @@ class Capabilities {
 	 */
 	public static function current_user_can_manage_hourcategories(): bool {
 		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_HOURCATEGORIES );
+	}
+
+	/**
+	 * Чи може користувач керувати довідником спортивних розрядів.
+	 */
+	public static function current_user_can_manage_sportscategories(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_SPORTSCATEGORIES );
 	}
 
 	/**
@@ -1262,6 +1302,13 @@ class Capabilities {
 	}
 
 	/**
+	 * Чи може користувач видаляти записи довідника спортивних розрядів.
+	 */
+	public static function current_user_can_delete_sportscategories(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::DELETE_SPORTSCATEGORIES );
+	}
+
+	/**
 	 * Чи може користувач переглядати протокол довідника видів походів.
 	 */
 	public static function current_user_can_view_tourtype_protocol(): bool {
@@ -1280,6 +1327,13 @@ class Capabilities {
 	 */
 	public static function current_user_can_view_hourcategories_protocol(): bool {
 		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_HOURCATEGORIES_PROTOCOL );
+	}
+
+	/**
+	 * Чи може користувач переглядати протокол довідника спортивних розрядів.
+	 */
+	public static function current_user_can_view_sportscategories_protocol(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_SPORTSCATEGORIES_PROTOCOL );
 	}
 
 	/**
