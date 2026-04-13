@@ -2,8 +2,8 @@
 /**
  * Клас активації та деактивації плагіна FSTU.
  *
- * Version:     1.1.0
- * Date_update: 2026-04-12
+ * Version:     1.2.0
+ * Date_update: 2026-04-13
  *
  * @package FSTU\Core
  */
@@ -18,6 +18,8 @@ class Activator {
 
 	private const TOURTYPE_ORDER_COLUMN = 'TourType_Order';
 	private const TOURTYPE_ORDER_BACKFILL_OPTION = 'fstu_tourtype_order_backfill_done';
+	private const HOURCATEGORIES_ORDER_COLUMN = 'HourCategories_Order';
+	private const HOURCATEGORIES_ORDER_BACKFILL_OPTION = 'fstu_hourcategories_order_backfill_done';
 
 	/**
 	 * Виконується при активації плагіна.
@@ -67,6 +69,14 @@ class Activator {
 		}
 
 		if ( ! self::maybe_backfill_tourtype_order_column() ) {
+			return false;
+		}
+
+		if ( ! self::maybe_add_hourcategories_order_column() ) {
+			return false;
+		}
+
+		if ( ! self::maybe_backfill_hourcategories_order_column() ) {
 			return false;
 		}
 
@@ -122,6 +132,100 @@ class Activator {
 		}
 
 		update_option( self::TOURTYPE_ORDER_BACKFILL_OPTION, '1' );
+
+		return true;
+	}
+
+	/**
+	 * Додає технічну колонку порядку для HourCategories, якщо її ще немає.
+	 */
+	private static function maybe_add_hourcategories_order_column(): bool {
+		global $wpdb;
+
+		if ( ! self::table_exists( 'S_HourCategories' ) ) {
+			return false;
+		}
+
+		if ( self::hourcategories_order_column_exists() ) {
+			return true;
+		}
+
+		$altered = $wpdb->query(
+			'ALTER TABLE S_HourCategories ADD COLUMN ' . self::HOURCATEGORIES_ORDER_COLUMN . ' INT UNSIGNED NOT NULL DEFAULT 0'
+		);
+
+		if ( false === $altered ) {
+			return false;
+		}
+
+		delete_option( self::HOURCATEGORIES_ORDER_BACKFILL_OPTION );
+
+		return true;
+	}
+
+	/**
+	 * Виконує backfill значень сортування для HourCategories, якщо він ще не завершений.
+	 */
+	private static function maybe_backfill_hourcategories_order_column(): bool {
+		if ( ! self::hourcategories_order_column_exists() ) {
+			return false;
+		}
+
+		if ( '1' === get_option( self::HOURCATEGORIES_ORDER_BACKFILL_OPTION, '0' ) ) {
+			return true;
+		}
+
+		if ( ! self::backfill_hourcategories_order_column() ) {
+			return false;
+		}
+
+		update_option( self::HOURCATEGORIES_ORDER_BACKFILL_OPTION, '1' );
+
+		return true;
+	}
+
+	/**
+	 * Заповнює значення сортування для наявних записів HourCategories.
+	 */
+	private static function backfill_hourcategories_order_column(): bool {
+		global $wpdb;
+
+		$rows = $wpdb->get_results(
+			'SELECT HourCategories_ID, HourCategories_Code, HourCategories_Name, HourCategories_Order FROM S_HourCategories ORDER BY HourCategories_Code ASC, HourCategories_Name ASC, HourCategories_ID ASC',
+			ARRAY_A
+		);
+
+		if ( ! is_array( $rows ) || empty( $rows ) ) {
+			return true;
+		}
+
+		$order = 0;
+
+		foreach ( $rows as $row ) {
+			$hourcategories_id = absint( $row['HourCategories_ID'] ?? 0 );
+			if ( $hourcategories_id <= 0 ) {
+				continue;
+			}
+
+			++$order;
+			$current_order = absint( $row['HourCategories_Order'] ?? 0 );
+
+			if ( $current_order === $order ) {
+				continue;
+			}
+
+			$updated = $wpdb->update(
+				'S_HourCategories',
+				[ self::HOURCATEGORIES_ORDER_COLUMN => $order ],
+				[ 'HourCategories_ID' => $hourcategories_id ],
+				[ '%d' ],
+				[ '%d' ]
+			);
+
+			if ( false === $updated ) {
+				return false;
+			}
+		}
 
 		return true;
 	}
@@ -198,6 +302,20 @@ class Activator {
 			$wpdb->prepare(
 				'SHOW COLUMNS FROM S_TourType LIKE %s',
 				self::TOURTYPE_ORDER_COLUMN
+			)
+		);
+	}
+
+	/**
+	 * Перевіряє наявність колонки HourCategories_Order.
+	 */
+	private static function hourcategories_order_column_exists(): bool {
+		global $wpdb;
+
+		return null !== $wpdb->get_var(
+			$wpdb->prepare(
+				'SHOW COLUMNS FROM S_HourCategories LIKE %s',
+				self::HOURCATEGORIES_ORDER_COLUMN
 			)
 		);
 	}

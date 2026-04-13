@@ -3,7 +3,7 @@
  * Plugin Name:  FSTU Portal
  * Plugin URI:   https://www.fstu.com.ua/
  * Description:  Офіційний плагін Федерації спортивного туризму України. Enterprise ERP/CRM система управління реєстрами, структурою та фінансами федерації.
- * Version:      1.17.1
+ * Version:      1.18.0
  * Author:       Oleksandr Dykyi
  * Author URI:   https://www.fstu.com.ua/
  * Text Domain:  fstu
@@ -11,7 +11,7 @@
  * Requires PHP: 8.0
  * Requires at least: 6.0
  *
- * Date_update: 2026-04-12
+ * Date_update: 2026-04-13
  *
  * @package FSTU
  */
@@ -22,8 +22,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // ─── Константи плагіна ────────────────────────────────────────────────────────
 
-define( 'FSTU_VERSION',      '1.17.1' );
-define( 'FSTU_DB_VERSION',   '1.1.0' );
+define( 'FSTU_VERSION',      '1.18.0' );
+define( 'FSTU_DB_VERSION',   '1.2.0' );
 define( 'FSTU_PLUGIN_FILE',  __FILE__ );
 define( 'FSTU_PLUGIN_DIR',   plugin_dir_path( __FILE__ ) );
 define( 'FSTU_PLUGIN_URL',   plugin_dir_url( __FILE__ ) );
@@ -111,6 +111,10 @@ require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/TourType/class-tourtype-aj
 // HikingCategory — Довідник категорій походів ФСТУ (2026-04-13)
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/HikingCategory/class-hikingcategory-list.php';
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/HikingCategory/class-hikingcategory-ajax.php';
+
+// HourCategories — Довідник видів складності походів ФСТУ (2026-04-13)
+require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/HourCategories/class-hourcategories-list.php';
+require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/HourCategories/class-hourcategories-ajax.php';
 
 // EventType — Довідник типів заходів ФСТУ (2026-04-07)
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/EventType/class-eventtype-list.php';
@@ -389,6 +393,10 @@ function fstu_init(): void {
 	// ── Довідник категорій походів ФСТУ ───────────────────────────────────────
 	( new FSTU\Dictionaries\HikingCategory\HikingCategory_List() )->init();
 	( new FSTU\Dictionaries\HikingCategory\HikingCategory_Ajax() )->init();
+
+	// ── Довідник видів складності походів ФСТУ ────────────────────────────────
+	( new FSTU\Dictionaries\HourCategories\HourCategories_List() )->init();
+	( new FSTU\Dictionaries\HourCategories\HourCategories_Ajax() )->init();
 
 	// ── Довідник типів заходів ФСТУ ───────────────────────────────────────────
 	( new FSTU\Dictionaries\EventType\EventType_List() )->init();

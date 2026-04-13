@@ -2,7 +2,7 @@
 /**
  * Клас централізованого керування capability-моделлю ФСТУ.
  *
- * Version:     1.20.0
+ * Version:     1.21.0
  * Date_update: 2026-04-13
  *
  * @package FSTU\Core
@@ -32,6 +32,10 @@ class Capabilities {
 	public const MANAGE_HIKING_CATEGORY   = 'fstu_manage_hiking_category';
 	public const DELETE_HIKING_CATEGORY   = 'fstu_delete_hiking_category';
 	public const VIEW_HIKING_CATEGORY_PROTOCOL = 'fstu_view_hiking_category_protocol';
+	public const VIEW_HOURCATEGORIES      = 'fstu_view_hourcategories';
+	public const MANAGE_HOURCATEGORIES    = 'fstu_manage_hourcategories';
+	public const DELETE_HOURCATEGORIES    = 'fstu_delete_hourcategories';
+	public const VIEW_HOURCATEGORIES_PROTOCOL = 'fstu_view_hourcategories_protocol';
 	public const VIEW_TYPEGUIDANCE        = 'fstu_view_typeguidance';
 	public const MANAGE_TYPEGUIDANCE      = 'fstu_manage_typeguidance';
 	public const DELETE_TYPEGUIDANCE      = 'fstu_delete_typeguidance';
@@ -159,6 +163,10 @@ class Capabilities {
 				self::MANAGE_HIKING_CATEGORY   => true,
 				self::DELETE_HIKING_CATEGORY   => true,
 				self::VIEW_HIKING_CATEGORY_PROTOCOL => true,
+				self::VIEW_HOURCATEGORIES      => true,
+				self::MANAGE_HOURCATEGORIES    => true,
+				self::DELETE_HOURCATEGORIES    => true,
+				self::VIEW_HOURCATEGORIES_PROTOCOL => true,
 				self::VIEW_TYPEGUIDANCE        => true,
 				self::MANAGE_TYPEGUIDANCE      => true,
 				self::DELETE_TYPEGUIDANCE      => true,
@@ -284,6 +292,10 @@ class Capabilities {
 				self::MANAGE_HIKING_CATEGORY       => true,
 				self::DELETE_HIKING_CATEGORY       => true,
 				self::VIEW_HIKING_CATEGORY_PROTOCOL => true,
+				self::VIEW_HOURCATEGORIES         => true,
+				self::MANAGE_HOURCATEGORIES       => true,
+				self::DELETE_HOURCATEGORIES       => true,
+				self::VIEW_HOURCATEGORIES_PROTOCOL => true,
 				self::VIEW_MEMBER_CARD_APPLICATIONS => true,
 				self::MANAGE_MEMBER_CARD_APPLICATIONS => true,
 				self::VIEW_MEMBER_CARD_APPLICATIONS_PROTOCOL => true,
@@ -320,6 +332,7 @@ class Capabilities {
 				self::MANAGE_PARTICIPATION_TYPE => true,
 				self::VIEW_PARTICIPATION_TYPE_PROTOCOL => true,
 				self::VIEW_TOURTYPE            => true,
+				self::VIEW_HOURCATEGORIES      => true,
 				self::VIEW_MEMBER_CARD_APPLICATIONS => true,
 				self::MANAGE_MEMBER_CARD_APPLICATIONS => true,
 				self::VIEW_MEMBER_CARD_APPLICATIONS_PROTOCOL => true,
@@ -365,6 +378,7 @@ class Capabilities {
 			'userfstu' => [
 				self::VIEW_PARTICIPATION_TYPE => true,
 				self::VIEW_TOURTYPE => true,
+				self::VIEW_HOURCATEGORIES => true,
 				self::SELF_MANAGE_MEMBER_CARD_APPLICATIONS => true,
 				self::REISSUE_MEMBER_CARD_APPLICATIONS => true,
 				self::UPDATE_MEMBER_CARD_APPLICATIONS_PHOTO => true,
@@ -649,6 +663,20 @@ class Capabilities {
 			'canManage'   => self::current_user_can_manage_hikingcategory(),
 			'canDelete'   => self::current_user_can_delete_hikingcategory(),
 			'canProtocol' => self::current_user_can_view_hikingcategory_protocol(),
+		];
+	}
+
+	/**
+	 * Повертає прапорці прав для довідника видів складності походів.
+	 *
+	 * @return array<string,bool>
+	 */
+	public static function get_hourcategories_permissions(): array {
+		return [
+			'canView'     => self::current_user_can_view_hourcategories(),
+			'canManage'   => self::current_user_can_manage_hourcategories(),
+			'canDelete'   => self::current_user_can_delete_hourcategories(),
+			'canProtocol' => self::current_user_can_view_hourcategories_protocol(),
 		];
 	}
 
@@ -1185,6 +1213,13 @@ class Capabilities {
 	}
 
 	/**
+	 * Чи може користувач переглядати довідник видів складності походів.
+	 */
+	public static function current_user_can_view_hourcategories(): bool {
+		return true;
+	}
+
+	/**
 	 * Чи може користувач керувати довідником видів походів.
 	 */
 	public static function current_user_can_manage_tourtype(): bool {
@@ -1196,6 +1231,13 @@ class Capabilities {
 	 */
 	public static function current_user_can_manage_hikingcategory(): bool {
 		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_HIKING_CATEGORY );
+	}
+
+	/**
+	 * Чи може користувач керувати довідником видів складності походів.
+	 */
+	public static function current_user_can_manage_hourcategories(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_HOURCATEGORIES );
 	}
 
 	/**
@@ -1213,6 +1255,13 @@ class Capabilities {
 	}
 
 	/**
+	 * Чи може користувач видаляти записи довідника видів складності походів.
+	 */
+	public static function current_user_can_delete_hourcategories(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::DELETE_HOURCATEGORIES );
+	}
+
+	/**
 	 * Чи може користувач переглядати протокол довідника видів походів.
 	 */
 	public static function current_user_can_view_tourtype_protocol(): bool {
@@ -1224,6 +1273,13 @@ class Capabilities {
 	 */
 	public static function current_user_can_view_hikingcategory_protocol(): bool {
 		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_HIKING_CATEGORY_PROTOCOL );
+	}
+
+	/**
+	 * Чи може користувач переглядати протокол довідника видів складності походів.
+	 */
+	public static function current_user_can_view_hourcategories_protocol(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_HOURCATEGORIES_PROTOCOL );
 	}
 
 	/**
