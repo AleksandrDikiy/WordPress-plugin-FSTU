@@ -202,12 +202,64 @@ class Personal_Cabinet_Ajax {
 		$result = $this->service->save_dues_receipt( $profile_user_id, $permissions, absint($_POST['year_id']), (float)$_POST['summa'], esc_url_raw($_POST['url']) );
 		is_wp_error( $result ) ? $this->send_safe_error( $result->get_error_message() ) : wp_send_json_success( $result );
 	}
+    // Новий метод для обробки повернення з Portmone
+    public function handle_portmone_return(): void {
+        // Отримуємо базові дані з URL, які ми самі ж туди і поклали
+        $result = sanitize_key($_GET['result'] ?? '');
+        $profile_user_id = absint($_GET['user_id'] ?? 0);
 
-	public function handle_portmone_return(): void {
-		$redirect_url = $this->payments_service->process_portmone_return( sanitize_key($_GET['result'] ?? ''), $_GET, $_POST );
-		wp_safe_redirect( $redirect_url ?: home_url('/') );
-		exit;
-	}
+        // ЯКЩО ОПЛАТА УСПІШНА
+        if ( 'success' === $result && $profile_user_id > 0 ) {
+            global $wpdb;
+
+            // 1. Отримуємо суму з налаштувань (точно як у Personal.php)
+            $amount = floatval( $wpdb->get_var( "SELECT GetParamValueSettings('AnnualFee') as 'AnnualFee'" ) );
+            if ( $amount <= 0 ) $amount = 25; // Страховка
+
+            // 2. Отримуємо параметри, які повернув Portmone у $_POST масиві
+            $year = absint( $_POST['ATTRIBUTE1'] ?? 0 );
+            $user_create = absint( $_POST['ATTRIBUTE2'] ?? 0 );
+
+            // 3. Захист від дублювання (перевіряємо чи цей рік вже не оплачений)
+            $exists = $wpdb->get_var( $wpdb->prepare( "SELECT Dues_ID FROM Dues WHERE User_ID = %d AND Year_ID = %d", $profile_user_id, $year ) );
+
+            if ( ! $exists && $year > 0 ) {
+                // 4. Прямий запис у БД (ідентично до логіки старого плагіна)
+                $wpdb->insert( 'Dues', [
+                    'Dues_DateCreate'      => current_time('mysql'),
+                    'User_ID'              => $profile_user_id,
+                    'Year_ID'              => $year,
+                    'UserCreate'           => $user_create > 0 ? $user_create : $profile_user_id,
+                    'Dues_ShopBillid'      => sanitize_text_field( $_POST['SHOPBILLID'] ?? '' ),
+                    'Dues_ShopOrderNumber' => sanitize_text_field( $_POST['SHOPORDERNUMBER'] ?? '' ),
+                    'Dues_ApprovalCode'    => sanitize_text_field( $_POST['APPROVALCODE'] ?? '' ),
+                    'Dues_CardMask'        => sanitize_text_field( $_POST['CARD_MASK'] ?? '' ),
+                    'Dues_Summa'           => $amount,
+                    'DuesType_ID'          => 1 // 1 = Членський внесок
+                ] );
+
+                // Логування в протокол
+                $this->service->get_protocol_service()->log_action_for_user(
+                    $user_create > 0 ? $user_create : $profile_user_id, 'I',
+                    "Онлайн-оплату членського внеску за $year рік успішно зафіксовано через Portmone.", '✓'
+                );
+            }
+
+            // 5. Перенаправляємо назад до кабінету з повідомленням про успіх
+            wp_safe_redirect( home_url("/personal/?ViewID={$profile_user_id}&payment_status=success&payment_year={$year}") );
+            exit;
+        }
+
+        // ЯКЩО ПОМИЛКА АБО СКАСУВАННЯ
+        if ( 'failure' === $result && $profile_user_id > 0 ) {
+            wp_safe_redirect( home_url("/personal/?ViewID={$profile_user_id}&payment_status=failure") );
+            exit;
+        }
+
+        // Fallback (резервний варіант)
+        wp_safe_redirect( home_url('/personal/') );
+        exit;
+    }
 
 	private function verify_nonce(): void { check_ajax_referer( Personal_Cabinet_List::NONCE_ACTION, 'nonce' ); }
 	private function assert_authenticated(): void { if ( ! is_user_logged_in() ) { $this->send_safe_error( 'Авторизуйтесь', 401 ); } }
