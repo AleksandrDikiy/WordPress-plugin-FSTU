@@ -859,11 +859,51 @@ class Capabilities {
 			'canManageStatus'      => self::current_user_can_manage_steering_status(),
 			'canSeeFinance'        => self::current_user_can_view_steering_finance_columns(),
 			'canNotify'            => self::current_user_can_send_steering_notifications(),
-			'canViewHiddenExpired' => self::current_user_can_view_steering_finance_columns(),
-		];
-	}
+            'canViewHiddenExpired' => self::current_user_can_view_steering_finance_columns(),
+            'canViewSkipperBadge'  => self::current_user_can_view_skipper_badge(),
+            'canViewServiceTab'    => self::current_user_can_view_steering_service_tab(),
+        ];
+    }
 
-	/**
+    /**
+     * Чи може користувач бачити службову вкладку в картці стернового.
+     */
+    public static function current_user_can_view_steering_service_tab(): bool {
+        if ( current_user_can( 'manage_options' ) ) {
+            return true;
+        }
+
+        $current_user = wp_get_current_user();
+        $user_roles   = $current_user instanceof \WP_User ? array_map( 'strval', (array) $current_user->roles ) : [];
+
+        foreach ( [ 'administrator', 'sailingfinancier', 'usersail', 'sailadministrator' ] as $role ) {
+            if ( in_array( $role, $user_roles, true ) ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+    /**
+     * Чи може користувач бачити бейдж "Капітан" у загальному реєстрі.
+     */
+    public static function current_user_can_view_skipper_badge(): bool {
+        if ( current_user_can( 'manage_options' ) ) {
+            return true;
+        }
+
+        $current_user = wp_get_current_user();
+        $user_roles   = $current_user instanceof \WP_User ? array_map( 'strval', (array) $current_user->roles ) : [];
+
+        foreach ( [ 'administrator', 'sailadministrator' ] as $role ) {
+            if ( in_array( $role, $user_roles, true ) ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+    /**
 	 * Повертає прапорці прав для модуля посвідчень членів ФСТУ.
 	 *
 	 * @return array<string,bool>

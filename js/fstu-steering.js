@@ -1,8 +1,8 @@
 /**
  * JS модуля «Реєстр стернових ФСТУ».
 	 *
-	 * Version:     1.11.0
-	 * Date_update: 2026-04-09
+	 * Version:     1.11.1
+	 * Date_update: 2026-04-14
  *
  * @package FSTU
  */
@@ -264,6 +264,19 @@ jQuery( document ).ready( function ( $ ) {
 				closeModal( $( this ).attr( 'id' ) );
 			}
 		} );
+
+		// Обробник кліку по вкладках
+		$( document ).on( 'click', '.fstu-tab-btn', function () {
+			const targetId = $( this ).data( 'target' );
+
+			// Знімаємо клас active з усіх кнопок та вкладок
+			$( '.fstu-tab-btn' ).removeClass( 'is-active' );
+			$( '.fstu-tab-pane' ).removeClass( 'is-active' ).addClass( 'fstu-hidden' );
+
+			// Робимо активними обрані елементи
+			$( this ).addClass( 'is-active' );
+			$( '#' + targetId ).removeClass( 'fstu-hidden' ).addClass( 'is-active' );
+		} );
 	}
 
 	function loadList() {
@@ -351,6 +364,10 @@ jQuery( document ).ready( function ( $ ) {
 
 	function fillViewModal( item ) {
 		currentView.steeringId = parseInt( item.Steering_ID, 10 ) || currentView.steeringId;
+
+		// Перевірка вкладки "Службова"
+		$( '#fstu-steering-tab-service-btn' ).toggleClass( 'fstu-hidden', ! permissions.canViewServiceTab );
+
 		setText( '#fstu-steering-view-fio', item.FIO || '—' );
 		setText( '#fstu-steering-view-fio-eng', buildEnglishFullName( item ) || '—' );
 		setText( '#fstu-steering-view-type-app', resolveTypeLabel( item.Steering_TypeApp ) || '—' );
@@ -760,6 +777,12 @@ jQuery( document ).ready( function ( $ ) {
 		$( '#fstu-steering-delete-btn' ).addClass( 'fstu-hidden' ).prop( 'disabled', false );
 		$( '#fstu-steering-view-photo' ).attr( 'src', '' ).addClass( 'fstu-hidden' );
 		toggleAdminRows();
+
+		// Скидаємо активну вкладку на "Публічну"
+		$( '.fstu-tab-btn' ).removeClass( 'is-active' );
+		$( '[data-target="fstu-tab-public"]' ).addClass( 'is-active' );
+		$( '.fstu-tab-pane' ).addClass( 'fstu-hidden' ).removeClass( 'is-active' );
+		$( '#fstu-tab-public' ).removeClass( 'fstu-hidden' ).addClass( 'is-active' );
 	}
 
 	function resolveTypeLabel( typeId ) {

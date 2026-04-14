@@ -776,3 +776,148 @@ body.fstu-modal-open {
     display: inline-block;
     line-height: 1;
 }
+
+/* ==========================================
+   СУЧАСНА КАРТКА З ВЛАДКАМИ (ОНОВЛЕННЯ)
+========================================== */
+
+/* Оновлення кнопки закриття (хрестик) */
+.fstu-modal__close {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	border: none;
+	background: transparent;
+	font-size: 28px;
+	color: #6b7280;
+	cursor: pointer;
+	border-radius: 50%;
+	transition: background-color 0.2s ease, color 0.2s ease;
+}
+.fstu-modal__close:hover {
+	background-color: #f3f4f6;
+	color: #ef4444; /* Червоний при наведенні */
+}
+
+/* Навігація вкладок */
+.fstu-modal__tabs-nav {
+	display: flex;
+	gap: 16px;
+	padding: 0 18px;
+	background: #f8f9fa;
+	border-bottom: 1px solid #e5e7eb;
+}
+
+.fstu-tab-btn {
+	padding: 10px 20px !important;
+	background-color: transparent !important;
+	border: 2px solid transparent !important;
+	color: #4b5563 !important;
+	font-size: 14px !important;
+	font-weight: 600 !important;
+	cursor: pointer;
+	border-radius: 6px !important;
+	box-shadow: none !important;
+	transition: all 0.2s ease;
+	margin: 0 !important;
+	outline: none !important;
+}
+.fstu-tab-btn:hover {
+	background-color: #f3f4f6 !important;
+	color: #c65b41 !important;
+}
+.fstu-tab-btn.is-active {
+	background-color: #c65b41 !important;
+	color: #ffffff !important;
+	border-color: #c65b41 !important;
+}
+
+/* Анімація вкладок */
+.fstu-tab-pane {
+	opacity: 0;
+	transition: opacity 0.3s ease;
+}
+.fstu-tab-pane.is-active {
+	opacity: 1;
+}
+
+/* Сучасна сітка картки (2 колонки) */
+.fstu-card-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 24px;
+	padding-top: 10px;
+}
+
+/* Адаптивність для телефонів */
+@media (max-width: 768px) {
+	.fstu-card-grid {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* Колонка з фотографією */
+.fstu-card-grid__col--photo .fstu-steering-photo-wrap {
+	background: #f9fafb;
+	border: 1px solid #e5e7eb;
+	border-radius: 8px;
+	padding: 16px;
+	min-height: auto;
+}
+.fstu-card-grid__col--photo .fstu-steering-photo {
+	width: 100%;
+	max-width: 320px;
+	height: auto;
+	border: none;
+	border-radius: 6px;
+	box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Рядки даних у колонках */
+.fstu-view-data-list {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	background: #fff;
+	border: 1px solid #e5e7eb;
+	padding: 16px;
+	border-radius: 8px;
+}
+.fstu-view-data-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: 12px;
+}
+.fstu-view-data-row--stacked {
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 4px;
+}
+.fstu-view-data-label {
+	font-weight: 600;
+	color: #6b7280;
+	font-size: 13px;
+	flex-shrink: 0;
+}
+.fstu-view-data-value {
+	color: #111827;
+	text-align: right;
+	font-size: 14px;
+}
+.fstu-view-data-row--stacked .fstu-view-data-value {
+	text-align: left;
+}
+
+/* Декоративні елементи */
+.fstu-text-bold { font-weight: 700; }
+.fstu-text-small { font-size: 12px; line-height: 1.4; color: #374151; }
+.fstu-view-data-divider {
+	border: 0;
+	border-top: 1px dashed #e5e7eb;
+	margin: 6px 0;
+	width: 100%;
+}
+.fstu-mt-4 { margin-top: 16px; }

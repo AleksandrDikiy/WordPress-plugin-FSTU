@@ -321,11 +321,12 @@ class Steering_Ajax {
 			$reg_number     = (string) ( $item['Steering_RegNumber'] ?? '' );
 
 
-			$date_pay       = (string) ( $item['Steering_DatePay'] ?? '' );
-			$row_class      = $this->resolve_row_class( $item );
-			$is_skipper     = ( $item['Record_Type'] ?? 'steering' ) === 'skipper';
-			$badge          = $is_skipper ? ' <span class="fstu-badge fstu-badge--warning">Капітан</span>' : '';
-			$actions        = '<button type="button" class="fstu-steering-dropdown__item fstu-steering-view-btn" data-steering-id="' . esc_attr( (string) $steering_id ) . '">' . esc_html__( 'Перегляд', 'fstu' ) . '</button>';
+            $date_pay       = (string) ( $item['Steering_DatePay'] ?? '' );
+            $row_class      = $this->resolve_row_class( $item );
+            $is_skipper     = ( $item['Record_Type'] ?? 'steering' ) === 'skipper';
+            $show_badge     = $is_skipper && ! empty( $permissions['canViewSkipperBadge'] );
+            $badge          = $show_badge ? ' <span class="fstu-badge fstu-badge--warning">Капітан</span>' : '';
+            $actions        = '<button type="button" class="fstu-steering-dropdown__item fstu-steering-view-btn" data-steering-id="' . esc_attr( (string) $steering_id ) . '">' . esc_html__( 'Перегляд', 'fstu' ) . '</button>';
 
 			if ( ! empty( $permissions['canManage'] ) && ! $is_skipper ) {
 				$actions .= '<button type="button" class="fstu-steering-dropdown__item fstu-steering-edit-btn" data-steering-id="' . esc_attr( (string) $steering_id ) . '">' . esc_html__( 'Редагувати', 'fstu' ) . '</button>';
