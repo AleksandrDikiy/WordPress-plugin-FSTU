@@ -11,8 +11,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Контролер відображення модуля «Реєстр суддів ФСТУ».
  * Реєструє shortcode, підключає assets та локалізує фронтенд-дані.
  *
- * Version:     1.1.0
- * Date_update: 2026-04-09
+ * Version:     1.1.1
+ * Date_update: 2026-04-14
  *
  * @package FSTU\Modules\Registry\Referees
  */
@@ -181,12 +181,17 @@ class Referees_List {
 		];
 	}
 
-	/**
-	 * @return array<string,bool>
-	 */
-	private function get_permissions(): array {
-		return Capabilities::get_referees_permissions();
-	}
+    /**
+     * @return array<string,bool>
+     */
+    private function get_permissions(): array {
+        $permissions = Capabilities::get_referees_permissions();
+
+        // Примусово дозволяємо перегляд реєстру для всіх (публічний доступ)
+        $permissions['canView'] = true;
+
+        return $permissions;
+    }
 
 	private function get_asset_version( string $file_path ): string {
 		if ( file_exists( $file_path ) ) {

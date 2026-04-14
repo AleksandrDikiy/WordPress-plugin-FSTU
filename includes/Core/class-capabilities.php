@@ -2,8 +2,8 @@
 /**
  * Клас централізованого керування capability-моделлю ФСТУ.
  *
- * Version:     1.26.0
- * Date_update: 2026-04-13
+ * Version:     1.26.1
+ * Date_update: 2026-04-14
  *
  * @package FSTU\Core
  */
@@ -1255,12 +1255,12 @@ class Capabilities {
 		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_CITY_PROTOCOL );
 	}
 
-	/**
-	 * Чи може користувач переглядати реєстр суден.
-	 */
-	public static function current_user_can_view_sailboats(): bool {
-		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_SAILBOATS );
-	}
+    /**
+     * Чи може користувач переглядати реєстр суден.
+     */
+    public static function current_user_can_view_sailboats(): bool {
+        return true; // КРИТИЧНА ЗМІНА: Дозволяємо перегляд усім (гостям та авторизованим)
+    }
 
 	/**
 	 * Чи може користувач керувати реєстром суден.

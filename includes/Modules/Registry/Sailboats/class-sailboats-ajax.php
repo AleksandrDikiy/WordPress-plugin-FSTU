@@ -11,8 +11,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  * AJAX-обробники модуля "Судновий реєстр ФСТУ".
  * Список, картка, протокол, create/update та службові операції модуля.
  *
- * Version:     1.10.1
- * Date_update: 2026-04-09
+ * Version:     1.10.2
+ * Date_update: 2026-04-14
  *
  * @package FSTU\Modules\Registry\Sailboats
  */
@@ -30,25 +30,35 @@ class Sailboats_Ajax {
 	private ?Sailboats_Notification_Service $notification_service = null;
 	private ?Sailboats_Service $service = null;
 
-	/**
-	 * Реєструє AJAX-обробники.
-	 */
-	public function init(): void {
-		add_action( 'wp_ajax_fstu_sailboats_get_list', [ $this, 'handle_get_list' ] );
-		add_action( 'wp_ajax_fstu_sailboats_get_single', [ $this, 'handle_get_single' ] );
-		add_action( 'wp_ajax_fstu_sailboats_create', [ $this, 'handle_create' ] );
-		add_action( 'wp_ajax_fstu_sailboats_update', [ $this, 'handle_update' ] );
-		add_action( 'wp_ajax_fstu_sailboats_update_status', [ $this, 'handle_update_status' ] );
-		add_action( 'wp_ajax_fstu_sailboats_set_payment', [ $this, 'handle_set_payment' ] );
-		add_action( 'wp_ajax_fstu_sailboats_mark_received', [ $this, 'handle_mark_received' ] );
-		add_action( 'wp_ajax_fstu_sailboats_mark_sale', [ $this, 'handle_mark_sale' ] );
-		add_action( 'wp_ajax_fstu_sailboats_delete', [ $this, 'handle_delete' ] );
-		add_action( 'wp_ajax_fstu_sailboats_send_dues_notification', [ $this, 'handle_send_dues_notification' ] );
-		add_action( 'wp_ajax_fstu_sailboats_get_protocol', [ $this, 'handle_get_protocol' ] );
-		add_action( 'wp_ajax_fstu_sailboats_get_dictionaries', [ $this, 'handle_get_dictionaries' ] );
-		add_action( 'wp_ajax_fstu_sailboats_search_existing', [ $this, 'handle_search_existing' ] );
-		add_action( 'wp_ajax_fstu_merilkas_get_list_by_sailboat', [ $this, 'handle_get_list_by_sailboat' ] );
-	}
+    public function init(): void {
+        // 1. Операції ЧИТАННЯ (доступні для всіх, додаємо nopriv)
+        $read_actions = [
+            'get_list',
+            'get_single',
+            'get_dictionaries',
+            'search_existing' // Якщо хочете дозволити пошук існуючих суден гостям
+        ];
+
+        foreach ( $read_actions as $action ) {
+            add_action( "wp_ajax_fstu_sailboats_{$action}", [ $this, "handle_{$action}" ] );
+            add_action( "wp_ajax_nopriv_fstu_sailboats_{$action}", [ $this, "handle_{$action}" ] );
+        }
+
+        // 2. Операції ЗАПИСУ та СЛУЖБОВІ (залишаємо як є, тільки для авторизованих)
+        add_action( 'wp_ajax_fstu_sailboats_create', [ $this, 'handle_create' ] );
+        add_action( 'wp_ajax_fstu_sailboats_update', [ $this, 'handle_update' ] );
+        add_action( 'wp_ajax_fstu_sailboats_update_status', [ $this, 'handle_update_status' ] );
+        add_action( 'wp_ajax_fstu_sailboats_set_payment', [ $this, 'handle_set_payment' ] );
+        add_action( 'wp_ajax_fstu_sailboats_mark_received', [ $this, 'handle_mark_received' ] );
+        add_action( 'wp_ajax_fstu_sailboats_mark_sale', [ $this, 'handle_mark_sale' ] );
+        add_action( 'wp_ajax_fstu_sailboats_delete', [ $this, 'handle_delete' ] );
+        add_action( 'wp_ajax_fstu_sailboats_send_dues_notification', [ $this, 'handle_send_dues_notification' ] );
+        add_action( 'wp_ajax_fstu_sailboats_get_protocol', [ $this, 'handle_get_protocol' ] );
+        add_action( 'wp_ajax_fstu_merilkas_get_list_by_sailboat', [ $this, 'handle_get_list_by_sailboat' ] );
+
+        // Не забудьте додати nopriv і для мерилок, якщо вони теж мають бути публічними
+        add_action( 'wp_ajax_nopriv_fstu_merilkas_get_list_by_sailboat', [ $this, 'handle_get_list_by_sailboat' ] );
+    }
 
 	/**
 	 * Повертає список записів.

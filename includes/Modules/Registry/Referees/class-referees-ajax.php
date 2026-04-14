@@ -10,8 +10,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * AJAX-обробники модуля «Реєстр суддів ФСТУ».
  *
- * Version:     1.0.1
- * Date_update: 2026-04-08
+ * Version:     1.0.2
+ * Date_update: 2026-04-14
  *
  * @package FSTU\Modules\Registry\Referees
  */
@@ -25,26 +25,31 @@ class Referees_Ajax {
 	private ?Referees_Protocol_Service $protocol_service = null;
 	private ?Referees_Service $service = null;
 
-	public function init(): void {
-		add_action( 'wp_ajax_fstu_referees_get_list', [ $this, 'handle_get_list' ] );
-		add_action( 'wp_ajax_fstu_referees_get_single', [ $this, 'handle_get_single' ] );
-		add_action( 'wp_ajax_fstu_referees_create', [ $this, 'handle_create' ] );
-		add_action( 'wp_ajax_fstu_referees_update', [ $this, 'handle_update' ] );
-		add_action( 'wp_ajax_fstu_referees_delete', [ $this, 'handle_delete' ] );
-		add_action( 'wp_ajax_fstu_referees_get_dictionaries', [ $this, 'handle_get_dictionaries' ] );
-		add_action( 'wp_ajax_fstu_referees_get_protocol', [ $this, 'handle_get_protocol' ] );
-		add_action( 'wp_ajax_fstu_referees_get_certificates', [ $this, 'handle_get_certificates' ] );
-		add_action( 'wp_ajax_fstu_referees_create_certificate', [ $this, 'handle_create_certificate' ] );
-		add_action( 'wp_ajax_fstu_referees_bind_certificate_category', [ $this, 'handle_bind_certificate_category' ] );
-		add_action( 'wp_ajax_fstu_referees_unbind_certificate_category', [ $this, 'handle_unbind_certificate_category' ] );
-	}
+    public function init(): void {
+        // Публічні методи (доступні для всіх)
+        add_action( 'wp_ajax_fstu_referees_get_list', [ $this, 'handle_get_list' ] );
+        add_action( 'wp_ajax_nopriv_fstu_referees_get_list', [ $this, 'handle_get_list' ] );
+        //
+        add_action( 'wp_ajax_fstu_referees_get_single', [ $this, 'handle_get_single' ] );
+        add_action( 'wp_ajax_nopriv_fstu_referees_get_single', [ $this, 'handle_get_single' ] );
+        //
+        add_action( 'wp_ajax_fstu_referees_get_dictionaries', [ $this, 'handle_get_dictionaries' ] );
+        add_action( 'wp_ajax_nopriv_fstu_referees_get_dictionaries', [ $this, 'handle_get_dictionaries' ] );
+        //
+        add_action( 'wp_ajax_fstu_referees_get_certificates', [ $this, 'handle_get_certificates' ] );
+        add_action( 'wp_ajax_nopriv_fstu_referees_get_certificates', [ $this, 'handle_get_certificates' ] );
+        // Методи управління (залишаємо тільки для авторизованих)
+        add_action( 'wp_ajax_fstu_referees_create', [ $this, 'handle_create' ] );
+        add_action( 'wp_ajax_fstu_referees_update', [ $this, 'handle_update' ] );
+        add_action( 'wp_ajax_fstu_referees_delete', [ $this, 'handle_delete' ] );
+        add_action( 'wp_ajax_fstu_referees_get_protocol', [ $this, 'handle_get_protocol' ] );
+        add_action( 'wp_ajax_fstu_referees_create_certificate', [ $this, 'handle_create_certificate' ] );
+        add_action( 'wp_ajax_fstu_referees_bind_certificate_category', [ $this, 'handle_bind_certificate_category' ] );
+        add_action( 'wp_ajax_fstu_referees_unbind_certificate_category', [ $this, 'handle_unbind_certificate_category' ] );
+    }
 
 	public function handle_get_list(): void {
 		check_ajax_referer( Referees_List::NONCE_ACTION, 'nonce' );
-
-		if ( ! $this->current_user_can_view() ) {
-			wp_send_json_error( [ 'message' => __( 'Немає прав для перегляду реєстру суддів.', 'fstu' ) ] );
-		}
 
 		$search              = sanitize_text_field( wp_unslash( $_POST['search'] ?? '' ) );
 		$search              = mb_substr( $search, 0, self::MAX_SEARCH_LENGTH );
@@ -583,9 +588,10 @@ class Referees_Ajax {
 		return $this->service;
 	}
 
-	private function current_user_can_view(): bool {
-		return Capabilities::current_user_can_view_referees();
-	}
+    private function current_user_can_view(): bool {
+        // Примусово дозволяємо отримання даних через AJAX для всіх
+        return true;
+    }
 
 	private function current_user_can_manage(): bool {
 		return Capabilities::current_user_can_manage_referees();
