@@ -8,8 +8,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Бізнес-сервіс модуля «Особистий кабінет ФСТУ».
  *
- * Version:     1.14.0
- * Date_update: 2026-04-12
+ * Version:     1.14.1
+ * Date_update: 2026-04-14
  *
  * @package FSTU\Modules\PersonalCabinet
  */
@@ -370,7 +370,7 @@ class Personal_Cabinet_Service {
 		$can_pay_online        = ! empty( $permissions['canPayOnline'] );
 		$can_view_dues         = $can_manage_dues || $can_pay_online || $is_owner;
 		$can_manage_sailing    = ! empty( $permissions['canManageSailing'] );
-		$can_manage_sail_dues  = ! empty( $permissions['canManageSailDues'] );
+        $can_manage_sail_dues  = ! empty( $permissions['canManageSailDues'] );
 
 		$dues_items_raw      = isset( $collections['dues'] ) && is_array( $collections['dues'] ) ? $collections['dues'] : [];
 		$dues_sail_items_raw = isset( $collections['dues_sail'] ) && is_array( $collections['dues_sail'] ) ? $collections['dues_sail'] : [];
@@ -1045,29 +1045,35 @@ class Personal_Cabinet_Service {
 				'isReadOnly' => ! $can_manage_sailing,
 				'note'    => 'Показано дані про судна та вітрильні посвідчення користувача.',
 			],
-			'dues_sail' => [
-				'title'   => '', 
-				'visible' => ! empty( $permissions['canViewSailDues'] ),
-				'sections' => $dues_sail_sections, 
-				'table'    => [
-					'columns' => [
-						[ 'key' => 'year', 'label' => 'Рік' ],
-						[ 'key' => 'sum', 'label' => 'Сума' ],
-						[ 'key' => 'date', 'label' => 'Дата додавання' ],
-						[ 'key' => 'financier', 'label' => 'Фінансист' ],
-						[ 'key' => 'status', 'label' => 'Статус' ],
-						[ 'key' => '_actions', 'label' => 'Дії', 'type' => 'actions' ],
-					],
-					'rows'           => $dues_sail_table_rows,
-					'defaultPerPage' => 10,
-					'emptyMessage'   => __( 'Записи вітрильних внесків відсутні.', 'fstu' ),
-				],
-				// ВИПРАВЛЕННЯ: Повністю прибрали зайві кнопки дій
-				'actions' => [],
-				'accessNotice' => '',
-				'isReadOnly' => ! $can_manage_sail_dues,
-				'note'    => 'Показано історію членських внесків вітрильників.',
-			],
+            'dues_sail' => [
+                'title'   => '',
+                'visible' => ! empty( $permissions['canViewSailDues'] ),
+                'sections' => $dues_sail_sections,
+                'table'    => [
+                    'columns' => [
+                        [ 'key' => 'year', 'label' => 'Рік' ],
+                        [ 'key' => 'sum', 'label' => 'Сума' ],
+                        [ 'key' => 'date', 'label' => 'Дата додавання' ],
+                        [ 'key' => 'financier', 'label' => 'Фінансист' ],
+                        [ 'key' => 'status', 'label' => 'Статус' ],
+                        [ 'key' => '_actions', 'label' => 'Дії', 'type' => 'actions' ],
+                    ],
+                    'rows'           => $dues_sail_table_rows,
+                    'defaultPerPage' => 10,
+                    'emptyMessage'   => __( 'Записи вітрильних внесків відсутні.', 'fstu' ),
+                ],
+                // ГАРАНТОВАНЕ виведення кнопки без зайвих обгорток і тернарних операторів
+                'actions' => $this->build_tab_actions( [
+                    [
+                        'label'     => 'Додати оплату',
+                        'enabled'   => $can_manage_sail_dues || current_user_can('administrator') || current_user_can('sailingfinancier'),
+                        'actionKey' => 'add_sail_dues',
+                    ],
+                ], '' ),
+                'accessNotice' => '',
+                'isReadOnly' => ! $can_manage_sail_dues,
+                'note'    => 'Показано історію членських внесків вітрильників.',
+            ],
 		];
 	}
 //...

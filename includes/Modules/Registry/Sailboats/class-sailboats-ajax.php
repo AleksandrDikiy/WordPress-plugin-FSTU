@@ -60,45 +60,52 @@ class Sailboats_Ajax {
         add_action( 'wp_ajax_nopriv_fstu_merilkas_get_list_by_sailboat', [ $this, 'handle_get_list_by_sailboat' ] );
     }
 
-	/**
-	 * Повертає список записів.
-	 */
-	public function handle_get_list(): void {
-		check_ajax_referer( Sailboats_List::NONCE_ACTION, 'nonce' );
+    /**
+     * Повертає список записів.
+     */
+    public function handle_get_list(): void {
+        check_ajax_referer( Sailboats_List::NONCE_ACTION, 'nonce' );
 
-		if ( ! $this->current_user_can_view() ) {
-			wp_send_json_error( [ 'message' => __( 'Немає прав для перегляду реєстру суден.', 'fstu' ) ] );
-		}
+        if ( ! $this->current_user_can_view() ) {
+            wp_send_json_error( [ 'message' => __( 'Немає прав для перегляду реєстру суден.', 'fstu' ) ] );
+        }
 
-		$search    = sanitize_text_field( wp_unslash( $_POST['search'] ?? '' ) );
-		$search    = mb_substr( $search, 0, self::MAX_SEARCH_LENGTH );
-		$page      = max( 1, absint( $_POST['page'] ?? 1 ) );
-		$per_page  = min( max( 1, absint( $_POST['per_page'] ?? self::DEFAULT_PER_PAGE ) ), self::MAX_PER_PAGE );
-		$region_id = absint( $_POST['region_id'] ?? 0 );
-		$status_id = absint( $_POST['status_id'] ?? 0 );
-		$offset    = ( $page - 1 ) * $per_page;
+        $search    = sanitize_text_field( wp_unslash( $_POST['search'] ?? '' ) );
+        $search    = mb_substr( $search, 0, self::MAX_SEARCH_LENGTH );
+        $page      = max( 1, absint( $_POST['page'] ?? 1 ) );
+        $per_page  = min( max( 1, absint( $_POST['per_page'] ?? self::DEFAULT_PER_PAGE ) ), self::MAX_PER_PAGE );
+        $region_id = absint( $_POST['region_id'] ?? 0 );
+        $status_id = isset( $_POST['status_id'] ) && '' !== $_POST['status_id'] ? absint( $_POST['status_id'] ) : 7;
+        // Примусово обмежуємо гостей тільки статусом "Доставлено одержувачу" (7)
+        if ( ! is_user_logged_in() ) {
+            $status_id = 7;
+        }
+        // ДОДАНО ОБ'ЯВЛЕННЯ ЗМІННОЇ
+        $dues_filter = sanitize_text_field( wp_unslash( $_POST['dues_filter'] ?? 'all' ) );
+        $offset    = ( $page - 1 ) * $per_page;
 
-		$payload = $this->get_service()->get_list_payload(
-			[
-				'search'    => $search,
-				'page'      => $page,
-				'per_page'  => $per_page,
-				'offset'    => $offset,
-				'region_id' => $region_id,
-				'status_id' => $status_id,
-			]
-		);
+        $payload = $this->get_service()->get_list_payload(
+            [
+                'search'    => $search,
+                'page'      => $page,
+                'per_page'  => $per_page,
+                'offset'    => $offset,
+                'region_id' => $region_id,
+                'status_id' => $status_id,
+                'dues_filter' => $dues_filter, // ПЕРЕДАЧА ЗМІННОЇ
+            ]
+        );
 
-		wp_send_json_success(
-			[
-				'html'        => $this->build_rows( $payload['items'], $offset, $this->get_permissions() ),
-				'total'       => $payload['total'],
-				'page'        => $payload['page'],
-				'per_page'    => $payload['per_page'],
-				'total_pages' => $payload['total_pages'],
-			]
-		);
-	}
+        wp_send_json_success(
+            [
+                'html'        => $this->build_rows( $payload['items'], $offset, $this->get_permissions() ),
+                'total'       => $payload['total'],
+                'page'        => $payload['page'],
+                'per_page'    => $payload['per_page'],
+                'total_pages' => $payload['total_pages'],
+            ]
+        );
+    }
 
 	/**
 	 * Повертає один запис судна.
@@ -1005,7 +1012,13 @@ class Sailboats_Ajax {
 	 * @param array<int,array<string,mixed>> $items Список суден.
 	 */
 	private function build_rows( array $items, int $offset, array $permissions ): string {
-		$colspan = ! empty( $permissions['canFinance'] ) ? 13 : 9;
+        // Було: $colspan = ! empty( $permissions['canFinance'] ) ? 13 : 9;
+        $is_logged_in = is_user_logged_in();
+        $colspan = ! empty( $permissions['canFinance'] ) ? 13 : 9;
+
+        if ( ! $is_logged_in ) {
+            $colspan--; // Зменшуємо на 1 для гостей, бо приховуємо Статус
+        }
 
 		if ( empty( $items ) ) {
 			return '<tr class="fstu-row"><td colspan="' . esc_attr( (string) $colspan ) . '" class="fstu-no-results">' . esc_html__( 'Немає записів, які б відповідали критеріям пошуку.', 'fstu' ) . '</td></tr>';
@@ -1075,7 +1088,9 @@ class Sailboats_Ajax {
 			$html  .= '<td class="fstu-td">' . $this->format_table_value( $item['region_name'] ?? '' ) . '</td>';
 			$html  .= '<td class="fstu-td">' . $this->format_table_value( $item['owner_name'] ?? '' ) . '</td>';
 			$html  .= '<td class="fstu-td">' . $this->format_table_value( $item['producer_name'] ?? '' ) . '</td>';
-			$html  .= '<td class="fstu-td">' . $this->format_table_value( $item['status_name'] ?? '' ) . '</td>';
+            if ( is_user_logged_in() ) {
+                $html .= '<td class="fstu-td">' . $this->format_table_value( $item['status_name'] ?? '' ) . '</td>';
+            }
 
 			if ( ! empty( $permissions['canFinance'] ) ) {
 				$html .= '<td class="fstu-td">' . $this->format_table_value( $item['registration_date'] ?? '' ) . '</td>';

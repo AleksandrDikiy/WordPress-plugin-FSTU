@@ -9,8 +9,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Репозиторій модуля "Судновий реєстр ФСТУ".
  * Відповідає за SQL-запити списку, картки, протоколу та довідників фільтрів.
  *
- * Version:     1.11.1
- * Date_update: 2026-04-09
+ * Version:     1.11.2
+ * Date_update: 2026-04-14
  *
  * @package FSTU\Modules\Registry\Sailboats
  */
@@ -36,9 +36,10 @@ class Sailboats_Repository {
 		$offset    = isset( $args['offset'] ) ? max( 0, absint( $args['offset'] ) ) : 0;
 
 		if ( '' !== $search ) {
-			$legacy_search_result = $this->get_sailboats_list_by_legacy_search( $search, $region_id, $status_id, $per_page, $offset );
+            // Додаємо шостий аргумент (фільтр)
+            $legacy_search_result = $this->get_sailboats_list_by_legacy_search( $search, $region_id, $status_id, $per_page, $offset, (string) ( $args['dues_filter'] ?? 'all' ) );
 
-			if ( is_array( $legacy_search_result ) ) {
+            if ( is_array( $legacy_search_result ) ) {
 				return $legacy_search_result;
 			}
 		}
@@ -94,6 +95,27 @@ class Sailboats_Repository {
 			$where_parts[] = $context['status_id_expr'] . ' = %d';
 			$params[]      = $status_id;
 		}
+
+        // ДОДАНО БЛОК ФІЛЬТРАЦІЇ ПО ВНЕСКАХ
+        $dues_filter = isset( $args['dues_filter'] ) ? (string) $args['dues_filter'] : 'all';
+        if ( 'fstu_paid' === $dues_filter ) {
+            $where_parts[] = "( ({$context['f1_expr']} + 0) > 0 OR ({$context['f2_expr']} + 0) > 0 )";
+        } elseif ( 'sail_paid' === $dues_filter ) {
+            $where_parts[] = "( ({$context['v1_expr']} + 0) > 0 OR ({$context['v2_expr']} + 0) > 0 )";
+        } elseif ( 'full_paid' === $dues_filter ) {
+            // ВИПРАВЛЕНО НА OR: об'єднуємо всі 4 колонки в одні дужки через OR
+            $where_parts[] = "( ({$context['f1_expr']} + 0) > 0 OR ({$context['f2_expr']} + 0) > 0 OR ({$context['v1_expr']} + 0) > 0 OR ({$context['v2_expr']} + 0) > 0 )";
+        }
+        // КІНЕЦЬ БЛОКУ ФІЛЬТРАЦІЇ ПО ВНЕСКАХ
+        if ( ! is_user_logged_in() ) {
+            // Для гостей показуємо лише тих, хто сплатив вітрильні внески (V1 або V2)
+            $where_parts[] = "( ({$context['v1_expr']} + 0) > 0 OR ({$context['v2_expr']} + 0) > 0 )";
+
+            // Також рекомендується обмежити перегляд лише перевіреними записами (статус > 2)
+            if ( '' !== $context['status_id_expr'] ) {
+                $where_parts[] = "{$context['status_id_expr']} > 2";
+            }
+        }
 
 		$where_sql = 'WHERE ' . implode( ' AND ', $where_parts );
 		$count_sql = "SELECT COUNT(DISTINCT {$item_id_expr}) FROM {$context['from_sql']} {$where_sql}";
@@ -979,7 +1001,7 @@ class Sailboats_Repository {
 	 *
 	 * @return array{items: array<int,array<string,mixed>>, total: int}|null
 	 */
-	private function get_sailboats_list_by_legacy_search( string $search, int $region_id, int $status_id, int $per_page, int $offset ): ?array {
+    private function get_sailboats_list_by_legacy_search( string $search, int $region_id, int $status_id, int $per_page, int $offset, string $dues_filter = 'all' ): ?array {
 		global $wpdb;
 
 		$s_columns  = $this->get_table_columns( 'Sailboat' );
@@ -1036,6 +1058,16 @@ class Sailboats_Repository {
 		$f1_expr      = $this->build_due_expression( $user_id_expr, 'GetUserDues', -1, "''" );
 		$f2_expr      = $this->build_due_expression( $user_id_expr, 'GetUserDues', 0, "''" );
 
+        // 2. Використовуємо передану змінну $dues_filter замість помилкового $args['dues_filter']
+        if ( 'fstu_paid' === $dues_filter ) {
+            $where_parts[] = "( ({$f1_expr} + 0) > 0 OR ({$f2_expr} + 0) > 0 )";
+        } elseif ( 'sail_paid' === $dues_filter ) {
+            $where_parts[] = "( ({$v1_expr} + 0) > 0 OR ({$v2_expr} + 0) > 0 )";
+        } elseif ( 'full_paid' === $dues_filter ) {
+            // ВИПРАВЛЕНО НА OR
+            $where_parts[] = "( ({$f1_expr} + 0) > 0 OR ({$f2_expr} + 0) > 0 OR ({$v1_expr} + 0) > 0 OR ({$v2_expr} + 0) > 0 )";
+        }
+
 		$producer_expr = "''";
 		$status_expr   = "''";
 
@@ -1075,6 +1107,16 @@ class Sailboats_Repository {
 			],
 			"''"
 		);
+
+        if ( ! is_user_logged_in() ) {
+            // Умова для вітрильних внесків
+            $where_parts[] = "( ({$v1_expr} + 0) > 0 OR ({$v2_expr} + 0) > 0 )";
+
+            // Умова для статусу (якщо колонка статусу визначена)
+            if ( '' !== $status_column ) {
+                $where_parts[] = "a.`{$status_column}` > 2";
+            }
+        }
 
 		$where_sql = 'WHERE ' . implode( ' AND ', $where_parts );
 		$from_sql  = 'Sailboat s LEFT JOIN vApplicationShipTicket a ON a.Sailboat_ID = s.Sailboat_ID LEFT JOIN vSailboat vs ON vs.AppShipTicket_ID = a.AppShipTicket_ID';

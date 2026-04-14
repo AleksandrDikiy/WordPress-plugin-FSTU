@@ -2,8 +2,8 @@
  * JS модуля "Реєстр суден".
  * Робочий список, фільтри, протокол, dropdown дій, перегляд, форма та службові операції.
  *
- * Version:     1.13.0
- * Date_update: 2026-04-09
+ * Version:     1.13.1
+ * Date_update: 2026-04-14
  *
  * @package FSTU
  */
@@ -32,7 +32,8 @@ jQuery( document ).ready( function ( $ ) {
 		perPage: parseInt( fstuSailboatsL10n.defaults.perPage, 10 ) || 10,
 		search: '',
 		regionId: 0,
-		statusId: 0,
+		statusId: parseInt( fstuSailboatsL10n.defaults.statusId, 10 ) || 7,
+		duesFilter: 'all', // ДОДАНО
 		total: 0,
 		totalPages: 1,
 		loading: false,
@@ -66,10 +67,10 @@ jQuery( document ).ready( function ( $ ) {
 		$( document ).on( 'click', '.fstu-tab-btn', function () {
 			const tabId = $( this ).data( 'tab' );
 			const $wrapper = $( this ).closest( '.fstu-tabs-wrapper' );
-			
+
 			$wrapper.find( '.fstu-tab-btn' ).removeClass( 'is-active' );
 			$( this ).addClass( 'is-active' );
-			
+
 			$wrapper.find( '.fstu-tab-content' ).removeClass( 'is-active' );
 			$wrapper.find( '#tab-' + tabId ).addClass( 'is-active' );
 
@@ -87,14 +88,16 @@ jQuery( document ).ready( function ( $ ) {
 						method: 'POST',
 						data: {
 							action: 'fstu_load_merilkas_tab',
-							nonce: fstuSailboatsL10n.nonce, // ЗМІНЕНО: Використовуємо рідний nonce суднового реєстру
+							nonce: fstuSailboatsL10n.nonce,
 							sailboat_id: sailboatId
 						}
 					}).done(function( response ) {
 						if ( response.success && response.data && response.data.html ) {
 							$container.html( response.data.html ).addClass( 'is-loaded' );
 						} else {
-							$container.html( '<div class="fstu-no-results">' + (response.data?.message || 'Помилка завантаження.') + '</div>' );
+							// ВИПРАВЛЕНО: класична перевірка замість ?.
+							const errorMsg = ( response.data && response.data.message ) ? response.data.message : 'Помилка завантаження.';
+							$container.html( '<div class="fstu-no-results">' + escapeHtml( errorMsg ) + '</div>' );
 						}
 					}).fail(function() {
 						$container.html( '<div class="fstu-no-results">Помилка з\'єднання з сервером.</div>' );
@@ -102,7 +105,37 @@ jQuery( document ).ready( function ( $ ) {
 				}
 			}
 			// -----------------------------------------
-		} );	
+		} );
+
+		// Закриття меню при кліку поза його межами
+		$( document ).on( 'click', function ( event ) {
+			if ( ! $( event.target ).closest( '.fstu-sailboats-dropdown' ).length && ! $( event.target ).closest( '.fstu-body-dropdown-menu' ).length ) {
+				closeAllDropdowns();
+			}
+		} );
+
+		// ВАЖЛИВО: Прапорець-захист. Відстежуємо, чи користувач зараз клікає по меню
+		let isMenuClick = false;
+		$( document ).on( 'mousedown', '.fstu-body-dropdown-menu', function() {
+			isMenuClick = true;
+		} );
+		$( document ).on( 'mouseup', function() {
+			// Даємо час (50мс) на виконання події click перед зняттям захисту
+			setTimeout( function() { isMenuClick = false; }, 50 );
+		} );
+
+		// Закриття dropdown при скролі (анти-обрізання)
+		document.addEventListener( 'scroll', function ( event ) {
+			// Якщо скрол відбувся під час кліку по меню — ІГНОРУЄМО скрол (захист від обриву кліку)
+			if ( isMenuClick ) return;
+
+			if ( $( '.fstu-sailboats-dropdown.is-open' ).length || $( '.fstu-body-dropdown-menu' ).length ) {
+				// Не закриваємо, якщо скрол відбувається всередині самого меню
+				if ( ! $( event.target ).closest( '.fstu-sailboats-dropdown__menu' ).length && ! $( event.target ).closest( '.fstu-body-dropdown-menu' ).length ) {
+					closeAllDropdowns();
+				}
+			}
+		}, true ); // Використовуємо capture phase, щоб перехопити скрол у будь-якому контейнері
 	}
 
 	function bindListEvents() {
@@ -124,6 +157,12 @@ jQuery( document ).ready( function ( $ ) {
 
 		$( document ).on( 'change', '#fstu-sailboats-status-filter', function () {
 			listState.statusId = parseInt( $( this ).val(), 10 ) || 0;
+			listState.page = 1;
+			loadList();
+		} );
+		// ДОДАНО
+		$( document ).on( 'change', '#fstu-sailboats-dues-filter', function () {
+			listState.duesFilter = $( this ).val();
 			listState.page = 1;
 			loadList();
 		} );
@@ -409,6 +448,7 @@ jQuery( document ).ready( function ( $ ) {
 
 		listState.loading = true;
 		closeAllDropdowns();
+		$( '.fstu-body-dropdown-menu' ).remove();
 		setTableLoading( '#fstu-sailboats-tbody', fstuSailboatsL10n.table.colspan, fstuSailboatsL10n.messages.loading );
 
 		$.ajax( {
@@ -422,6 +462,7 @@ jQuery( document ).ready( function ( $ ) {
 				per_page: listState.perPage,
 				region_id: listState.regionId,
 				status_id: listState.statusId,
+				dues_filter: listState.duesFilter, // ДОДАНО
 			},
 		} ).done( function ( response ) {
 			if ( response.success ) {
@@ -1229,7 +1270,7 @@ jQuery( document ).ready( function ( $ ) {
 
 		// --- ФОРМУЄМО HTML З ТАБАМИ ---
 		let html = '<div class="fstu-tabs-wrapper">';
-		
+
 		// Навігація
 		html += '<div class="fstu-tabs-nav">';
 		html += '<button type="button" class="fstu-tab-btn is-active" data-tab="general">ЗАГАЛЬНА</button>';
@@ -1354,24 +1395,89 @@ jQuery( document ).ready( function ( $ ) {
 	function closeAllDropdowns() {
 		$( '.fstu-sailboats-dropdown' ).removeClass( 'is-open is-dropup' );
 		$( '.fstu-sailboats-dropdown__toggle' ).attr( 'aria-expanded', 'false' );
+
+		// Ховаємо всі меню, які ми перенесли в body
+		$( '.fstu-body-dropdown-menu' ).css( { display: 'none' } );
 	}
 
 	function positionDropdown( $dropdown ) {
-		const $menu = $dropdown.find( '.fstu-sailboats-dropdown__menu' );
-		if ( ! $menu.length ) {
-			return;
+		const $toggle = $dropdown.find( '.fstu-sailboats-dropdown__toggle' );
+		let $menu   = $dropdown.find( '.fstu-sailboats-dropdown__menu' );
+
+		if ( ! $toggle.length ) return;
+
+		// ВАЖЛИВО: Гарантовано отримуємо ID запису з поточного рядка
+		const itemId = $dropdown.closest('tr').find('[data-sailboat-id]').attr('data-sailboat-id') || 0;
+
+		// Переносимо меню в <body>
+		if ( $menu.length ) {
+			const uniqueId = 'fstu-dropdown-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+			$toggle.attr( 'data-target-menu', uniqueId );
+			$menu.attr( 'id', uniqueId ).addClass( 'fstu-body-dropdown-menu' );
+
+			// ВАЖЛИВО: Насильно прописуємо ID в усі кнопки, щоб вони працювали після перенесення
+			if ( itemId > 0 ) {
+				$menu.find( '.fstu-sailboats-dropdown__item' ).attr( 'data-sailboat-id', itemId );
+			}
+
+			$( 'body' ).append( $menu );
+		} else {
+			// Якщо вже перенесено, шукаємо по ID
+			const targetId = $toggle.attr( 'data-target-menu' );
+			$menu = $( '#' + targetId );
 		}
 
-		$dropdown.removeClass( 'is-dropup' );
-		$menu.css( 'visibility', 'hidden' );
+		if ( ! $menu.length ) return;
+
+		// Робимо видимим для розрахунку розмірів
+		$menu.css( { display: 'block', visibility: 'hidden' } );
+
+		const toggleRect = $toggle.get( 0 ).getBoundingClientRect();
+		const menuRect   = $menu.get( 0 ).getBoundingClientRect();
+
+		let topPos = toggleRect.bottom;
+
+		if ( topPos + menuRect.height > window.innerHeight && toggleRect.top > menuRect.height ) {
+			topPos = toggleRect.top - menuRect.height;
+		}
+
+		// Жорстко задаємо стилі
+		$menu.css( {
+			position: 'fixed',
+			top: topPos + 'px',
+			left: ( toggleRect.right - menuRect.width ) + 'px',
+			zIndex: 9999999,
+			visibility: 'visible',
+			backgroundColor: '#ffffff',
+			border: '1px solid #d1d5db',
+			borderRadius: '4px',
+			boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+			minWidth: '160px',
+			padding: '4px 0',
+			margin: '0',
+			display: 'flex',
+			flexDirection: 'column'
+		} );
+
+		// Стилізуємо кнопки
+		$menu.find( 'button' ).css( {
+			display: 'block',
+			width: '100%',
+			padding: '10px 16px',
+			textAlign: 'left',
+			backgroundColor: 'transparent',
+			border: 'none',
+			color: '#333333',
+			fontSize: '13px',
+			cursor: 'pointer',
+			boxShadow: 'none'
+		} ).off('mouseenter mouseleave').on( 'mouseenter', function() {
+			$( this ).css( { backgroundColor: '#f3f4f6', color: '#d9534f' } );
+		} ).on( 'mouseleave', function() {
+			$( this ).css( { backgroundColor: 'transparent', color: '#333333' } );
+		} );
+
 		$dropdown.addClass( 'is-open' );
-
-		const rect = $menu.get( 0 ).getBoundingClientRect();
-		if ( rect.bottom > window.innerHeight && rect.top > rect.height ) {
-			$dropdown.addClass( 'is-dropup' );
-		}
-
-		$menu.css( 'visibility', '' );
 	}
 
 	function setTableLoading( tbodySelector, colspan, message ) {

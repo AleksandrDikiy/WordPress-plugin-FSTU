@@ -11,8 +11,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Контролер відображення модуля "Судновий реєстр ФСТУ".
  * Реєструє шорткод [fstu_sailboats], підключає assets та передає локалізовані дані у JS.
  *
- * Version:     1.8.0
- * Date_update: 2026-04-09
+ * Version:     1.8.1
+ * Date_update: 2026-04-14
  *
  * @package FSTU\Modules\Registry\Sailboats
  */
@@ -94,7 +94,13 @@ class Sailboats_List {
 	 * @param array<string,bool> $permissions Права поточного користувача.
 	 */
 	private function enqueue_script( array $permissions ): void {
-		$table_colspan = ! empty( $permissions['canFinance'] ) ? 13 : 9;
+        // Було: $table_colspan = ! empty( $permissions['canFinance'] ) ? 13 : 9;
+        $is_logged_in = is_user_logged_in();
+        $table_colspan = ! empty( $permissions['canFinance'] ) ? 13 : 9;
+
+        if ( ! $is_logged_in ) {
+            $table_colspan--;
+        }
 		$module_url    = self::get_module_url( 'login' );
 		$login_url     = wp_login_url( '' !== $module_url ? $module_url : home_url( '/' ) );
 		$current_user  = $this->get_current_user_form_defaults();
@@ -118,10 +124,11 @@ class Sailboats_List {
 				'bootstrap'   => $bootstrap,
 				'permissions' => $permissions,
 				'currentUser' => $current_user,
-				'defaults'    => [
-					'perPage'         => 10,
-					'protocolPerPage' => 10,
-				],
+                'defaults'    => [
+                    'perPage'         => 10,
+                    'protocolPerPage' => 10,
+                    'statusId'        => 7, // Додано статус за замовчуванням
+                ],
 				'table'       => [
 					'colspan'         => $table_colspan,
 					'protocolColspan' => 6,

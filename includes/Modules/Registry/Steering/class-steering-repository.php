@@ -11,8 +11,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	 * Містить SQL-запити до legacy-таблиць і views модуля Steering,
 	 * включно зі списком реєстру, карткою, довідниками та протоколом Logs.
  *
-	 * Version:     1.9.0
- * Date_update: 2026-04-08
+	 * Version:     1.9.1
+ * Date_update: 2026-04-14
  *
  * @package FSTU\Modules\Registry\Steering
  */
@@ -716,65 +716,72 @@ class Steering_Repository {
 			FROM vSteeringSkipper vs";
 	}
 
-	/**
-	 * @param array<string,mixed> $filters Набір фільтрів.
-	 * @return array{0:string,1:array<int,string|int>}
-	 */
-	private function build_where_sql( array $filters, bool $can_view_hidden_expired ): array {
-		global $wpdb;
+    /**
+     * @param array<string,mixed> $filters Набір фільтрів.
+     * @return array{0:string,1:array<int,string|int>}
+     */
+    private function build_where_sql( array $filters, bool $can_view_hidden_expired ): array {
+        global $wpdb;
 
-		$where  = [];
-		$params = [];
+        $where  = [];
+        $params = [];
 
-		$search      = trim( (string) ( $filters['search'] ?? '' ) );
-		$dues_filter = trim( (string) ( $filters['dues_filter'] ?? 'all' ) );
-		$status_id   = (int) ( $filters['status_id'] ?? 0 );
-		$type_filter = trim( (string) ( $filters['type_filter'] ?? 'all' ) );
+        $search      = trim( (string) ( $filters['search'] ?? '' ) );
+        $dues_filter = trim( (string) ( $filters['dues_filter'] ?? 'all' ) );
+        $status_id   = (int) ( $filters['status_id'] ?? 0 );
+        $type_filter = trim( (string) ( $filters['type_filter'] ?? 'all' ) );
 
-		$has_sail_any = '( GetUserDuesSail(vs.User_ID, YEAR(CURDATE()) - 1) > 0 OR GetUserDuesSail(vs.User_ID, YEAR(CURDATE())) > 0 )';
-		$has_fstu_any = '( GetUserDues(vs.User_ID, YEAR(CURDATE()) - 1) > 0 OR GetUserDues(vs.User_ID, YEAR(CURDATE())) > 0 )';
+        $has_sail_any = '( GetUserDuesSail(vs.User_ID, YEAR(CURDATE()) - 1) > 0 OR GetUserDuesSail(vs.User_ID, YEAR(CURDATE())) > 0 )';
+        $has_fstu_any = '( GetUserDues(vs.User_ID, YEAR(CURDATE()) - 1) > 0 OR GetUserDues(vs.User_ID, YEAR(CURDATE())) > 0 )';
 
-		if ( in_array( $type_filter, [ 'steering', 'skipper' ], true ) ) {
-			$where[]  = 'vs.Record_Type = %s';
-			$params[] = $type_filter;
-		}
+        if ( in_array( $type_filter, [ 'steering', 'skipper' ], true ) ) {
+            $where[]  = 'vs.Record_Type = %s';
+            $params[] = $type_filter;
+        }
 
-		if ( ! $can_view_hidden_expired ) {
-			$where[] = 'vs.AppStatus_ID > 2';
-			$where[] = $has_sail_any;
-			$where[] = $has_fstu_any;
-		}
+        if ( ! $can_view_hidden_expired ) {
+            $where[] = 'vs.AppStatus_ID > 2';
 
-		if ( '' !== $search ) {
-			$search_like = '%' . $wpdb->esc_like( $search ) . '%';
-			$where[]     = '( vs.FIO LIKE %s OR CAST(vs.Steering_RegNumber AS CHAR) LIKE %s )';
-			$params[]    = $search_like;
-			$params[]    = $search_like;
-		}
+            // ЗБЕРЕЖЕНО ЛОГІКУ ПРИХОВУВАННЯ: якщо немає прав на перегляд боржників,
+            // показуємо ТІЛЬКИ тих, хто хоч щось сплатив (або Sail, або FSTU).
+            // Але якщо обрано специфічний фільтр - застосується він (нижче).
+            if ( 'all' === $dues_filter ) {
+                $where[] = $has_sail_any;
+                $where[] = $has_fstu_any;
+            }
+        }
 
-		if ( $can_view_hidden_expired ) {
-			if ( $status_id > 0 ) {
-				$where[]  = 'vs.AppStatus_ID = %d';
-				$params[] = $status_id;
-			}
+        if ( '' !== $search ) {
+            $search_like = '%' . $wpdb->esc_like( $search ) . '%';
+            $where[]     = '( vs.FIO LIKE %s OR CAST(vs.Steering_RegNumber AS CHAR) LIKE %s )';
+            $params[]    = $search_like;
+            $params[]    = $search_like;
+        }
 
-			switch ( $dues_filter ) {
-				case 'full_paid':
-					$where[] = $has_sail_any;
-					$where[] = $has_fstu_any;
-					break;
-				case 'fstu_paid':
-					$where[] = $has_fstu_any;
-					break;
-				case 'sail_paid':
-					$where[] = $has_sail_any;
-					break;
-			}
-		}
+        // Фільтр по статусу (застосовується завжди, якщо переданий)
+        if ( $status_id > 0 ) {
+            $where[]  = 'vs.AppStatus_ID = %d';
+            $params[] = $status_id;
+        }
 
-		$where_sql = ! empty( $where ) ? ' WHERE ' . implode( ' AND ', $where ) : '';
+        // Фільтр по внесках (застосовується завжди, якщо переданий специфічний)
+        switch ( $dues_filter ) {
+            case 'full_paid':
+// ВИПРАВЛЕНО НА OR: беремо в дужки і ставимо OR між умовами
+                $where[] = "( {$has_sail_any} OR {$has_fstu_any} )";
+                break;
+            case 'fstu_paid':
+                $where[] = $has_fstu_any;
+                break;
+            case 'sail_paid':
+                $where[] = $has_sail_any;
+                break;
+        }
 
-		return [ $where_sql, $params ];
-	}
+        $where_sql = ! empty( $where ) ? ' WHERE ' . implode( ' AND ', $where ) : '';
+
+        return [ $where_sql, $params ];
+    }
+    //
 }
 

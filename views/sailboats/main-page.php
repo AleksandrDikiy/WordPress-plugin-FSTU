@@ -2,8 +2,8 @@
 /**
  * Основний шаблон модуля "Судновий реєстр ФСТУ".
  *
- * Version:     1.4.0
- * Date_update: 2026-04-09
+ * Version:     1.4.1
+ * Date_update: 2026-04-14
  *
  * @package FSTU\Modules\Registry\Sailboats
  */
@@ -19,6 +19,8 @@ $guest_login_url = isset( $guest_login_url ) ? (string) $guest_login_url : wp_lo
 $can_submit      = ! empty( $permissions['canSubmit'] );
 $can_manage      = ! empty( $permissions['canManage'] );
 $can_protocol    = ! empty( $permissions['canProtocol'] );
+$can_finance     = ! empty( $permissions['canFinance'] );
+$is_logged_in     = is_user_logged_in();
 $bootstrap_notice = isset( $bootstrap_notice ) ? (string) $bootstrap_notice : '';
 $bootstrap_return_url = isset( $bootstrap_return_url ) ? (string) $bootstrap_return_url : '';
 ?>
@@ -80,9 +82,21 @@ $bootstrap_return_url = isset( $bootstrap_return_url ) ? (string) $bootstrap_ret
 				<option value="0"><?php esc_html_e( 'Усі області', 'fstu' ); ?></option>
 			</select>
 
-			<select id="fstu-sailboats-status-filter" class="fstu-select fstu-select--compact" aria-label="<?php esc_attr_e( 'Фільтр по статусу', 'fstu' ); ?>">
-				<option value="0"><?php esc_html_e( 'Усі статуси', 'fstu' ); ?></option>
-			</select>
+            <?php if ( $is_logged_in ) : ?>
+                <select id="fstu-sailboats-status-filter" class="fstu-select fstu-select--compact" aria-label="<?php esc_attr_e( 'Фільтр по статусу', 'fstu' ); ?>">
+                    <option value="0"><?php esc_html_e( 'Усі статуси', 'fstu' ); ?></option>
+                </select>
+            <?php endif; ?>
+
+            <?php if ( $can_finance ) : ?>
+                <label class="fstu-sailboats-filter-label" for="fstu-sailboats-dues-filter" style="font-size: 11px; font-weight: bold; margin-right: -4px;"><?php esc_html_e( 'ВНЕСКИ:', 'fstu' ); ?></label>
+                <select id="fstu-sailboats-dues-filter" class="fstu-select fstu-select--compact" aria-label="<?php esc_attr_e( 'Фільтр по внесках', 'fstu' ); ?>">
+                    <option value="all"><?php esc_html_e( 'весь реєстр', 'fstu' ); ?></option>
+                    <option value="full_paid"><?php esc_html_e( 'сплатили внески', 'fstu' ); ?></option>
+                    <option value="fstu_paid"><?php esc_html_e( 'сплатили ФСТУ', 'fstu' ); ?></option>
+                    <option value="sail_paid"><?php esc_html_e( 'сплатили вітрильні', 'fstu' ); ?></option>
+                </select>
+            <?php endif; ?>
 		</div>
 
 		<?php if ( $can_protocol ) : ?>

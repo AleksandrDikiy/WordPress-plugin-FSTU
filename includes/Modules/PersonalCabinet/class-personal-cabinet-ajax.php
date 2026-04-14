@@ -10,8 +10,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * AJAX-обробники модуля «Особистий кабінет ФСТУ».
  *
- * Version:     1.5.0
- * Date_update: 2026-04-12
+ * Version:     1.5.1
+ * Date_update: 2026-04-14
  */
 class Personal_Cabinet_Ajax {
 
@@ -63,6 +63,8 @@ class Personal_Cabinet_Ajax {
 		add_action( 'wp_ajax_fstu_personal_cabinet_get_all_referee_categories', [ $this, 'handle_get_all_referee_categories' ] );
 		add_action( 'wp_ajax_fstu_personal_cabinet_add_judging', [ $this, 'handle_add_judging' ] );
 		add_action( 'wp_ajax_fstu_personal_cabinet_delete_judging', [ $this, 'handle_delete_judging' ] );
+        // Методи для роботи з внесками вітрильників
+        add_action( 'wp_ajax_fstu_personal_cabinet_add_sail_dues', [ $this, 'handle_add_sail_dues' ] );
 	}
 
 	public function handle_get_profile(): void {
@@ -1039,5 +1041,52 @@ class Personal_Cabinet_Ajax {
 			$this->send_safe_error('Некоректний ID', 400);
 		}
 	}
+    public function handle_add_sail_dues(): void {
+        $this->verify_nonce();
+        $this->assert_authenticated();
+        $profile_user_id = $this->sanitize_profile_user_id();
+
+        // Використовуємо системну перевірку прав з вашого class-capabilities.php
+        if ( ! current_user_can( \FSTU\Core\Capabilities::MANAGE_PERSONAL_SAIL_DUES ) ) {
+            $this->send_safe_error('Немає прав для додавання оплати.', 403);
+        }
+
+        $year = absint($_POST['year'] ?? 0);
+        $summa = floatval($_POST['summa'] ?? 0);
+
+        if ( $year < 2000 || $year > ((int)date('Y') + 1) ) {
+            $this->send_safe_error('Некоректний рік.', 400);
+        }
+
+        global $wpdb;
+        $wpdb->suppress_errors(true);
+
+        // Перевіряємо, чи немає вже оплати за цей рік (щоб не було дублів)
+        $exists = $wpdb->get_var($wpdb->prepare("SELECT DuesSail_ID FROM DuesSail WHERE User_ID = %d AND Year_ID = %d", $profile_user_id, $year));
+        if ( $exists ) {
+            $this->send_safe_error("Внесок за $year рік вже існує.", 400);
+        }
+
+        $data = [
+            'User_ID'             => $profile_user_id,
+            'Year_ID'             => $year,
+            'DuesSail_Summa'      => $summa,
+            'DuesSail_DateCreate' => current_time('mysql'),
+            'UserCreate'          => get_current_user_id(),
+        ];
+
+        $inserted = $wpdb->insert('DuesSail', $data);
+
+        if ( false === $inserted ) {
+            $this->send_safe_error('Помилка збереження в БД: ' . $wpdb->last_error, 500);
+        }
+
+        // Логування в протокол
+        $this->service->get_protocol_service()->log_action_for_user(
+            get_current_user_id(), 'I', "Додано оплату вітрильних внесків за $year рік на суму $summa грн (профіль ID $profile_user_id)", '✓'
+        );
+
+        wp_send_json_success(['message' => 'Оплату успішно додано.']);
+    }
 	//-----------------
 }

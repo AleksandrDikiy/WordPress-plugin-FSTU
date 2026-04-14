@@ -9,8 +9,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Бізнес-сервіс модуля "Судновий реєстр ФСТУ".
  * Оркеструє список, перегляд, а також transactional create/update-flow.
  *
- * Version:     1.7.1
- * Date_update: 2026-04-08
+ * Version:     1.7.2
+ * Date_update: 2026-04-14
  *
  * @package FSTU\Modules\Registry\Sailboats
  */
@@ -290,39 +290,52 @@ class Sailboats_Service {
 	 *
 	 * @param array<string,mixed> $data Дані дії.
 	 */
-	public function mark_received( array $data ): bool {
-		$context = $this->require_item_context( (int) ( $data['item_id'] ?? 0 ) );
-		$this->assert_service_action_date_is_valid( $context, (string) ( $data['received_at'] ?? '' ), 'received' );
+    /**
+     * Фіксує вручення / доставку документа.
+     *
+     * @param array<string,mixed> $data Дані дії.
+     */
+    public function mark_received( array $data ): bool {
+        $context = $this->require_item_context( (int) ( $data['item_id'] ?? 0 ) );
+        $this->assert_service_action_date_is_valid( $context, (string) ( $data['received_at'] ?? '' ), 'received' );
 
-		$this->begin_transaction();
+        $this->begin_transaction();
 
-		try {
-			$this->repository->mark_application_received(
-				(int) $context['appshipticket_id'],
-				(string) $data['received_at'],
-				(string) ( $data['comment'] ?? '' )
-			);
+        try {
+            // 1. Записуємо дату вручення
+            $this->repository->mark_application_received(
+                (int) $context['appshipticket_id'],
+                (string) $data['received_at'],
+                (string) ( $data['comment'] ?? '' )
+            );
 
-			$this->protocol_service->log_action(
-				self::LOG_TYPE_UPDATE,
-				sprintf( 'Позначено вручення документа (AppShipTicket_ID:%d)', (int) $context['appshipticket_id'] ),
-				Sailboats_Protocol_Service::STATUS_SUCCESS,
-				true
-			);
+            // 2. КРИТИЧНЕ ВИПРАВЛЕННЯ: Оновлюємо статус на "Доставлено одержувачу" (ID 7)
+            $this->repository->update_application_status(
+                (int) $context['appshipticket_id'],
+                7, // 7 - це стандартний ID статусу "Доставлено одержувачу"
+                (string) ( $data['comment'] ?? '' )
+            );
 
-			$this->commit_transaction();
+            $this->protocol_service->log_action(
+                self::LOG_TYPE_UPDATE,
+                sprintf( 'Позначено вручення документа та змінено статус на "Доставлено" (AppShipTicket_ID:%d)', (int) $context['appshipticket_id'] ),
+                Sailboats_Protocol_Service::STATUS_SUCCESS,
+                true
+            );
 
-			return true;
-		} catch ( \Throwable $throwable ) {
-			$this->rollback_transaction();
-			$this->protocol_service->try_log_action(
-				self::LOG_TYPE_UPDATE,
-				sprintf( 'Помилка фіксації вручення документа (AppShipTicket_ID:%d) [%s]', (int) $context['appshipticket_id'], $this->get_error_marker( $throwable, 'received_failed' ) ),
-				'error'
-			);
-			throw $throwable;
-		}
-	}
+            $this->commit_transaction();
+
+            return true;
+        } catch ( \Throwable $throwable ) {
+            $this->rollback_transaction();
+            $this->protocol_service->try_log_action(
+                self::LOG_TYPE_UPDATE,
+                sprintf( 'Помилка фіксації вручення документа (AppShipTicket_ID:%d) [%s]', (int) $context['appshipticket_id'], $this->get_error_marker( $throwable, 'received_failed' ) ),
+                'error'
+            );
+            throw $throwable;
+        }
+    }
 
 	/**
 	 * Фіксує продаж / вибуття судна.

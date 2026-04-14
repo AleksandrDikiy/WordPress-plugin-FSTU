@@ -1319,3 +1319,49 @@ body.fstu-modal-open {
 	}
 }
 
+/* Стилізація випадаючого меню в Судновому реєстрі */
+.fstu-sailboats-dropdown__menu {
+	/* Робимо фон суцільним та білим */
+	background-color: #ffffff !important;
+
+	/* Додаємо чітку межу та тінь для ефекту "поверх контенту" */
+	border: 1px solid #dddddd !important;
+	box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15) !important;
+
+	/* Заокруглення та відступи */
+	border-radius: 4px !important;
+	padding: 8px 0 !important;
+
+	/* Скидаємо відступи, якщо вони успадковані */
+	margin: 0 !important;
+
+	/* Задаємо мінімальну ширину, щоб пункти не стискалися */
+	min-width: 160px !important;
+}
+
+/* Стилізація пунктів меню (припускаємо, що це посилання або кнопки) */
+.fstu-sailboats-dropdown__item {
+	display: block !important;
+	width: 100% !important;
+	padding: 8px 16px !important;
+
+	/* Чорний або темно-сірий колір тексту */
+	color: #333333 !important;
+	text-align: left !important;
+	text-decoration: none !important;
+	background: none !important;
+	border: none !important;
+	cursor: pointer !important;
+
+	/* Налаштування шрифту */
+	font-size: 13px !important;
+	line-height: 1.5 !important;
+	box-sizing: border-box !important;
+}
+
+/* Ефект наведення на пункт меню */
+.fstu-sailboats-dropdown__item:hover {
+	/* Світло-сірий фон та синій колір тексту при наведенні */
+	background-color: #f5f5f5 !important;
+	color: #0073aa !important; /* Стандартний синій WordPress */
+}

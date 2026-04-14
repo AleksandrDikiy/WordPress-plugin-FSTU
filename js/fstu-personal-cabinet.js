@@ -1,8 +1,8 @@
 /**
  * JS модуля «Особистий кабінет ФСТУ».
  *
- * Version:     1.8.0
- * Date_update: 2026-04-12
+ * Version:     1.8.1
+ * Date_update: 2026-04-14
  */
 jQuery(document).ready(function ($) {
     'use strict';
@@ -1666,6 +1666,47 @@ jQuery(document).ready(function ($) {
     // Логіка швидкого переходу до реєстру суддів
     $(document).on('click', '.fstu-personal-tab-actions__item-button[data-action-key="open_referee_registry"]', function() {
         window.open('/referee', '_blank');
+    });
+    // Логіка додавання вітрильного внеску (Dues Sail)
+    $(document).on('click', '.fstu-personal-tab-actions__item-button[data-action-key="add_sail_dues"]', function() {
+        $('#fstu-personal-dues-sail-alert').addClass('fstu-hidden');
+        $('#fstu-personal-dues-sail-form')[0].reset();
+
+        // Підставляємо поточний рік за замовчуванням
+        var currentYear = new Date().getFullYear();
+        $('#fstu-dues-sail-year').val(currentYear);
+
+        $('#fstu-personal-dues-sail-modal').removeClass('fstu-hidden');
+    });
+
+    $(document).on('click', '#fstu-personal-dues-sail-cancel, #fstu-personal-dues-sail-cancel-icon', function() {
+        $('#fstu-personal-dues-sail-modal').addClass('fstu-hidden');
+    });
+
+    $(document).on('submit', '#fstu-personal-dues-sail-form', function(e) {
+        e.preventDefault();
+        var $btn = $('#fstu-personal-dues-sail-submit').prop('disabled', true).text('Збереження...');
+        var $alert = $('#fstu-personal-dues-sail-alert').addClass('fstu-hidden');
+
+        $.post(l10n.ajaxUrl, {
+            action: 'fstu_personal_cabinet_add_sail_dues',
+            nonce: l10n.nonce,
+            profile_user_id: state.profileUserId,
+            year: $('#fstu-dues-sail-year').val(),
+            summa: $('#fstu-dues-sail-sum').val()
+        }).done(function(res) {
+            if(res.success) {
+                $('#fstu-personal-dues-sail-modal').addClass('fstu-hidden');
+                state.flashAlert = { type: 'success', message: 'Оплату успішно додано.' };
+                loadProfile();
+            } else {
+                $alert.removeClass('fstu-hidden').addClass('fstu-alert--error').text(res.data.message || 'Помилка');
+            }
+        }).fail(function(xhr) {
+            $alert.removeClass('fstu-hidden').addClass('fstu-alert--error').text(getAjaxErrorMessage(xhr, 'Помилка збереження.'));
+        }).always(function() {
+            $btn.prop('disabled', false).text('Зберегти');
+        });
     });
     // Ініціалізація профілю при завантаженні сторінки
     loadProfile();

@@ -97,6 +97,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 		<?php include FSTU_PLUGIN_DIR . 'views/personal-cabinet/modal-experience.php'; ?>
 		<?php include FSTU_PLUGIN_DIR . 'views/personal-cabinet/modal-rank.php'; ?>
 		<?php include FSTU_PLUGIN_DIR . 'views/personal-cabinet/modal-judging.php'; ?>
+        <?php include FSTU_PLUGIN_DIR . 'views/personal-cabinet/modal-dues-sail.php'; ?>
 
 	<?php endif; ?>
 </div>

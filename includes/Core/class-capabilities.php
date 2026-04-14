@@ -399,6 +399,11 @@ class Capabilities {
 				self::MANAGE_CALENDAR_RESULTS       => true,
 				self::DELETE_CALENDAR_RESULTS       => true,
 				self::VIEW_CALENDAR_RESULTS_PROTOCOL => true,
+                // ДОДАНО ДЛЯ ВІТРИЛЬНИКІВ
+                self::VIEW_SAILBOATS                => true,
+                self::VIEW_SAILBOATS_FINANCE_COLUMNS => true,
+                self::VIEW_STEERING                 => true,
+                self::VIEW_STEERING_FINANCE_COLUMNS => true,
 			],
 			'userregistrar' => [
 				self::ACCESS_ADMIN             => true,
@@ -501,10 +506,15 @@ class Capabilities {
 				self::MANAGE_PERSONAL_JUDGING     => true,
 			],
 			'sailingfinancier' => [
-				self::VIEW_PERSONAL_CABINET => true,
-				self::MANAGE_PERSONAL_SAILING => true,
+				self::VIEW_PERSONAL_CABINET     => true,
+				self::MANAGE_PERSONAL_SAILING   => true,
 				self::MANAGE_PERSONAL_SAIL_DUES => true,
-				self::VIEW_PERSONAL_SAIL_DUES => true,
+				self::VIEW_PERSONAL_SAIL_DUES   => true,
+                // ДОДАНО ДЛЯ ВІТРИЛЬНИКІВ
+                self::VIEW_SAILBOATS                    => true,
+                self::VIEW_SAILBOATS_FINANCE_COLUMNS    => true,
+                self::VIEW_STEERING                     => true,
+                self::VIEW_STEERING_FINANCE_COLUMNS     => true,
 			],
 		];
 
