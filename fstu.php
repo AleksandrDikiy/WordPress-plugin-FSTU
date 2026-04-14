@@ -3,7 +3,7 @@
  * Plugin Name:  FSTU Portal
  * Plugin URI:   https://www.fstu.com.ua/
  * Description:  Офіційний плагін Федерації спортивного туризму України. Enterprise ERP/CRM система управління реєстрами, структурою та фінансами федерації.
- * Version:      1.20.1
+ * Version:      1.23.2
  * Author:       Oleksandr Dykyi
  * Author URI:   https://www.fstu.com.ua/
  * Text Domain:  fstu
@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // ─── Константи плагіна ────────────────────────────────────────────────────────
 
-define( 'FSTU_VERSION',      '1.20.1' );
+define( 'FSTU_VERSION',      '1.23.2' );
 define( 'FSTU_DB_VERSION',   '1.2.0' );
 define( 'FSTU_PLUGIN_FILE',  __FILE__ );
 define( 'FSTU_PLUGIN_DIR',   plugin_dir_path( __FILE__ ) );
@@ -163,6 +163,71 @@ if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Applications/class-applica
 }
 if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Applications/class-applications-ajax.php' ) ) {
 	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Applications/class-applications-ajax.php';
+}
+
+// Calendar — Календарний план змагань ФСТУ (2026-04-13)
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Calendar/CalendarEvents/class-calendar-events-repository.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Calendar/CalendarEvents/class-calendar-events-repository.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Calendar/CalendarEvents/class-calendar-events-protocol-service.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Calendar/CalendarEvents/class-calendar-events-protocol-service.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Calendar/CalendarEvents/class-calendar-events-service.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Calendar/CalendarEvents/class-calendar-events-service.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Calendar/class-calendar-list.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Calendar/class-calendar-list.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Calendar/CalendarEvents/class-calendar-events-ajax.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Calendar/CalendarEvents/class-calendar-events-ajax.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Calendar/CalendarApplications/class-calendar-applications-repository.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Calendar/CalendarApplications/class-calendar-applications-repository.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Calendar/CalendarApplications/class-calendar-applications-mailer.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Calendar/CalendarApplications/class-calendar-applications-mailer.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Calendar/CalendarApplications/class-calendar-applications-protocol-service.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Calendar/CalendarApplications/class-calendar-applications-protocol-service.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Calendar/CalendarApplications/class-calendar-applications-service.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Calendar/CalendarApplications/class-calendar-applications-service.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Calendar/CalendarApplications/class-calendar-applications-ajax.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Calendar/CalendarApplications/class-calendar-applications-ajax.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Calendar/CalendarRoutes/class-calendar-routes-repository.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Calendar/CalendarRoutes/class-calendar-routes-repository.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Calendar/CalendarRoutes/class-calendar-routes-protocol-service.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Calendar/CalendarRoutes/class-calendar-routes-protocol-service.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Calendar/CalendarRoutes/class-calendar-routes-mkk-service.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Calendar/CalendarRoutes/class-calendar-routes-mkk-service.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Calendar/CalendarRoutes/class-calendar-routes-notification-service.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Calendar/CalendarRoutes/class-calendar-routes-notification-service.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Calendar/CalendarRoutes/class-calendar-routes-service.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Calendar/CalendarRoutes/class-calendar-routes-service.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Calendar/CalendarRoutes/class-calendar-routes-ajax.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Calendar/CalendarRoutes/class-calendar-routes-ajax.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Calendar/CalendarResults/class-calendar-results-repository.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Calendar/CalendarResults/class-calendar-results-repository.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Calendar/CalendarResults/class-calendar-results-protocol-service.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Calendar/CalendarResults/class-calendar-results-protocol-service.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Calendar/CalendarResults/class-calendar-results-sailing-rules-service.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Calendar/CalendarResults/class-calendar-results-sailing-rules-service.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Calendar/CalendarResults/class-calendar-results-service.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Calendar/CalendarResults/class-calendar-results-service.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Calendar/CalendarResults/class-calendar-results-ajax.php' ) ) {
+	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Calendar/CalendarResults/class-calendar-results-ajax.php';
 }
 
 // Sailboats — Реєстр суден ФСТУ (2026-04-07)
@@ -441,6 +506,23 @@ function fstu_init(): void {
 	}
 	if ( class_exists( 'FSTU\\Modules\\Applications\\Applications_Ajax' ) ) {
 		( new FSTU\Modules\Applications\Applications_Ajax() )->init();
+	}
+
+	// ── Календарний план змагань ФСТУ ─────────────────────────────────────────
+	if ( class_exists( 'FSTU\\Modules\\Calendar\\Calendar_List' ) ) {
+		( new FSTU\Modules\Calendar\Calendar_List() )->init();
+	}
+	if ( class_exists( 'FSTU\\Modules\\Calendar\\CalendarEvents\\Calendar_Events_Ajax' ) ) {
+		( new FSTU\Modules\Calendar\CalendarEvents\Calendar_Events_Ajax() )->init();
+	}
+	if ( class_exists( 'FSTU\\Modules\\Calendar\\CalendarApplications\\Calendar_Applications_Ajax' ) ) {
+		( new FSTU\Modules\Calendar\CalendarApplications\Calendar_Applications_Ajax() )->init();
+	}
+	if ( class_exists( 'FSTU\\Modules\\Calendar\\CalendarRoutes\\Calendar_Routes_Ajax' ) ) {
+		( new FSTU\Modules\Calendar\CalendarRoutes\Calendar_Routes_Ajax() )->init();
+	}
+	if ( class_exists( 'FSTU\\Modules\\Calendar\\CalendarResults\\Calendar_Results_Ajax' ) ) {
+		( new FSTU\Modules\Calendar\CalendarResults\Calendar_Results_Ajax() )->init();
 	}
 
 	// ── Реєстр суден ФСТУ ────────────────────────────────────────────────────

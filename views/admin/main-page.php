@@ -2,7 +2,7 @@
 /**
  * View: Головна сторінка плагіна в адмінці.
  *
- * Version:     1.18.1
+ * Version:     1.19.0
  * Date_update: 2026-04-13
  */
 if ( ! defined( 'ABSPATH' ) ) {
@@ -25,6 +25,7 @@ $hourcategories_page_url = isset( $hourcategories_page_url ) ? (string) $hourcat
 $sportscategories_page_url = isset( $sportscategories_page_url ) ? (string) $sportscategories_page_url : '';
 $referee_category_page_url = isset( $referee_category_page_url ) ? (string) $referee_category_page_url : '';
 $tourismtype_page_url = isset( $tourismtype_page_url ) ? (string) $tourismtype_page_url : '';
+$calendar_page_url = isset( $calendar_page_url ) ? (string) $calendar_page_url : '';
 $referees_page_url = isset( $referees_page_url ) ? (string) $referees_page_url : '';
 $recorders_page_url = isset( $recorders_page_url ) ? (string) $recorders_page_url : '';
 $mkk_page_url = isset( $mkk_page_url ) ? (string) $mkk_page_url : '';
@@ -79,6 +80,16 @@ $clubs_page_url = isset( $clubs_page_url ) ? (string) $clubs_page_url : '';
                                     Службовий модуль нового покоління для ведення посвідчень членів ФСТУ: список із фільтрами, картка посвідчення, протокол змін, а також підготовлений owner/self-service flow через особистий кабінет. Для ролі administrator доступне повне керування включно з номером картки і видаленням, для userregistrar та globalregistrar — службове керування без ручної зміни номера картки.
                                     <?php if ( '' !== $member_card_applications_page_url ) : ?>
                                         <br><a href="<?php echo esc_url( $member_card_applications_page_url ); ?>">Відкрити сторінку модуля →</a>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_calendar]</code></th>
+                                <td>
+                                    <strong>Календарний план змагань ФСТУ</strong><br>
+                                    Новий модуль домену `Calendar` для публічного перегляду календарного плану заходів ФСТУ з табличним реєстром, month/week view, карткою заходу, action bar та окремим протоколом. У поточній ітерації вже підключено shell модуля і вертикальний зріз `Calendar_Events` без використання SQL-view у runtime-шарі.
+                                    <?php if ( '' !== $calendar_page_url ) : ?>
+                                        <br><a href="<?php echo esc_url( $calendar_page_url ); ?>">Відкрити сторінку модуля →</a>
                                     <?php endif; ?>
                                 </td>
                             </tr>

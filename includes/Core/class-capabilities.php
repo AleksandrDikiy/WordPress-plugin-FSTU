@@ -2,7 +2,7 @@
 /**
  * Клас централізованого керування capability-моделлю ФСТУ.
  *
- * Version:     1.23.0
+ * Version:     1.26.0
  * Date_update: 2026-04-13
  *
  * @package FSTU\Core
@@ -132,6 +132,23 @@ class Capabilities {
 	public const MANAGE_PERSONAL_SAILING       = 'fstu_manage_personal_sailing';
 	public const MANAGE_PERSONAL_SAIL_DUES     = 'fstu_manage_personal_sail_dues';
 	public const VIEW_PERSONAL_SAIL_DUES       = 'fstu_view_personal_sail_dues';
+	public const VIEW_CALENDAR                  = 'fstu_view_calendar';
+	public const MANAGE_CALENDAR_EVENTS         = 'fstu_manage_calendar_events';
+	public const MANAGE_ANY_CALENDAR_EVENTS     = 'fstu_manage_any_calendar_events';
+	public const DELETE_CALENDAR_EVENTS         = 'fstu_delete_calendar_events';
+	public const VIEW_CALENDAR_EVENTS_PROTOCOL  = 'fstu_view_calendar_events_protocol';
+	public const SUBMIT_CALENDAR_APPLICATIONS   = 'fstu_submit_calendar_applications';
+	public const MANAGE_CALENDAR_APPLICATIONS   = 'fstu_manage_calendar_applications';
+	public const DELETE_CALENDAR_APPLICATIONS   = 'fstu_delete_calendar_applications';
+	public const VIEW_CALENDAR_APPLICATIONS_PROTOCOL = 'fstu_view_calendar_applications_protocol';
+	public const MANAGE_CALENDAR_ROUTES         = 'fstu_manage_calendar_routes';
+	public const DELETE_CALENDAR_ROUTES         = 'fstu_delete_calendar_routes';
+	public const VIEW_CALENDAR_ROUTES_PROTOCOL  = 'fstu_view_calendar_routes_protocol';
+	public const REVIEW_CALENDAR_MKK            = 'fstu_review_calendar_mkk';
+	public const VIEW_CALENDAR_RESULTS          = 'fstu_view_calendar_results';
+	public const MANAGE_CALENDAR_RESULTS        = 'fstu_manage_calendar_results';
+	public const DELETE_CALENDAR_RESULTS        = 'fstu_delete_calendar_results';
+	public const VIEW_CALENDAR_RESULTS_PROTOCOL = 'fstu_view_calendar_results_protocol';
 
 	/**
 	 * Ініціалізує capability-модель для поточного запиту.
@@ -270,6 +287,23 @@ class Capabilities {
 				self::MANAGE_PERSONAL_SAILING       => true,
 				self::MANAGE_PERSONAL_SAIL_DUES     => true,
 				self::VIEW_PERSONAL_SAIL_DUES       => true,
+				self::VIEW_CALENDAR                 => true,
+				self::MANAGE_CALENDAR_EVENTS        => true,
+				self::MANAGE_ANY_CALENDAR_EVENTS    => true,
+				self::DELETE_CALENDAR_EVENTS        => true,
+				self::VIEW_CALENDAR_EVENTS_PROTOCOL => true,
+				self::SUBMIT_CALENDAR_APPLICATIONS  => true,
+				self::MANAGE_CALENDAR_APPLICATIONS  => true,
+				self::DELETE_CALENDAR_APPLICATIONS  => true,
+				self::VIEW_CALENDAR_APPLICATIONS_PROTOCOL => true,
+				self::MANAGE_CALENDAR_ROUTES        => true,
+				self::DELETE_CALENDAR_ROUTES        => true,
+				self::VIEW_CALENDAR_ROUTES_PROTOCOL => true,
+				self::REVIEW_CALENDAR_MKK           => true,
+				self::VIEW_CALENDAR_RESULTS         => true,
+				self::MANAGE_CALENDAR_RESULTS       => true,
+				self::DELETE_CALENDAR_RESULTS       => true,
+				self::VIEW_CALENDAR_RESULTS_PROTOCOL => true,
 			],
 			'sailadministrator' => [
 				self::ACCESS_ADMIN                  => true,
@@ -349,6 +383,22 @@ class Capabilities {
 				self::MANAGE_GUIDANCE               => true,
 				self::DELETE_GUIDANCE               => true,
 				self::VIEW_GUIDANCE_PROTOCOL        => true,
+				self::VIEW_CALENDAR                 => true,
+				self::MANAGE_CALENDAR_EVENTS        => true,
+				self::MANAGE_ANY_CALENDAR_EVENTS    => true,
+				self::DELETE_CALENDAR_EVENTS        => true,
+				self::VIEW_CALENDAR_EVENTS_PROTOCOL => true,
+				self::SUBMIT_CALENDAR_APPLICATIONS  => true,
+				self::MANAGE_CALENDAR_APPLICATIONS  => true,
+				self::DELETE_CALENDAR_APPLICATIONS  => true,
+				self::VIEW_CALENDAR_APPLICATIONS_PROTOCOL => true,
+				self::MANAGE_CALENDAR_ROUTES        => true,
+				self::DELETE_CALENDAR_ROUTES        => true,
+				self::VIEW_CALENDAR_ROUTES_PROTOCOL => true,
+				self::VIEW_CALENDAR_RESULTS         => true,
+				self::MANAGE_CALENDAR_RESULTS       => true,
+				self::DELETE_CALENDAR_RESULTS       => true,
+				self::VIEW_CALENDAR_RESULTS_PROTOCOL => true,
 			],
 			'userregistrar' => [
 				self::ACCESS_ADMIN             => true,
@@ -399,6 +449,18 @@ class Capabilities {
 				self::VIEW_MKK_PROTOCOL          => true,
 				self::VIEW_GUIDANCE              => true,
 				self::VIEW_GUIDANCE_CARD         => true,
+				self::VIEW_CALENDAR              => true,
+				self::MANAGE_CALENDAR_EVENTS     => true,
+				self::MANAGE_ANY_CALENDAR_EVENTS => true,
+				self::VIEW_CALENDAR_EVENTS_PROTOCOL => true,
+				self::SUBMIT_CALENDAR_APPLICATIONS => true,
+				self::MANAGE_CALENDAR_APPLICATIONS => true,
+				self::VIEW_CALENDAR_APPLICATIONS_PROTOCOL => true,
+				self::MANAGE_CALENDAR_ROUTES     => true,
+				self::VIEW_CALENDAR_ROUTES_PROTOCOL => true,
+				self::VIEW_CALENDAR_RESULTS      => true,
+				self::MANAGE_CALENDAR_RESULTS    => true,
+				self::VIEW_CALENDAR_RESULTS_PROTOCOL => true,
 			],
 			'userfstu' => [
 				self::VIEW_PARTICIPATION_TYPE => true,
@@ -420,6 +482,11 @@ class Capabilities {
 				self::PAY_PERSONAL_DUES_ONLINE => true,
 				self::VIEW_GUIDANCE => true,
 				self::VIEW_GUIDANCE_CARD => true,
+				self::VIEW_CALENDAR => true,
+				self::MANAGE_CALENDAR_EVENTS => true,
+				self::SUBMIT_CALENDAR_APPLICATIONS => true,
+				self::MANAGE_CALENDAR_ROUTES => true,
+				self::VIEW_CALENDAR_RESULTS => true,
 			],
 			'referee' => [
 				self::VIEW_REFEREES               => true,
@@ -803,6 +870,80 @@ class Capabilities {
 			'canReissue'          => self::current_user_can_reissue_member_card_applications(),
 			'canUpdatePhoto'      => self::current_user_can_update_member_card_applications_photo(),
 			'canManageCardNumber' => self::current_user_can_manage_member_card_number(),
+		];
+	}
+
+	/**
+	 * Повертає прапорці прав для модуля Calendar.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public static function get_calendar_permissions(): array {
+		return [
+			'canView'      => self::current_user_can_view_calendar(),
+			'events'       => self::get_calendar_events_permissions(),
+			'applications' => self::get_calendar_applications_permissions(),
+			'routes'       => self::get_calendar_routes_permissions(),
+			'results'      => self::get_calendar_results_permissions(),
+			'canReviewMkk' => self::current_user_can_review_calendar_mkk(),
+			'isGuest'      => ! is_user_logged_in(),
+		];
+	}
+
+	/**
+	 * Повертає прапорці прав для Calendar_Events.
+	 *
+	 * @return array<string,bool>
+	 */
+	public static function get_calendar_events_permissions(): array {
+		return [
+			'canView'      => self::current_user_can_view_calendar(),
+			'canManage'    => self::current_user_can_manage_calendar_events(),
+			'canManageAny' => self::current_user_can_manage_any_calendar_events(),
+			'canDelete'    => self::current_user_can_delete_calendar_events(),
+			'canProtocol'  => self::current_user_can_view_calendar_events_protocol(),
+		];
+	}
+
+	/**
+	 * Повертає прапорці прав для Calendar_Applications.
+	 *
+	 * @return array<string,bool>
+	 */
+	public static function get_calendar_applications_permissions(): array {
+		return [
+			'canSubmit'   => self::current_user_can_submit_calendar_applications(),
+			'canManage'   => self::current_user_can_manage_calendar_applications(),
+			'canDelete'   => self::current_user_can_delete_calendar_applications(),
+			'canProtocol' => self::current_user_can_view_calendar_applications_protocol(),
+		];
+	}
+
+	/**
+	 * Повертає прапорці прав для Calendar_Routes.
+	 *
+	 * @return array<string,bool>
+	 */
+	public static function get_calendar_routes_permissions(): array {
+		return [
+			'canManage'   => self::current_user_can_manage_calendar_routes(),
+			'canDelete'   => self::current_user_can_delete_calendar_routes(),
+			'canProtocol' => self::current_user_can_view_calendar_routes_protocol(),
+			'canReviewMkk'=> self::current_user_can_review_calendar_mkk(),
+		];
+	}
+
+	/**
+	 * Повертає прапорці прав для Calendar_Results.
+	 *
+	 * @return array<string,bool>
+	 */
+	public static function get_calendar_results_permissions(): array {
+		return [
+			'canView'     => self::current_user_can_view_calendar_results(),
+			'canManage'   => self::current_user_can_manage_calendar_results(),
+			'canDelete'   => self::current_user_can_delete_calendar_results(),
+			'canProtocol' => self::current_user_can_view_calendar_results_protocol(),
 		];
 	}
 
@@ -1642,5 +1783,126 @@ class Capabilities {
 
 	public static function current_user_can_view_personal_sail_dues(): bool {
 		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_PERSONAL_SAIL_DUES );
+	}
+
+	/**
+	 * Чи може користувач переглядати модуль Calendar.
+	 */
+	public static function current_user_can_view_calendar(): bool {
+		return true;
+	}
+
+	/**
+	 * Чи може користувач керувати власними/доступними подіями Calendar.
+	 */
+	public static function current_user_can_manage_calendar_events(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_CALENDAR_EVENTS );
+	}
+
+	/**
+	 * Чи може користувач керувати будь-якими подіями Calendar.
+	 */
+	public static function current_user_can_manage_any_calendar_events(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_ANY_CALENDAR_EVENTS );
+	}
+
+	/**
+	 * Чи може користувач видаляти події Calendar без owner-обмеження.
+	 */
+	public static function current_user_can_delete_calendar_events(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::DELETE_CALENDAR_EVENTS );
+	}
+
+	/**
+	 * Чи може користувач переглядати протокол подій Calendar.
+	 */
+	public static function current_user_can_view_calendar_events_protocol(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_CALENDAR_EVENTS_PROTOCOL );
+	}
+
+	/**
+	 * Чи може користувач подавати заявки Calendar.
+	 */
+	public static function current_user_can_submit_calendar_applications(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::SUBMIT_CALENDAR_APPLICATIONS );
+	}
+
+	/**
+	 * Чи може користувач керувати заявками Calendar.
+	 */
+	public static function current_user_can_manage_calendar_applications(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_CALENDAR_APPLICATIONS );
+	}
+
+	/**
+	 * Чи може користувач видаляти заявки Calendar.
+	 */
+	public static function current_user_can_delete_calendar_applications(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::DELETE_CALENDAR_APPLICATIONS );
+	}
+
+	/**
+	 * Чи може користувач переглядати протокол заявок Calendar.
+	 */
+	public static function current_user_can_view_calendar_applications_protocol(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_CALENDAR_APPLICATIONS_PROTOCOL );
+	}
+
+	/**
+	 * Чи може користувач керувати маршрутами Calendar.
+	 */
+	public static function current_user_can_manage_calendar_routes(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_CALENDAR_ROUTES );
+	}
+
+	/**
+	 * Чи може користувач видаляти маршрути Calendar.
+	 */
+	public static function current_user_can_delete_calendar_routes(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::DELETE_CALENDAR_ROUTES );
+	}
+
+	/**
+	 * Чи може користувач переглядати протокол маршрутів Calendar.
+	 */
+	public static function current_user_can_view_calendar_routes_protocol(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_CALENDAR_ROUTES_PROTOCOL );
+	}
+
+	/**
+	 * Чи може користувач виконувати MKK-review для Calendar.
+	 */
+	public static function current_user_can_review_calendar_mkk(): bool {
+		return current_user_can( 'manage_options' )
+			|| current_user_can( self::REVIEW_CALENDAR_MKK )
+			|| current_user_can( self::MANAGE_MKK );
+	}
+
+	/**
+	 * Чи може користувач переглядати результати Calendar.
+	 */
+	public static function current_user_can_view_calendar_results(): bool {
+		return true;
+	}
+
+	/**
+	 * Чи може користувач керувати результатами Calendar.
+	 */
+	public static function current_user_can_manage_calendar_results(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_CALENDAR_RESULTS );
+	}
+
+	/**
+	 * Чи може користувач видаляти результати Calendar.
+	 */
+	public static function current_user_can_delete_calendar_results(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::DELETE_CALENDAR_RESULTS );
+	}
+
+	/**
+	 * Чи може користувач переглядати протокол результатів Calendar.
+	 */
+	public static function current_user_can_view_calendar_results_protocol(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_CALENDAR_RESULTS_PROTOCOL );
 	}
 }

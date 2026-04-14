@@ -1,0 +1,123 @@
+/**
+ * Стилі адмін-панелі (Хаб шорткодів).
+ * Version: 1.1.0
+ * Date_update: 2026-04-13
+ */
+
+/* Сітка карток */
+.fstu-tabs-content {
+    margin-top: 20px;
+}
+
+.fstu-shortcode-card {
+    background: #fff;
+    border: 1px solid #d1d5db;
+    padding: 20px;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.fstu-shortcode-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+.fstu-shortcode-card h3 {
+    margin-top: 0;
+    color: #d9534f;
+    font-size: 16px;
+    margin-bottom: 10px;
+}
+
+.fstu-shortcode-card p {
+    color: #666;
+    font-size: 13px;
+    flex-grow: 1; /* Опис займає вільний простір, щоб кнопки були на одному рівні */
+    margin-bottom: 15px;
+}
+
+.fstu-shortcode-card code {
+    display: block;
+    margin-bottom: 15px;
+    background: #f8f9fa;
+    padding: 8px;
+    text-align: center;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    font-size: 14px;
+    color: #333;
+}
+
+/* Кнопки (Корпоративний стандарт ФСТУ) */
+.fstu-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.fstu-btn--copy-simple {
+    background-color: #f8f9fa;
+    color: #333;
+    border: 1px solid #d1d5db;
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+.fstu-btn--copy-simple:hover {
+    background-color: #d9534f;
+    color: #fff;
+    border-color: #d9534f;
+}
+
+.fstu-btn--open-generator,
+.fstu-btn--save {
+    background-color: #d9534f !important;
+    color: #fff !important;
+    border: none !important;
+    padding: 8px 15px;
+}
+
+.fstu-btn--open-generator:hover,
+.fstu-btn--save:hover {
+    background-color: #c9302c !important;
+}
+
+/* Скидання стилів для модального вікна (Захист від тем) */
+.fstu-modal-close {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 5px !important;
+    font-size: 24px !important;
+    line-height: 1 !important;
+    color: #666 !important;
+    cursor: pointer;
+}
+
+.fstu-modal-close:hover {
+    color: #d9534f !important;
+}
+
+.fstu-generator-input {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 6px 10px;
+    box-sizing: border-box;
+}
+
+.fstu-generator-input:focus {
+    border-color: #d9534f;
+    outline: none;
+    box-shadow: 0 0 0 1px #d9534f;
+}
