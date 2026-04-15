@@ -1,0 +1,328 @@
+/**
+ * Стилі довідника статусів карток.
+ * Version: 1.1.0
+ * Date_update: 2026-04-15
+ */
+
+.fstu-status-card-module {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #333;
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* ================== ACTION BAR ================== */
+.fstu-action-bar {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+}
+
+.fstu-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #f8f9fa;
+    color: #333;
+    border: 1px solid #d1d5db;
+    padding: 6px 16px;
+    font-size: 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.fstu-btn:hover {
+    background: #d9534f;
+    color: #fff;
+    border-color: #d43f3a;
+}
+
+.fstu-btn--save {
+    background: #d9534f !important;
+    color: #fff !important;
+    border: none;
+}
+
+.fstu-btn--save:hover {
+    background: #c9302c !important;
+}
+
+/* ================== ТАБЛИЦЯ ================== */
+.fstu-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    border: 1px solid #d1d5db;
+}
+
+.fstu-table th, .fstu-table td {
+    padding: 10px 15px;
+    border: 1px solid #e5e7eb;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.fstu-table thead th {
+    background-color: #dcead6;
+    color: #333;
+    font-weight: 600;
+}
+
+.fstu-table tbody tr:nth-child(even) {
+    background-color: #f8faf6;
+}
+
+.fstu-table tbody tr:hover {
+    background-color: #f1f5f9;
+}
+
+.fstu-text-center { text-align: center; }
+
+/* Drag and Drop Handle */
+.fstu-td-drag {
+    cursor: grab;
+    color: #9ca3af;
+    font-size: 18px;
+    width: 40px;
+    user-select: none;
+}
+.fstu-td-drag:active { cursor: grabbing; }
+
+/* Пошук у шапці */
+.fstu-th-with-search {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    white-space: nowrap;
+}
+
+.fstu-input--in-header {
+    background: rgba(255,255,255,0.85);
+    border: 1px solid #ccc;
+    height: 30px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    flex-grow: 1;
+    font-size: 13px;
+}
+
+/* ================== DROPDOWN ================== */
+.fstu-dropdown-toggle {
+    width: 28px;
+    height: 28px;
+    background: #f3f4f6;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 10px;
+    transition: 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+}
+
+.fstu-dropdown-toggle:hover {
+    background: #d9534f;
+    color: #fff;
+    border-color: #d43f3a;
+}
+
+.fstu-dropdown-menu {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+    padding: 5px 0;
+    margin: 0;
+    list-style: none;
+    min-width: 140px;
+}
+
+.fstu-dropdown-menu li button {
+    width: 100%;
+    text-align: left;
+    padding: 8px 15px;
+    background: none !important;
+    border: none !important;
+    cursor: pointer;
+    font-size: 13px;
+    color: #333 !important; /* Жорстко задаємо темний колір тексту */
+    font-weight: normal !important;
+}
+
+.fstu-dropdown-menu li button:hover {
+    background: #f3f4f6 !important;
+    color: #d9534f !important; /* При наведенні - корпоративний червоний */
+}
+
+.fstu-dropdown-menu li button:hover {
+    background: #f3f4f6;
+    color: #d9534f;
+}
+
+/* ================== ПАГІНАЦІЯ ================== */
+.fstu-pagination--compact {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8f9fa;
+    padding: 10px 15px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+.fstu-pagination__left { flex: 1; display: flex; align-items: center; gap: 6px; justify-content: flex-start; }
+.fstu-pagination__controls { flex: 1; display: flex; justify-content: center; gap: 5px; }
+.fstu-pagination__info { flex: 1; text-align: right; justify-content: flex-end; color: #6b7280; }
+
+.fstu-select--compact {
+    width: 70px !important;
+    height: 28px;
+    padding: 2px 6px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+}
+
+/* ================== МОДАЛЬНЕ ВІКНО ================== */
+.fstu-modal {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fstu-modal-overlay {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+}
+
+.fstu-modal-dialog {
+    position: relative;
+    background: #fff;
+    width: 100%;
+    max-width: 500px;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column;
+}
+
+.fstu-modal-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.fstu-modal-header h3 { margin: 0; font-size: 18px; }
+
+/* Скидання стилів теми для хрестика */
+.fstu-modal-close {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    color: #9ca3af;
+}
+
+.fstu-modal-close:hover { color: #d9534f; }
+
+.fstu-modal-body {
+    padding: 20px;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.fstu-modal-footer {
+    padding: 15px 20px;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    background: #f8f9fa;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+.fstu-form-group { margin-bottom: 15px; }
+.fstu-label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 13px; }
+.fstu-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+/* ==========================================================================
+   ФІКСИ: Захист стилів від теми WordPress (Елементор/WP Reset)
+   ========================================================================== */
+
+/* 1. Захист колонки ДІЇ від розтягування */
+.fstu-status-card-module .fstu-table th.fstu-th--actions,
+.fstu-status-card-module .fstu-table td.fstu-text-center {
+    width: 60px !important;
+    max-width: 60px !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    padding-left: 5px !important;
+    padding-right: 5px !important;
+}
+
+/* 2. Фікс кнопки ▼ (Має бути квадратною) */
+.fstu-status-card-module .fstu-dropdown-toggle {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 28px !important; /* Фіксований розмір */
+    height: 28px !important; /* Фіксований розмір */
+    padding: 0 !important;
+    margin: 0 !important;
+    font-size: 10px !important;
+    line-height: 1 !important;
+    cursor: pointer !important;
+
+    /* Скидання стилів теми */
+    box-shadow: none !important;
+    min-width: 0 !important;
+    border-radius: 4px !important;
+    transition: all 0.2s ease !important;
+
+    /* Кольори: Корпоративний сірий фон, ЧОРНИЙ текст/стрілка за замовчуванням */
+    background-color: #f3f4f6 !important;
+    color: #000000 !important;
+    border: 1px solid #d1d5db !important;
+}
+
+/* 3. Кольори при наведенні (:hover) */
+.fstu-status-card-module .fstu-dropdown-toggle:hover {
+    /* Наведення: Прозорий фон (щоб зберегти фон рядка) + ЧЕРВОНИЙ текст */
+    background-color: transparent !important;
+    color: #d9534f !important;
+    border-color: #d9534f !important;
+}
+
+/* 4. Фікс колонки Drag (⋮⋮) - також має бути компактною */
+.fstu-status-card-module .fstu-table th.fstu-th--drag-handle,
+.fstu-status-card-module .fstu-table td.fstu-td-drag {
+    width: 40px !important;
+    max-width: 40px !important;
+    text-align: center !important;
+}

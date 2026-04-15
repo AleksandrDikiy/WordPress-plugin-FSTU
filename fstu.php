@@ -132,6 +132,10 @@ require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/EventType/class-eventtype-
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/TourismType/class-tourismtype-list.php';
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/TourismType/class-tourismtype-ajax.php';
 
+// StatusCard — Довідник статусів карток та квитків ФСТУ (2026-04-15)
+require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/StatusCard/class-status-card-list.php';
+require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/StatusCard/class-status-card-ajax.php';
+
 // Admin
 if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Admin/class-admin-menu.php' ) ) {
 	require_once FSTU_PLUGIN_DIR . 'includes/Admin/class-admin-menu.php';
@@ -486,7 +490,13 @@ function fstu_init(): void {
 	// ── Довідник типів туризму ФСТУ ───────────────────────────────────────────
 	( new FSTU\Dictionaries\TourismType\TourismType_List() )->init();
 	( new FSTU\Dictionaries\TourismType\TourismType_Ajax() )->init();
-	
+
+    // ── Довідник статусів карток ───────────────────────────────────────────
+    //( new FSTU\Dictionaries\StatusCard\Class_Status_Card_List() )->init();
+    //( new FSTU\Dictionaries\StatusCard\Class_Status_Card_Ajax() )->init();
+    new \FSTU\Dictionaries\StatusCard\Class_Status_Card_List();
+    new \FSTU\Dictionaries\StatusCard\Class_Status_Card_Ajax();
+
 	// ── Адмінка ───────────────────────────────────────────────────────────────
 	if ( class_exists( 'FSTU\\Admin\\Admin_Menu' ) ) {
 		( new FSTU\Admin\Admin_Menu() )->init();

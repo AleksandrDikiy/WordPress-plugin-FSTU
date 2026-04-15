@@ -1,8 +1,8 @@
 <?php
 /**
  * Клас-реєстр шорткодів плагіна FSTU.
- * * Version: 1.1.0
- * Date_update: 2026-04-13
+ * * Version: 1.1.1
+ * Date_update: 2026-04-15
  */
 
 namespace FSTU\Admin;
@@ -238,6 +238,12 @@ class Shortcodes_Registry {
             'fstu_sportscategories' => [
                 'title'       => __( 'Довідник спортивних розрядів', 'fstu' ),
                 'description' => __( 'Публічний довідник спортивних розрядів з пошуком, compact-пагінацією, dropdown-меню «Дії» та розділом «ПРОТОКОЛ».', 'fstu' ),
+                'category'    => 'dictionaries',
+                'attributes'  => [],
+            ],
+            'fstu_status_card_dict' => [
+                'title'       => __( 'Довідник статусів карток та квитків', 'fstu' ),
+                'description' => __( 'Виводить довідник статусів карток з пошуком у шапці таблиці, compact-пагінацією, drag-and-drop сортуванням, dropdown-меню «Дії», модальними вікнами та розділом «ПРОТОКОЛ».', 'fstu' ),
                 'category'    => 'dictionaries',
                 'attributes'  => [],
             ],

@@ -2,8 +2,8 @@
 /**
  * View: Головна сторінка плагіна в адмінці.
  *
- * Version:     1.19.0
- * Date_update: 2026-04-13
+ * Version:     1.19.1
+ * Date_update: 2026-04-15
  */
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -324,16 +324,23 @@ $clubs_page_url = isset( $clubs_page_url ) ? (string) $clubs_page_url : '';
                                       <?php endif; ?>
                                   </td>
                               </tr>
-                                                                                                    <tr>
-                                                                                                        <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_sportscategories]</code></th>
-                                                                                                        <td>
-                                                                                                            <strong>Довідник спортивних розрядів</strong><br>
-                                                                                                            Виводить публічний довідник спортивних розрядів з пошуком у шапці таблиці, compact-пагінацією, dropdown-меню «Дії», модальними вікнами перегляду/редагування та окремим розділом «ПРОТОКОЛ». Перегляд списку і картки доступний гостям та авторизованим користувачам, а create/update/delete/protocol — лише ролям `administrator` і `globalregistrar`.
-                                                                                                            <?php if ( '' !== $sportscategories_page_url ) : ?>
-                                                                                                                <br><a href="<?php echo esc_url( $sportscategories_page_url ); ?>">Відкрити сторінку довідника →</a>
-                                                                                                            <?php endif; ?>
-                                                                                                        </td>
-                                                                                                    </tr>
+                            <tr>
+                                <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_sportscategories]</code></th>
+                                <td>
+                                    <strong>Довідник спортивних розрядів</strong><br>
+                                    Виводить публічний довідник спортивних розрядів з пошуком у шапці таблиці, compact-пагінацією, dropdown-меню «Дії», модальними вікнами перегляду/редагування та окремим розділом «ПРОТОКОЛ». Перегляд списку і картки доступний гостям та авторизованим користувачам, а create/update/delete/protocol — лише ролям `administrator` і `globalregistrar`.
+                                    <?php if ( '' !== $sportscategories_page_url ) : ?>
+                                        <br><a href="<?php echo esc_url( $sportscategories_page_url ); ?>">Відкрити сторінку довідника →</a>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_status_card_dict]</code></th>
+                                <td>
+                                    <strong>Довідник статусів карток та квитків</strong><br>
+                                    Виводить довідник статусів карток з пошуком у шапці таблиці, compact-пагінацією, drag-and-drop сортуванням, dropdown-меню «Дії», модальними вікнами та розділом «ПРОТОКОЛ».
+                                </td>
+                            </tr>
                             <tr>
                                 <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_dictionaries_hub]</code></th>
                                 <td>
