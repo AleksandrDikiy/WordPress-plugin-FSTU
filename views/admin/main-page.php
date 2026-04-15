@@ -184,16 +184,16 @@ $clubs_page_url = isset( $clubs_page_url ) ? (string) $clubs_page_url : '';
                                     Виводить таблицю видів змагань з пошуком, пагінацією та модальними вікнами перегляду/редагування. Дозволяє адміністраторам та реєстраторам додавати й редагувати записи, а адміністраторам — видаляти їх без inline-коду та з AJAX-захистом nonce.
                                 </td>
                             </tr>
-                                                                                        <tr>
-                                                                                            <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_participationtype]</code></th>
-                                                                                            <td>
-                                                                                                <strong>Довідник видів участі в заходах ФСТУ</strong><br>
-                                                                                                Виводить довідник видів участі з пошуком у шапці таблиці, колонкою «Тип», compact-пагінацією, drag-and-drop сортуванням, dropdown-меню «Дії», модальними вікнами перегляду/редагування та окремим розділом «ПРОТОКОЛ». Для всіх авторизованих користувачів доступний перегляд списку й картки, для ролей `administrator`, `globalregistrar`, `userregistrar` — create/update, а delete залишено лише для `administrator` і `globalregistrar`.
-                                                                                                <?php if ( '' !== $participationtype_page_url ) : ?>
-                                                                                                    <br><a href="<?php echo esc_url( $participationtype_page_url ); ?>">Відкрити сторінку довідника →</a>
-                                                                                                <?php endif; ?>
-                                                                                            </td>
-                                                                                        </tr>
+                            <tr>
+                                <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_participationtype]</code></th>
+                                <td>
+                                    <strong>Довідник видів участі в заходах ФСТУ</strong><br>
+                                    Виводить довідник видів участі з пошуком у шапці таблиці, колонкою «Тип», compact-пагінацією, drag-and-drop сортуванням, dropdown-меню «Дії», модальними вікнами перегляду/редагування та окремим розділом «ПРОТОКОЛ». Для всіх авторизованих користувачів доступний перегляд списку й картки, для ролей `administrator`, `globalregistrar`, `userregistrar` — create/update, а delete залишено лише для `administrator` і `globalregistrar`.
+                                    <?php if ( '' !== $participationtype_page_url ) : ?>
+                                        <br><a href="<?php echo esc_url( $participationtype_page_url ); ?>">Відкрити сторінку довідника →</a>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
                             <tr>
                                 <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_commission]</code></th>
                                 <td>
@@ -339,6 +339,13 @@ $clubs_page_url = isset( $clubs_page_url ) ? (string) $clubs_page_url : '';
                                 <td>
                                     <strong>Довідник статусів карток та квитків</strong><br>
                                     Виводить довідник статусів карток з пошуком у шапці таблиці, compact-пагінацією, drag-and-drop сортуванням, dropdown-меню «Дії», модальними вікнами та розділом «ПРОТОКОЛ».
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_type_card]</code></th>
+                                <td>
+                                    <strong>Довідник типів членських білетів</strong><br>
+                                    Виводить довідник типів квитків (карток) з пошуком у шапці таблиці, compact-пагінацією, drag-and-drop сортуванням, dropdown-меню «Дії», модальними вікнами та розділом «ПРОТОКОЛ». Перегляд списку доступний для ролі `userregistrar`, а повне керування — лише ролям `administrator` і `globalregistrar`.
                                 </td>
                             </tr>
                             <tr>

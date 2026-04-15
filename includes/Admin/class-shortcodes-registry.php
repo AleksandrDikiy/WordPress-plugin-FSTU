@@ -93,7 +93,6 @@ class Shortcodes_Registry {
                 'category'    => 'registry',
                 'attributes'  => [],
             ],
-
             // ==========================================
             // 2. КАЛЕНДАР (calendar)
             // ==========================================
@@ -244,6 +243,12 @@ class Shortcodes_Registry {
             'fstu_status_card_dict' => [
                 'title'       => __( 'Довідник статусів карток та квитків', 'fstu' ),
                 'description' => __( 'Виводить довідник статусів карток з пошуком у шапці таблиці, compact-пагінацією, drag-and-drop сортуванням, dropdown-меню «Дії», модальними вікнами та розділом «ПРОТОКОЛ».', 'fstu' ),
+                'category'    => 'dictionaries',
+                'attributes'  => [],
+            ],
+            'fstu_type_card' => [
+                'title'       => __( 'Довідник типів членських білетів', 'fstu' ),
+                'description' => __( 'Виводить довідник типів квитків (карток) з пошуком у шапці таблиці, compact-пагінацією, drag-and-drop сортуванням, dropdown-меню «Дії», модальними вікнами та розділом «ПРОТОКОЛ».', 'fstu' ),
                 'category'    => 'dictionaries',
                 'attributes'  => [],
             ],

@@ -150,6 +150,11 @@ class Capabilities {
 	public const DELETE_CALENDAR_RESULTS        = 'fstu_delete_calendar_results';
 	public const VIEW_CALENDAR_RESULTS_PROTOCOL = 'fstu_view_calendar_results_protocol';
 
+    public const VIEW_TYPE_CARD             = 'fstu_view_type_card';
+    public const MANAGE_TYPE_CARD           = 'fstu_manage_type_card';
+    public const DELETE_TYPE_CARD           = 'fstu_delete_type_card';
+    public const VIEW_TYPE_CARD_PROTOCOL    = 'fstu_view_type_card_protocol';
+
 	/**
 	 * Ініціалізує capability-модель для поточного запиту.
 	 */
@@ -304,6 +309,10 @@ class Capabilities {
 				self::MANAGE_CALENDAR_RESULTS       => true,
 				self::DELETE_CALENDAR_RESULTS       => true,
 				self::VIEW_CALENDAR_RESULTS_PROTOCOL => true,
+                self::VIEW_TYPE_CARD             => true,
+                self::MANAGE_TYPE_CARD           => true,
+                self::DELETE_TYPE_CARD           => true,
+                self::VIEW_TYPE_CARD_PROTOCOL    => true,
 			],
 			'sailadministrator' => [
 				self::ACCESS_ADMIN                  => true,
@@ -404,6 +413,10 @@ class Capabilities {
                 self::VIEW_SAILBOATS_FINANCE_COLUMNS => true,
                 self::VIEW_STEERING                 => true,
                 self::VIEW_STEERING_FINANCE_COLUMNS => true,
+                self::VIEW_TYPE_CARD             => true,
+                self::MANAGE_TYPE_CARD           => true,
+                self::DELETE_TYPE_CARD           => true,
+                self::VIEW_TYPE_CARD_PROTOCOL    => true,
 			],
 			'userregistrar' => [
 				self::ACCESS_ADMIN             => true,
@@ -466,6 +479,8 @@ class Capabilities {
 				self::VIEW_CALENDAR_RESULTS      => true,
 				self::MANAGE_CALENDAR_RESULTS    => true,
 				self::VIEW_CALENDAR_RESULTS_PROTOCOL => true,
+                self::VIEW_TYPE_CARD             => true,
+                self::VIEW_TYPE_CARD_PROTOCOL    => true,
 			],
 			'userfstu' => [
 				self::VIEW_PARTICIPATION_TYPE => true,
@@ -1955,4 +1970,17 @@ class Capabilities {
 	public static function current_user_can_view_calendar_results_protocol(): bool {
 		return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_CALENDAR_RESULTS_PROTOCOL );
 	}
+    /**
+     * Повертає прапорці прав для довідника типів членських білетів.
+     *
+     * @return array<string,bool>
+     */
+    public static function get_type_card_permissions(): array {
+        return [
+            'canView'     => current_user_can( 'manage_options' ) || current_user_can( self::VIEW_TYPE_CARD ),
+            'canManage'   => current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_TYPE_CARD ),
+            'canDelete'   => current_user_can( 'manage_options' ) || current_user_can( self::DELETE_TYPE_CARD ),
+            'canProtocol' => current_user_can( 'manage_options' ) || current_user_can( self::VIEW_TYPE_CARD_PROTOCOL ),
+        ];
+    }
 }

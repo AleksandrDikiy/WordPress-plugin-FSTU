@@ -136,6 +136,10 @@ require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/TourismType/class-tourismt
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/StatusCard/class-status-card-list.php';
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/StatusCard/class-status-card-ajax.php';
 
+// ── Довідник типів членських білетів (Type Card) ───────────────────────────
+require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/TypeCard/class-type-card-list.php';
+require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/TypeCard/class-type-card-ajax.php';
+
 // Admin
 if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Admin/class-admin-menu.php' ) ) {
 	require_once FSTU_PLUGIN_DIR . 'includes/Admin/class-admin-menu.php';
@@ -496,6 +500,10 @@ function fstu_init(): void {
     //( new FSTU\Dictionaries\StatusCard\Class_Status_Card_Ajax() )->init();
     new \FSTU\Dictionaries\StatusCard\Class_Status_Card_List();
     new \FSTU\Dictionaries\StatusCard\Class_Status_Card_Ajax();
+
+    // ── Довідник типів членських білетів (Type Card) ───────────────────────────
+    new \FSTU\Dictionaries\TypeCard\Class_Type_Card_List();
+    new \FSTU\Dictionaries\TypeCard\Class_Type_Card_Ajax();
 
 	// ── Адмінка ───────────────────────────────────────────────────────────────
 	if ( class_exists( 'FSTU\\Admin\\Admin_Menu' ) ) {
