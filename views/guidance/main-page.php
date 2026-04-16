@@ -21,34 +21,35 @@ $can_protocol = ! empty( $permissions['canProtocol'] );
 	<h2 class="fstu-guidance-title"><?php esc_html_e( 'Склад керівних органів ФСТУ', 'fstu' ); ?></h2>
 	<div id="fstu-guidance-page-message" class="fstu-page-message fstu-hidden" aria-live="polite"></div>
 
-	<div class="fstu-action-bar">
-		<div class="fstu-guidance-action-bar__actions">
-			<?php if ( $can_manage ) : ?>
-				<button type="button" class="fstu-btn fstu-btn--secondary" id="fstu-guidance-add-btn">
-					<span class="fstu-btn__icon">➕</span>
-					<?php esc_html_e( 'Додати запис', 'fstu' ); ?>
-				</button>
-			<?php endif; ?>
+    <div class="fstu-action-bar">
+        <div class="fstu-guidance-action-bar__actions">
+            <?php if ( $can_manage ) : ?>
+                <button type="button" class="fstu-btn fstu-btn--secondary" id="fstu-guidance-add-btn">
+                    <span class="fstu-btn__icon">➕</span> <?php esc_html_e( 'Додати запис', 'fstu' ); ?>
+                </button>
+            <?php endif; ?>
+        </div>
 
-			<?php if ( $can_protocol ) : ?>
-				<button type="button" class="fstu-btn fstu-btn--secondary" id="fstu-guidance-protocol-btn">
-					<span class="fstu-btn__icon">📋</span>
-					<?php esc_html_e( 'ПРОТОКОЛ', 'fstu' ); ?>
-				</button>
-				<button type="button" class="fstu-btn fstu-btn--secondary fstu-hidden" id="fstu-guidance-protocol-back-btn">
-					<span class="fstu-btn__icon">↩</span>
-					<?php esc_html_e( 'ДОВІДНИК', 'fstu' ); ?>
-				</button>
-			<?php endif; ?>
-		</div>
+        <div class="fstu-guidance-action-bar__filters" id="fstu-guidance-filter-wrap">
+            <label class="fstu-label fstu-label--compact" for="fstu-guidance-typeguidance-filter">
+                <?php esc_html_e( 'Керівний орган', 'fstu' ); ?>
+            </label>
+            <select id="fstu-guidance-typeguidance-filter" class="fstu-select fstu-select--compact">
+                <option value="1"><?php esc_html_e( 'Виконком', 'fstu' ); ?></option>
+            </select>
+        </div>
 
-		<div class="fstu-guidance-action-bar__filters" id="fstu-guidance-filter-wrap">
-			<label class="fstu-label fstu-label--compact" for="fstu-guidance-typeguidance-filter"><?php esc_html_e( 'Керівний орган', 'fstu' ); ?></label>
-			<select id="fstu-guidance-typeguidance-filter" class="fstu-select fstu-select--compact" aria-label="<?php esc_attr_e( 'Фільтр по керівному органу', 'fstu' ); ?>">
-				<option value="1"><?php esc_html_e( 'Виконком', 'fstu' ); ?></option>
-			</select>
-		</div>
-	</div>
+        <div class="fstu-guidance-action-bar__secondary">
+            <?php if ( $can_protocol ) : ?>
+                <button type="button" class="fstu-btn fstu-btn--secondary" id="fstu-guidance-protocol-btn">
+                    <span class="fstu-btn__icon">📋</span> <?php esc_html_e( 'ПРОТОКОЛ', 'fstu' ); ?>
+                </button>
+                <button type="button" class="fstu-btn fstu-btn--secondary fstu-hidden" id="fstu-guidance-protocol-back-btn">
+                    <span class="fstu-btn__icon">↩</span> <?php esc_html_e( 'ДОВІДНИК', 'fstu' ); ?>
+                </button>
+            <?php endif; ?>
+        </div>
+    </div>
 
 	<div id="fstu-guidance-main">
 		<?php include FSTU_PLUGIN_DIR . 'views/guidance/table-list.php'; ?>

@@ -152,25 +152,42 @@ class Guidance_Service {
 			throw new \RuntimeException( __( 'Запис не знайдено.', 'fstu' ) );
 		}
 
-		$data['user_id'] = (int) ( $current['User_ID'] ?? 0 );
-		$normalized      = $this->validate_and_normalize_payload( $data, $guidance_id );
+        // Валідуємо дані. validate_and_normalize_payload вже містить новий user_id
+        // ВІДЛАДКА: Перевіряємо, що прийшло з AJAX
+        error_log( 'FSTU Guidance Debug - Вхідні дані: ' . print_r( $data, true ) );
 
-		$this->begin_transaction();
+        // Валідуємо дані. validate_and_normalize_payload вже містить новий user_id
+        $normalized = $this->validate_and_normalize_payload( $data, $guidance_id );
 
-		try {
-			$this->repository->update_item( $guidance_id, $normalized );
-			$this->protocol_service->log_action_transactional(
-				'U',
-				sprintf(
-					'Оновлено запис складу керівних органів: %s / %s / %s',
-					$normalized['typeguidance_name'],
-					$normalized['member_guidance_name'],
-					$normalized['user_fio']
-				)
-			);
-			$this->commit_transaction();
+        // ВІДЛАДКА: Перевіряємо дані після нормалізації (чи є там новий user_id та user_fio)
+        error_log( 'FSTU Guidance Debug - Нормалізовані дані: ' . print_r( $normalized, true ) );
 
-			return [ 'guidance_id' => $guidance_id ];
+        $this->begin_transaction();
+
+        try {
+            // Виконуємо оновлення та перевіряємо, чи повернув репозиторій успіх (кількість змінених рядків або true)
+            $updated = $this->repository->update_item( $guidance_id, $normalized );
+
+            if ( false === $updated ) {
+                throw new \RuntimeException( __( 'Не вдалося оновити запис у базі даних.', 'fstu' ) );
+            }
+
+            // Тільки при успішному оновленні основної таблиці пишемо в лог
+            $this->protocol_service->log_action_transactional(
+                'U',
+                sprintf(
+                    'Оновлено запис складу керівних органів: %s / %s / %s',
+                    $normalized['typeguidance_name'],
+                    $normalized['member_guidance_name'],
+                    $normalized['user_fio']
+                ),
+                '✓'
+            );
+
+            $this->commit_transaction();
+
+            return [ 'guidance_id' => $guidance_id ];
+
 		} catch ( \Throwable $throwable ) {
 			$this->rollback_transaction();
 			$this->protocol_service->try_log_action( 'U', 'Помилка оновлення запису Guidance.', 'error' );
@@ -283,15 +300,15 @@ class Guidance_Service {
 			throw new \RuntimeException( __( 'Такий запис уже існує.', 'fstu' ) );
 		}
 
-		return [
-			'typeguidance_id'    => $typeguidance_id,
-			'typeguidance_name'  => (string) ( $typeguidance['TypeGuidance_Name'] ?? '' ),
-			'member_guidance_id' => $member_guidance_id,
-			'member_guidance_name' => (string) ( $member_guidance['MemberGuidance_Name'] ?? '' ),
-			'user_id'            => $user_id,
-			'user_fio'           => (string) ( $user['FIO'] ?? '' ),
-			'guidance_notes'     => $guidance_notes,
-		];
+        return [
+            'TypeGuidance_ID'    => $typeguidance_id, // Ключі як у таблиці БД
+            'typeguidance_name'  => (string) ( $typeguidance['TypeGuidance_Name'] ?? '' ),
+            'MemberGuidance_ID'  => $member_guidance_id,
+            'member_guidance_name' => (string) ( $member_guidance['MemberGuidance_Name'] ?? '' ),
+            'User_ID'            => $user_id, // Legacy БД часто очікує саме такий регістр
+            'user_fio'           => (string) ( $user['FIO'] ?? '' ),
+            'Guidance_Notes'     => $guidance_notes,
+        ];
 	}
 
 	/**

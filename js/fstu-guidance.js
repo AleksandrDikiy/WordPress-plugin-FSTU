@@ -268,7 +268,7 @@ jQuery( document ).ready( function ( $ ) {
 		$( '#fstu-guidance-form-mode' ).val( 'update' );
 		$( '#fstu-guidance-typeguidance-id' ).val( String( item.TypeGuidance_ID || 1 ) );
 		$( '#fstu-guidance-user-id' ).val( item.User_ID || 0 );
-		$( '#fstu-guidance-user-input' ).val( item.FIO || '' ).prop( 'readonly', true );
+		$( '#fstu-guidance-user-input' ).val( item.FIO || '' ).prop( 'readonly', false );
 		$( '#fstu-guidance-notes' ).val( item.Guidance_Notes || '' );
 		loadMemberGuidanceOptions( parseInt( item.TypeGuidance_ID || 1, 10 ) || 1, function () {
 			$( '#fstu-guidance-member-guidance-id' ).val( String( item.MemberGuidance_ID || 0 ) );
@@ -398,6 +398,8 @@ jQuery( document ).ready( function ( $ ) {
 			guidance_notes: $( '#fstu-guidance-notes' ).val(),
 			fstu_website: $( '#fstu-guidance-website' ).val(),
 		};
+
+		console.log('Відправка даних:', data); // Перевір у консолі браузера (F12)
 
 		$.ajax( {
 			url: fstuGuidanceL10n.ajaxUrl,

@@ -221,28 +221,35 @@ class Guidance_Repository {
 		return (int) $wpdb->insert_id;
 	}
 
-	public function update_item( int $guidance_id, array $data ): bool {
-		global $wpdb;
+    /**
+     * Оновлення запису Guidance.
+     * Виправлено: ключі масиву приведені до мапінгу сервісу (Legacy), додано оновлення User_ID.
+     */
+    public function update_item( int $guidance_id, array $data ): bool {
+        global $wpdb;
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		$result = $wpdb->update(
-			'Guidance',
-			[
-				'MemberGuidance_ID' => (int) $data['member_guidance_id'],
-				'TypeGuidance_ID'   => (int) $data['typeguidance_id'],
-				'Guidance_Notes'    => (string) $data['guidance_notes'],
-			],
-			[ 'Guidance_ID' => $guidance_id ],
-			[ '%d', '%d', '%s' ],
-			[ '%d' ]
-		);
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+        $result = $wpdb->update(
+            'Guidance',
+            [
+                'User_ID'           => (int) $data['User_ID'],           // Додано зміну користувача
+                'MemberGuidance_ID' => (int) $data['MemberGuidance_ID'], // Виправлено регістр ключа
+                'TypeGuidance_ID'   => (int) $data['TypeGuidance_ID'],   // Виправлено регістр ключа
+                'Guidance_Notes'    => (string) $data['Guidance_Notes'], // Виправлено регістр ключа
+            ],
+            [ 'Guidance_ID' => $guidance_id ],
+            [ '%d', '%d', '%d', '%s' ],
+            [ '%d' ]
+        );
 
-		if ( false === $result ) {
-			throw new \RuntimeException( 'guidance_update_failed' );
-		}
+        if ( false === $result ) {
+            throw new \RuntimeException( 'guidance_update_failed' );
+        }
 
-		return true;
-	}
+        // Повертаємо true, навіть якщо рядки не змінено (результат 0),
+        // щоб сервіс міг зафіксувати успіх у протоколі.
+        return true;
+    }
 
 	public function delete_item( int $guidance_id ): bool {
 		global $wpdb;
