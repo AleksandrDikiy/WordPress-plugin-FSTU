@@ -1,0 +1,85 @@
+/**
+ * Стилі модуля Presidium.
+ *
+ * Version:     1.0.0
+ * Date_update: 2026-04-16
+ */
+
+.fstu-presidium-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
+    gap: 20px !important;
+    padding: 10px 0 !important;
+}
+
+.fstu-member-card {
+    display: flex !important;
+    align-items: center !important;
+    background: #fff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    padding: 15px !important;
+    text-decoration: none !important;
+    color: inherit !important;
+    transition: all 0.2s ease !important;
+}
+
+.fstu-member-card:hover {
+    border-color: #d9534f !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+    transform: translateY(-2px);
+}
+
+.fstu-member-card__photo {
+    width: 64px !important;
+    height: 64px !important;
+    flex-shrink: 0 !important;
+    border-radius: 50% !important;
+    overflow: hidden !important;
+    margin-right: 15px !important;
+    background: #f1f5f9 !important;
+}
+
+.fstu-member-card__photo img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+}
+
+.fstu-member-card__content {
+    flex-grow: 1 !important;
+    overflow: hidden !important;
+}
+
+.fstu-member-card__role {
+    font-size: 10px !important;
+    text-transform: uppercase !important;
+    color: #64748b !important;
+    font-weight: 700 !important;
+    margin-bottom: 4px !important;
+    line-height: 1.2 !important;
+}
+
+.fstu-member-card__name {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    color: #1e293b !important;
+    margin-bottom: 5px !important;
+    line-height: 1.2 !important;
+}
+
+.fstu-contact {
+    display: flex !important;
+    align-items: center !important;
+    font-size: 13px !important;
+    color: #475569 !important;
+}
+
+.fstu-contact .dashicons {
+    font-size: 14px !important;
+    width: 14px !important;
+    height: 14px !important;
+    line-height: 14px !important;
+    margin-right: 6px !important;
+    color: #94a3b8 !important;
+}

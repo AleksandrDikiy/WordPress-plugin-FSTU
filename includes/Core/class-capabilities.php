@@ -167,6 +167,7 @@ class Capabilities {
     public const DELETE_DIRECTORY           = 'fstu_delete_directory';
     public const VIEW_DIRECTORY_PROTOCOL    = 'fstu_view_directory_protocol';
     public const SUBMIT_DIRECTORY_POLL      = 'fstu_submit_directory_poll';
+    public const VIEW_PRESIDIUM              = 'fstu_view_presidium';
 	/**
 	 * Ініціалізує capability-модель для поточного запиту.
 	 */
@@ -2064,6 +2065,14 @@ class Capabilities {
             'canDelete'   => current_user_can( 'manage_options' ) || current_user_can( self::DELETE_DIRECTORY ),
             'canProtocol' => current_user_can( 'manage_options' ) || current_user_can( self::VIEW_DIRECTORY_PROTOCOL ),
             'canViewContactsInList' => current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_DIRECTORY ),
+        ];
+    }
+    /**
+     * Повертає права для модуля Президія.
+     */
+    public static function get_presidium_permissions(): array {
+        return [
+            'canView' => true, // Модуль публічний
         ];
     }
     //----------
