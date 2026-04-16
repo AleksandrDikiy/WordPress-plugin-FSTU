@@ -140,6 +140,10 @@ require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/StatusCard/class-status-ca
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/TypeCard/class-type-card-list.php';
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/TypeCard/class-type-card-ajax.php';
 
+// ── Довідник типів вітрильних залікових груп ───────────────────────────────
+require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/SailGroupType/class-sail-group-type-list.php';
+require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/SailGroupType/class-sail-group-type-ajax.php';
+
 // Admin
 if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Admin/class-admin-menu.php' ) ) {
 	require_once FSTU_PLUGIN_DIR . 'includes/Admin/class-admin-menu.php';
@@ -504,6 +508,9 @@ function fstu_init(): void {
     // ── Довідник типів членських білетів (Type Card) ───────────────────────────
     new \FSTU\Dictionaries\TypeCard\Class_Type_Card_List();
     new \FSTU\Dictionaries\TypeCard\Class_Type_Card_Ajax();
+    // ── Довідник типів вітрильних залікових груп ───────────────────────────────
+    new \FSTU\Dictionaries\SailGroupType\Class_Sail_Group_Type_List();
+    new \FSTU\Dictionaries\SailGroupType\Class_Sail_Group_Type_Ajax();
 
 	// ── Адмінка ───────────────────────────────────────────────────────────────
 	if ( class_exists( 'FSTU\\Admin\\Admin_Menu' ) ) {

@@ -154,6 +154,10 @@ class Capabilities {
     public const MANAGE_TYPE_CARD           = 'fstu_manage_type_card';
     public const DELETE_TYPE_CARD           = 'fstu_delete_type_card';
     public const VIEW_TYPE_CARD_PROTOCOL    = 'fstu_view_type_card_protocol';
+    public const VIEW_SAIL_GROUP_TYPE          = 'fstu_view_sail_group_type';
+    public const MANAGE_SAIL_GROUP_TYPE        = 'fstu_manage_sail_group_type';
+    public const DELETE_SAIL_GROUP_TYPE        = 'fstu_delete_sail_group_type';
+    public const VIEW_SAIL_GROUP_TYPE_PROTOCOL = 'fstu_view_sail_group_type_protocol';
 
 	/**
 	 * Ініціалізує capability-модель для поточного запиту.
@@ -313,6 +317,10 @@ class Capabilities {
                 self::MANAGE_TYPE_CARD           => true,
                 self::DELETE_TYPE_CARD           => true,
                 self::VIEW_TYPE_CARD_PROTOCOL    => true,
+                self::VIEW_SAIL_GROUP_TYPE          => true,
+                self::MANAGE_SAIL_GROUP_TYPE        => true,
+                self::DELETE_SAIL_GROUP_TYPE        => true,
+                self::VIEW_SAIL_GROUP_TYPE_PROTOCOL => true,
 			],
 			'sailadministrator' => [
 				self::ACCESS_ADMIN                  => true,
@@ -336,6 +344,10 @@ class Capabilities {
 				self::VIEW_PERSONAL_CABINET         => true,
 				self::MANAGE_PERSONAL_SAILING       => true,
 				self::VIEW_PERSONAL_SAIL_DUES       => true,
+                self::VIEW_SAIL_GROUP_TYPE          => true,
+                self::MANAGE_SAIL_GROUP_TYPE        => true,
+                self::DELETE_SAIL_GROUP_TYPE        => true,
+                self::VIEW_SAIL_GROUP_TYPE_PROTOCOL => true,
 			],
 			'globalregistrar' => [
 				self::ACCESS_ADMIN                  => true,
@@ -507,6 +519,7 @@ class Capabilities {
 				self::SUBMIT_CALENDAR_APPLICATIONS => true,
 				self::MANAGE_CALENDAR_ROUTES => true,
 				self::VIEW_CALENDAR_RESULTS => true,
+                self::VIEW_SAIL_GROUP_TYPE          => true,
 			],
 			'referee' => [
 				self::VIEW_REFEREES               => true,
@@ -1983,4 +1996,16 @@ class Capabilities {
             'canProtocol' => current_user_can( 'manage_options' ) || current_user_can( self::VIEW_TYPE_CARD_PROTOCOL ),
         ];
     }
+    /**
+     * Повертає прапорці прав для довідника типів вітрильних залікових груп.
+     */
+    public static function get_sail_group_type_permissions(): array {
+        return [
+            'canView'     => current_user_can( 'manage_options' ) || current_user_can( self::VIEW_SAIL_GROUP_TYPE ),
+            'canManage'   => current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_SAIL_GROUP_TYPE ),
+            'canDelete'   => current_user_can( 'manage_options' ) || current_user_can( self::DELETE_SAIL_GROUP_TYPE ),
+            'canProtocol' => current_user_can( 'manage_options' ) || current_user_can( self::VIEW_SAIL_GROUP_TYPE_PROTOCOL ),
+        ];
+    }
+    //----------
 }

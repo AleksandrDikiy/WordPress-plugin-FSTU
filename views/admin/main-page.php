@@ -349,6 +349,13 @@ $clubs_page_url = isset( $clubs_page_url ) ? (string) $clubs_page_url : '';
                                 </td>
                             </tr>
                             <tr>
+                                <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_sail_group_type]</code></th>
+                                <td>
+                                    <strong>Довідник типів вітрильних залікових груп</strong><br>
+                                    Керування типами залікових груп та детальними налаштуваннями кожної групи (площі, формули, системи заліку). Повний доступ: `administrator`, `sailadministrator`. Перегляд: `userfstu`.
+                                </td>
+                            </tr>
+                            <tr>
                                 <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_dictionaries_hub]</code></th>
                                 <td>
                                     <strong>Довідники (Хаб)</strong><br>

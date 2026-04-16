@@ -252,6 +252,12 @@ class Shortcodes_Registry {
                 'category'    => 'dictionaries',
                 'attributes'  => [],
             ],
+            'fstu_sail_group_type' => [
+                'title'       => __( 'Типи вітрильних залікових груп', 'fstu' ),
+                'description' => __( 'Довідник типів вітрильних груп (S_SailGroupType) та їх підгруп (S_SailGroup) з підтримкою drag-and-drop сортування типів, пошуком та протоколом.', 'fstu' ),
+                'category'    => 'dictionaries',
+                'attributes'  => [],
+            ],
         ];
     }
 }
