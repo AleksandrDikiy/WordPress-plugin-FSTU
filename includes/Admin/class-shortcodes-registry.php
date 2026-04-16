@@ -258,6 +258,12 @@ class Shortcodes_Registry {
                 'category'    => 'dictionaries',
                 'attributes'  => [],
             ],
+            'fstu_type_boat' => [
+                'title'       => __( 'Виробники та типи суден', 'fstu' ),
+                'description' => __( 'Керування реєстром виробників суден та їхніми модельними рядами (типами). Дозволяє вести технічні характеристики, посилання на документацію та протоколювати зміни.', 'fstu' ),
+                'category'    => 'dictionaries',
+                'attributes'  => [],
+            ],
         ];
     }
 }

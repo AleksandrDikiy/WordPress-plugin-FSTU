@@ -356,6 +356,16 @@ $clubs_page_url = isset( $clubs_page_url ) ? (string) $clubs_page_url : '';
                                 </td>
                             </tr>
                             <tr>
+                                <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_type_boat]</code></th>
+                                <td>
+                                    <strong>Виробники та типи суден</strong><br>
+                                    Довідник нового покоління з ієрархічною структурою: реєстр виробників суден та детальні технічні характеристики кожного типу судна. Підтримує Master-Detail навігацію, Quick View та валідацію посилань.
+                                    <?php if ( isset($type_boat_page_url) && '' !== $type_boat_page_url ) : ?>
+                                        <br><a href="<?php echo esc_url( $type_boat_page_url ); ?>">Відкрити сторінку довідника →</a>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                            <tr>
                                 <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_dictionaries_hub]</code></th>
                                 <td>
                                     <strong>Довідники (Хаб)</strong><br>

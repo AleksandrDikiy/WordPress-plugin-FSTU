@@ -143,6 +143,9 @@ require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/TypeCard/class-type-card-a
 // ── Довідник типів вітрильних залікових груп ───────────────────────────────
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/SailGroupType/class-sail-group-type-list.php';
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/SailGroupType/class-sail-group-type-ajax.php';
+// ── Довідник типів суден ФСТУ ─────────────────────────────────────────────
+require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/TypeBoat/class-type-boat-list.php';
+require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/TypeBoat/class-type-boat-ajax.php';
 
 // Admin
 if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Admin/class-admin-menu.php' ) ) {
@@ -511,6 +514,9 @@ function fstu_init(): void {
     // ── Довідник типів вітрильних залікових груп ───────────────────────────────
     new \FSTU\Dictionaries\SailGroupType\Class_Sail_Group_Type_List();
     new \FSTU\Dictionaries\SailGroupType\Class_Sail_Group_Type_Ajax();
+    // ── Довідник типів суден ФСТУ ─────────────────────────────────────────────
+    ( new FSTU\Dictionaries\TypeBoat\Type_Boat_List() )->init();
+    ( new FSTU\Dictionaries\TypeBoat\Type_Boat_Ajax() )->init();
 
 	// ── Адмінка ───────────────────────────────────────────────────────────────
 	if ( class_exists( 'FSTU\\Admin\\Admin_Menu' ) ) {

@@ -1,0 +1,143 @@
+/**
+ * CSS модуля "Виробники та типи суден"
+ * Version: 1.1.3
+ */
+
+.fstu-typeboat-wrap { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 13px; color: #2c3e50; width: 100%; }
+.fstu-typeboat-title { font-size: 24px; font-weight: 700; margin: 0 0 12px; color: #1f2d3d; }
+.fstu-hidden { display: none !important; }
+
+/* Action Bar */
+.fstu-action-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 12px; padding: 10px 12px; background: #f8f9fa; border: 1px solid #d1d5db; border-radius: 4px; }
+.fstu-typeboat-action-bar__left, .fstu-typeboat-action-bar__center, .fstu-typeboat-action-bar__right { display: flex; align-items: center; gap: 8px; flex: 1; }
+.fstu-typeboat-action-bar__left { justify-content: flex-start; }
+.fstu-typeboat-action-bar__center { justify-content: center; }
+.fstu-typeboat-action-bar__right { justify-content: flex-end; }
+
+/* Detail Header (Панель керування типами суден) */
+.fstu-detail-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 12px;
+    padding: 10px 15px;
+    background: #f8faf6;
+    border: 1px solid #dcead6;
+    border-radius: 4px;
+}
+.fstu-detail-header h3 {
+    margin: 0 !important;
+    flex-grow: 1;
+    color: #2c3338;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+/* Buttons */
+.fstu-btn, .fstu-modal-container .fstu-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 36px; padding: 0 14px; font-size: 13px; font-weight: 500; line-height: 1; border: 1px solid #d1d5db; border-radius: 4px; background: #f8f9fa; color: #374151; text-decoration: none !important; box-shadow: none; cursor: pointer; transition: background-color .15s ease, border-color .15s ease, color .15s ease; }
+.fstu-btn:hover, .fstu-modal-container .fstu-btn:hover { background: #c65b41; border-color: #c65b41; color: #fff; }
+.fstu-btn--secondary { background: #f8f9fa; }
+.fstu-btn--primary { background: #d9534f; border-color: #d9534f; color: #fff; }
+.fstu-btn--primary:hover { background: #c8433f; border-color: #c8433f; color: #fff; }
+.fstu-btn__icon { font-size: 14px; width: 16px; height: 16px; line-height: 1; }
+
+/* Tables */
+.fstu-table { width: 100%; border-collapse: collapse; border: 1px solid #e2e4e7; background: #fff; margin-bottom: 0; }
+.fstu-table th { background: #dcead6; padding: 10px 8px; text-align: left; font-weight: 600; border: 1px solid #c8d8c0; color: #2c3328; }
+.fstu-table td { padding: 8px; border: 1px solid #e5e7eb; vertical-align: middle; }
+.fstu-table--zebra tbody tr:nth-child(even) td { background: #f8faf6; }
+.fstu-text-center { text-align: center !important; }
+.fstu-th-with-search { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+
+/* Inputs */
+.fstu-input--in-header { flex: 1; min-width: 140px; height: 24px; padding: 2px 7px; font-size: 12px; font-weight: 400; border: 1px solid #b7d7b7; border-radius: 4px; background: rgba(255, 255, 255, 0.85); color: #2c3e50; outline: none; }
+.fstu-input--in-header:focus { border-color: #c65b41; box-shadow: 0 0 0 2px rgba(198, 91, 65, 0.12); background: #fff; }
+.fstu-input, .fstu-textarea { width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 13px; color: #2c3338; box-sizing: border-box; background: #fff; }
+.fstu-input:focus, .fstu-textarea:focus { border-color: #d9534f; box-shadow: 0 0 0 1px #d9534f; outline: none; }
+.fstu-textarea { min-height: 80px; resize: vertical; }
+
+/* Forms */
+.fstu-form-group { margin-bottom: 15px; }
+.fstu-form-group label { display: block; font-weight: 500; margin-bottom: 5px; color: #2c3338; }
+.fstu-form-row { display: flex; gap: 15px; }
+.fstu-form-row > .fstu-form-group { flex: 1; }
+.fstu-form-row--4col > .fstu-form-group { flex: 0 0 calc(25% - 11.25px); }
+
+/* --- МОДАЛЬНІ ВІКНА --- */
+.fstu-modal { position: fixed; inset: 0; z-index: 100000; display: flex; align-items: center; justify-content: center; }
+.fstu-modal-overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.6); }
+.fstu-modal-container { position: relative; background: #fff; width: 600px; max-width: 95vw; border-radius: 4px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); display: flex; flex-direction: column; }
+.fstu-modal-header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-bottom: 1px solid #e2e4e7; background: #f8f9fa; border-radius: 4px 4px 0 0; }
+.fstu-modal-title { margin: 0 !important; font-size: 16px; font-weight: 600; }
+button.fstu-modal-close { background: transparent !important; border: none !important; box-shadow: none !important; font-size: 24px !important; line-height: 1 !important; padding: 0 5px !important; cursor: pointer; color: #646970 !important; min-width: 0 !important; margin: 0 !important; }
+button.fstu-modal-close:hover { color: #d9534f !important; }
+.fstu-modal-body { padding: 20px; max-height: 70vh; overflow-y: auto; }
+.fstu-modal-footer { padding: 15px 20px; border-top: 1px solid #e2e4e7; display: flex; justify-content: flex-end; gap: 10px; background: #f8f9fa; border-radius: 0 0 4px 4px; }
+
+/* Dropdown Menu */
+.fstu-dropdown-toggle { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; border: 1px solid #d1d5db; border-radius: 4px; background: #f8f9fa; color: #374151; cursor: pointer; transition: background-color .15s ease, border-color .15s ease, color .15s ease; }
+.fstu-dropdown-toggle:hover { background: #c65b41; border-color: #c65b41; color: #fff; }
+.fstu-dropdown-menu { min-width: 180px; padding: 6px 0; border: 1px solid #d1d5db; border-radius: 6px; background: #fff; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12); }
+.fstu-dropdown__item { display: flex; align-items: center; width: 100%; padding: 9px 12px; border: 0; background: transparent; text-align: left; font-size: 13px; color: #374151; cursor: pointer; text-decoration: none !important; }
+.fstu-dropdown__item:hover { background: #f9fafb; color: #c65b41; }
+.fstu-dropdown__item--danger:hover { color: #b91c1c; }
+.fstu-dropdown__item .dashicons { font-size: 15px; width: 15px; height: 15px; margin-right: 6px; }
+
+/* Quick View */
+.fstu-typeboat-quickview { position: relative; display: inline-block; cursor: help; color: #1d4ed8; font-weight: 500; text-decoration: none !important; }
+.fstu-typeboat-quickview:hover { color: #c65b41; }
+.fstu-typeboat-quickview-content { visibility: hidden; opacity: 0; position: absolute; bottom: 125%; left: 50%; transform: translateX(-50%); background-color: #1f2937; color: #fff; text-align: left; border-radius: 4px; padding: 8px 12px; width: max-content; max-width: 250px; z-index: 9999; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: opacity 0.2s, visibility 0.2s; font-size: 12px; white-space: pre-wrap; font-weight: normal; }
+.fstu-typeboat-quickview:hover .fstu-typeboat-quickview-content { visibility: visible; opacity: 1; }
+
+/* Smart Links */
+.fstu-smart-link { color: #d9534f; text-decoration: none !important; font-weight: 500; }
+.fstu-smart-link:hover { text-decoration: underline !important; color: #c9302c; }
+
+/* Pagination */
+/* --- ПАГІНАЦІЯ (Еталон AGENTS.md) --- */
+.fstu-pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.fstu-pagination--compact { padding: 10px 12px; background: #f8f9fa; border: 1px solid #d1d5db; border-top: 0; border-radius: 0 0 4px 4px; margin-top: 0; }
+
+.fstu-pagination__left, .fstu-pagination__controls, .fstu-pagination__info { display: flex; align-items: center; gap: 6px; flex: 1; }
+.fstu-pagination__left { justify-content: flex-start; }
+.fstu-pagination__controls { justify-content: center; }
+.fstu-pagination__info { justify-content: flex-end; font-size: 12px; color: #4b5563; }
+
+.fstu-pagination__per-page-label { font-size: 12px; color: #6b7280; white-space: nowrap; margin: 0; }
+.fstu-select--compact { width: 70px !important; height: 26px !important; padding: 2px 6px !important; font-size: 12px !important; border: 1px solid #d1d5db !important; border-radius: 4px !important; background: #fff !important; box-sizing: border-box; }
+
+.fstu-btn--page {
+    display: inline-flex !important; align-items: center !important; justify-content: center !important;
+    min-width: 32px !important; height: 32px !important; padding: 0 10px !important;
+    font-size: 13px !important; font-weight: 500 !important; line-height: 1 !important;
+    background: #f8f9fa !important; border: 1px solid #d1d5db !important; border-radius: 4px !important;
+    color: #374151 !important; box-shadow: none !important; cursor: pointer; text-decoration: none !important;
+}
+.fstu-btn--page:hover:not([disabled]) { background: #c65b41 !important; border-color: #c65b41 !important; color: #fff !important; }
+
+.fstu-btn--page-active, .fstu-btn--page-active:hover {
+    background: #c65b41 !important; border-color: #c65b41 !important; color: #fff !important; cursor: default;
+}
+
+.fstu-btn--page[disabled] { opacity: 0.6; cursor: not-allowed; pointer-events: none; }
+
+/* Badges */
+.fstu-badge { display: inline-flex; padding: 4px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+.fstu-badge--grey { background: #f3f4f6; color: #374151; }
+.fstu-badge--success { background: #dcfce7; color: #166534; }
+.fstu-badge--warning { background: #fef3c7; color: #92400e; }
+.fstu-badge--danger { background: #fee2e2; color: #991b1b; }
+
+/* --- СТИЛІ АКТИВНОЇ ПАГІНАЦІЇ --- */
+.fstu-btn--page-active,
+.fstu-btn--page-active:hover {
+    background: #c65b41 !important;
+    border-color: #c65b41 !important;
+    color: #fff !important;
+}
+
+.fstu-btn--page[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}

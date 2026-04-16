@@ -158,7 +158,10 @@ class Capabilities {
     public const MANAGE_SAIL_GROUP_TYPE        = 'fstu_manage_sail_group_type';
     public const DELETE_SAIL_GROUP_TYPE        = 'fstu_delete_sail_group_type';
     public const VIEW_SAIL_GROUP_TYPE_PROTOCOL = 'fstu_view_sail_group_type_protocol';
-
+    public const VIEW_TYPE_BOAT          = 'fstu_view_type_boat';
+    public const MANAGE_TYPE_BOAT        = 'fstu_manage_type_boat';
+    public const DELETE_TYPE_BOAT        = 'fstu_delete_type_boat';
+    public const VIEW_TYPE_BOAT_PROTOCOL = 'fstu_view_type_boat_protocol';
 	/**
 	 * Ініціалізує capability-модель для поточного запиту.
 	 */
@@ -321,6 +324,10 @@ class Capabilities {
                 self::MANAGE_SAIL_GROUP_TYPE        => true,
                 self::DELETE_SAIL_GROUP_TYPE        => true,
                 self::VIEW_SAIL_GROUP_TYPE_PROTOCOL => true,
+                self::VIEW_TYPE_BOAT          => true,
+                self::MANAGE_TYPE_BOAT        => true,
+                self::DELETE_TYPE_BOAT        => true,
+                self::VIEW_TYPE_BOAT_PROTOCOL => true,
 			],
 			'sailadministrator' => [
 				self::ACCESS_ADMIN                  => true,
@@ -348,6 +355,10 @@ class Capabilities {
                 self::MANAGE_SAIL_GROUP_TYPE        => true,
                 self::DELETE_SAIL_GROUP_TYPE        => true,
                 self::VIEW_SAIL_GROUP_TYPE_PROTOCOL => true,
+                self::VIEW_TYPE_BOAT          => true,
+                self::MANAGE_TYPE_BOAT        => true,
+                self::DELETE_TYPE_BOAT        => true,
+                self::VIEW_TYPE_BOAT_PROTOCOL => true,
 			],
 			'globalregistrar' => [
 				self::ACCESS_ADMIN                  => true,
@@ -520,6 +531,7 @@ class Capabilities {
 				self::MANAGE_CALENDAR_ROUTES => true,
 				self::VIEW_CALENDAR_RESULTS => true,
                 self::VIEW_SAIL_GROUP_TYPE          => true,
+                self::VIEW_TYPE_BOAT => true,
 			],
 			'referee' => [
 				self::VIEW_REFEREES               => true,
@@ -2005,6 +2017,18 @@ class Capabilities {
             'canManage'   => current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_SAIL_GROUP_TYPE ),
             'canDelete'   => current_user_can( 'manage_options' ) || current_user_can( self::DELETE_SAIL_GROUP_TYPE ),
             'canProtocol' => current_user_can( 'manage_options' ) || current_user_can( self::VIEW_SAIL_GROUP_TYPE_PROTOCOL ),
+        ];
+    }
+    /**
+     * Повертає прапорці прав для модуля Виробники та типи суден.
+     * @return array<string,bool>
+     */
+    public static function get_type_boat_permissions(): array {
+        return [
+            'canView'     => true, // Публічний доступ для всіх
+            'canManage'   => current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_TYPE_BOAT ),
+            'canDelete'   => current_user_can( 'manage_options' ) || current_user_can( self::DELETE_TYPE_BOAT ),
+            'canProtocol' => current_user_can( 'manage_options' ) || current_user_can( self::VIEW_TYPE_BOAT_PROTOCOL ),
         ];
     }
     //----------
