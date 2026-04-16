@@ -389,6 +389,13 @@ if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Guidance/class-gu
 if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Guidance/class-guidance-ajax.php' ) ) {
 	require_once FSTU_PLUGIN_DIR . 'includes/Modules/Registry/Guidance/class-guidance-ajax.php';
 }
+// Directory — Довідник Виконкому
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Directory/class-directory-repository.php' ) ) {
+    require_once FSTU_PLUGIN_DIR . 'includes/Modules/Directory/class-directory-repository.php';
+    require_once FSTU_PLUGIN_DIR . 'includes/Modules/Directory/class-directory-service.php';
+    require_once FSTU_PLUGIN_DIR . 'includes/Modules/Directory/class-directory-list.php';
+    require_once FSTU_PLUGIN_DIR . 'includes/Modules/Directory/class-directory-ajax.php';
+}
 // PersonalCabinet — Особистий кабінет ФСТУ (2026-04-09)
 if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/PersonalCabinet/class-personal-cabinet-repository.php' ) ) {
 	require_once FSTU_PLUGIN_DIR . 'includes/Modules/PersonalCabinet/class-personal-cabinet-repository.php';
@@ -595,7 +602,11 @@ function fstu_init(): void {
 	if ( class_exists( 'FSTU\Modules\Registry\Guidance\Guidance_Ajax' ) ) {
 		( new FSTU\Modules\Registry\Guidance\Guidance_Ajax() )->init();
 	}
-
+    // ── Directory — Виконком та Опитування ────────────────────────────────────
+    if ( class_exists( 'FSTU\Modules\Directory\Directory_List' ) ) {
+        ( new FSTU\Modules\Directory\Directory_List() )->init();
+        ( new FSTU\Modules\Directory\Directory_Ajax() )->init();
+    }
 	// ── Реєстр стернових ФСТУ ─────────────────────────────────────────────────
 	if ( class_exists( 'FSTU\Modules\Registry\Steering\Steering_List' ) ) {
 		( new FSTU\Modules\Registry\Steering\Steering_List() )->init();

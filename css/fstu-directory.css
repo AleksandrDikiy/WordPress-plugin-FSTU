@@ -1,0 +1,353 @@
+/**
+ * Стилі модуля Directory.
+ *
+ * Version:     1.0.0
+ * Date_update: 2026-04-16
+ */
+
+/* ==========================================================================
+   ACTION BAR ТА КНОПКИ (Захист від тем, напр. Astra)
+   ========================================================================== */
+.fstu-action-bar {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    background-color: #f8f9fa !important;
+    border: 1px solid #d1d5db !important;
+    padding: 10px 15px !important;
+    margin-bottom: 20px !important;
+    border-radius: 4px !important;
+}
+
+.fstu-action-bar__left, .fstu-action-bar__right {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+/* Скидання стилів кнопок */
+.fstu-module button.fstu-btn {
+    background-color: #f8f9fa !important;
+    color: #1e293b !important;
+    border: 1px solid #d1d5db !important;
+    padding: 6px 12px !important;
+    border-radius: 4px !important;
+    font-size: 13px !important;
+    line-height: 1.5 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.fstu-module button.fstu-btn .dashicons {
+    margin-right: 6px !important;
+    font-size: 16px !important;
+    width: 16px !important;
+    height: 16px !important;
+    color: inherit !important;
+}
+
+.fstu-module button.fstu-btn:hover,
+.fstu-module button.fstu-btn--active {
+    background-color: #d9534f !important;
+    color: #fff !important;
+    border-color: #d9534f !important;
+}
+
+.fstu-member-card {
+    text-decoration: none !important; /* Оскільки тепер це посилання */
+    color: inherit !important;
+}
+/* ==========================================================================
+   СІТКА КАРТОК (Grid View)
+   ========================================================================== */
+.fstu-members-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    padding: 20px 0;
+}
+
+.fstu-member-card {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 15px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.fstu-member-card:hover {
+    border-color: #d9534f;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.fstu-member-card__photo {
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    overflow: hidden;
+    margin-right: 15px;
+    background: #f1f5f9;
+}
+
+.fstu-member-card__photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.fstu-member-card__content {
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+.fstu-member-card__role {
+    font-size: 11px;
+    text-transform: uppercase;
+    color: #64748b;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.fstu-member-card__name {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 8px;
+    line-height: 1.2;
+}
+
+.fstu-contact {
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+    color: #475569;
+    margin-bottom: 4px;
+}
+
+.fstu-contact .dashicons {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    line-height: 14px;
+    margin-right: 6px;
+    color: #94a3b8;
+}
+
+/* ==========================================================================
+   DROPDOWN MENU (Анти-обрізання)
+   ========================================================================== */
+.fstu-dropdown-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.fstu-dropdown-toggle {
+    width: 28px;
+    height: 28px;
+    background: #f8f9fa;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #4b5563;
+    transition: all 0.2s ease;
+}
+
+.fstu-dropdown-toggle:hover,
+.fstu-dropdown-toggle--active {
+    background: #d9534f;
+    color: #fff;
+    border-color: #d9534f;
+}
+
+.fstu-dropdown-menu {
+    display: none;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    min-width: 160px;
+    padding: 4px 0;
+    /* Position fixed встановлюється через JS */
+}
+
+.fstu-dropdown-menu.fstu-dropdown--open {
+    display: block;
+}
+
+.fstu-dropdown-item {
+    display: block;
+    padding: 8px 16px;
+    color: #1e293b;
+    text-decoration: none;
+    font-size: 13px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    width: 100%;
+    text-align: left;
+}
+
+.fstu-dropdown-item:hover {
+    background: #f1f5f9;
+    color: #d9534f;
+}
+
+.fstu-dropdown-item--danger {
+    color: #ef4444;
+}
+
+.fstu-dropdown-item--danger:hover {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+/* ==========================================================================
+   МОДАЛЬНІ ВІКНА (Strict CSS Reset)
+   ========================================================================== */
+.fstu-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 100000; /* Надвисокий z-index згідно ТЗ */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(2px);
+}
+
+.fstu-modal-dialog {
+    width: 100%;
+    max-width: 500px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    animation: fstu-modal-fade-in 0.2s ease-out;
+}
+
+@keyframes fstu-modal-fade-in {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.fstu-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+/* CSS Reset для хрестика (захист від активної теми) */
+button.fstu-modal-close {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 24px !important;
+    line-height: 1 !important;
+    color: #64748b;
+    cursor: pointer;
+}
+
+button.fstu-modal-close:hover {
+    color: #d9534f !important;
+}
+
+.fstu-modal-body {
+    padding: 20px;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.fstu-modal-footer {
+    padding: 16px 20px;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+/* Стилі радіо-кнопок голосування */
+.fstu-poll-answers-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.fstu-radio-label {
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.fstu-radio-label:hover {
+    background: #f8fafc;
+}
+
+.fstu-radio-label input[type="radio"] {
+    margin-right: 10px;
+    cursor: pointer;
+}
+
+/* ==========================================================================
+   КОМПАКТНА ПАГІНАЦІЯ (Захист від розтягування темою)
+   ========================================================================== */
+.fstu-pagination--compact {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 10px 0 !important;
+    border-top: 1px solid #e2e8f0 !important;
+    margin-top: 15px !important;
+}
+
+.fstu-pagination__left {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+.fstu-pagination__controls {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 5px !important;
+}
+
+.fstu-pagination__info {
+    font-size: 13px !important;
+    color: #64748b !important;
+    text-align: right !important;
+}
+
+/* Жорстке обмеження ширини селектора */
+select.fstu-select--compact {
+    width: 70px !important;
+    min-width: 70px !important;
+    max-width: 70px !important;
+    height: 30px !important;
+    padding: 2px 6px !important;
+    font-size: 13px !important;
+    display: inline-block !important;
+}
