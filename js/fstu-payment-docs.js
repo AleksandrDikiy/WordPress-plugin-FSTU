@@ -113,10 +113,17 @@ jQuery( document ).ready( function( $ ) {
     }
 
     // ─── Події ─────────────────────────────────────────────────────────────────
-
     // Зміна фільтрів
     $( document ).on( 'change', '.fstu-filter-trigger', function() {
         state.page = 1;
+
+        // Показуємо або ховаємо кнопку внесків осередку
+        if ( $('#pd-filter-unit').val() > 0 ) {
+            $('#fstu-pd-btn-yearly-dues').show();
+        } else {
+            $('#fstu-pd-btn-yearly-dues').hide();
+        }
+
         fetchDocs();
     });
 
@@ -442,6 +449,43 @@ jQuery( document ).ready( function( $ ) {
         $( '.fstu-opts' ).removeClass( 'fstu-opts--open fstu-dropup' );
     } );
 
+    // ─── ВНЕСКИ ОСЕРЕДКУ (Portmone) ───────────────────────────────────────────
+    $( document ).on( 'click', '#fstu-pd-btn-yearly-dues', function() {
+        const unitId = $( '#pd-filter-unit' ).val();
+        if ( !unitId || unitId == 0 ) return;
+
+        $( '#fstu-yearly-dues-tbody' ).empty();
+        $( '#fstu-yearly-dues-loader' ).removeClass( 'fstu-hidden' );
+        $( '#fstu-modal-yearly-dues' ).removeClass( 'fstu-hidden' );
+        $( 'body' ).addClass( 'fstu-modal-open' );
+
+        $.post( fstuPaymentDocs.ajaxUrl, {
+            action: 'fstu_get_yearly_unit_dues',
+            nonce: fstuPaymentDocs.nonce,
+            unit_id: unitId
+        }, function( r ) {
+            $( '#fstu-yearly-dues-loader' ).addClass( 'fstu-hidden' );
+            if ( r.success ) {
+                $( '#fstu-yearly-dues-tbody' ).html( r.data.html );
+            } else {
+                alert( 'Помилка: ' + ( r.data?.message || 'Невідома помилка' ) );
+                $( '#fstu-modal-yearly-dues .fstu-modal-close-btn' ).trigger('click');
+            }
+        });
+    });
+
+    $( document ).on( 'click', '#fstu-modal-yearly-dues .fstu-modal-close-btn', function() {
+        $( '#fstu-modal-yearly-dues' ).addClass( 'fstu-hidden' );
+        $( 'body' ).removeClass( 'fstu-modal-open' );
+    });
+
     // ─── Ініціалізація ────────────────────────────────────────────────────────
+
+    // Автоматично обираємо осередок, якщо передано в URL (?unit_id=...)
+    if ( fstuPaymentDocs.unitId > 0 ) {
+        $( '#pd-filter-unit' ).val( fstuPaymentDocs.unitId );
+        $( '#fstu-pd-btn-yearly-dues' ).show();
+    }
+
     fetchDocs();
 });

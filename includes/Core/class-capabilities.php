@@ -168,6 +168,9 @@ class Capabilities {
     public const VIEW_DIRECTORY_PROTOCOL    = 'fstu_view_directory_protocol';
     public const SUBMIT_DIRECTORY_POLL      = 'fstu_submit_directory_poll';
     public const VIEW_PRESIDIUM              = 'fstu_view_presidium';
+    public const MANAGE_REGIONAL_FST         = 'fstu_manage_regional_fst';
+    public const DELETE_REGIONAL_FST         = 'fstu_delete_regional_fst';
+    public const VIEW_REGIONAL_FST_PROTOCOL  = 'fstu_view_regional_fst_protocol';
 	/**
 	 * Ініціалізує capability-модель для поточного запиту.
 	 */
@@ -339,6 +342,9 @@ class Capabilities {
                 self::DELETE_DIRECTORY           => true,
                 self::VIEW_DIRECTORY_PROTOCOL    => true,
                 self::SUBMIT_DIRECTORY_POLL      => true,
+                self::MANAGE_REGIONAL_FST        => true,
+                self::DELETE_REGIONAL_FST        => true,
+                self::VIEW_REGIONAL_FST_PROTOCOL => true,
 			],
 			'sailadministrator' => [
 				self::ACCESS_ADMIN                  => true,
@@ -456,6 +462,9 @@ class Capabilities {
                 self::DELETE_DIRECTORY           => true,
                 self::VIEW_DIRECTORY_PROTOCOL    => true,
                 self::SUBMIT_DIRECTORY_POLL      => true,
+                self::MANAGE_REGIONAL_FST        => true,
+                self::DELETE_REGIONAL_FST        => true,
+                self::VIEW_REGIONAL_FST_PROTOCOL => true,
 			],
 			'userregistrar' => [
 				self::ACCESS_ADMIN             => true,
@@ -523,6 +532,9 @@ class Capabilities {
                 self::VIEW_DIRECTORY             => true,
                 self::VIEW_DIRECTORY_PROTOCOL    => true,
                 self::SUBMIT_DIRECTORY_POLL      => true,
+                self::MANAGE_REGIONAL_FST        => true,
+                self::DELETE_REGIONAL_FST        => true,
+                self::VIEW_REGIONAL_FST_PROTOCOL => true,
 			],
 			'userfstu' => [
 				self::VIEW_PARTICIPATION_TYPE => true,
@@ -2073,6 +2085,17 @@ class Capabilities {
     public static function get_presidium_permissions(): array {
         return [
             'canView' => true, // Модуль публічний
+        ];
+    }
+    /**
+     * Повертає прапорці прав для модуля Осередки ФСТУ.
+     */
+    public static function get_regional_fst_permissions(): array {
+        return [
+            'canView'     => true, // Публічний перегляд для всіх (гостей також)
+            'canManage'   => current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_REGIONAL_FST ),
+            'canDelete'   => current_user_can( 'manage_options' ) || current_user_can( self::DELETE_REGIONAL_FST ),
+            'canProtocol' => current_user_can( 'manage_options' ) || current_user_can( self::VIEW_REGIONAL_FST_PROTOCOL ),
         ];
     }
     //----------

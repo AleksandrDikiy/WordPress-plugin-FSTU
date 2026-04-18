@@ -34,6 +34,7 @@ $member_card_applications_page_url = isset( $member_card_applications_page_url )
 $steering_page_url = isset( $steering_page_url ) ? (string) $steering_page_url : '';
 $personal_cabinet_page_url = isset( $personal_cabinet_page_url ) ? (string) $personal_cabinet_page_url : '';
 $clubs_page_url = isset( $clubs_page_url ) ? (string) $clubs_page_url : '';
+$regional_fst_page_url = isset( $regional_fst_page_url ) ? (string) $regional_fst_page_url : '';
 ?>
 
 <div class="wrap">
@@ -362,6 +363,16 @@ $clubs_page_url = isset( $clubs_page_url ) ? (string) $clubs_page_url : '';
                                     Довідник нового покоління з ієрархічною структурою: реєстр виробників суден та детальні технічні характеристики кожного типу судна. Підтримує Master-Detail навігацію, Quick View та валідацію посилань.
                                     <?php if ( isset($type_boat_page_url) && '' !== $type_boat_page_url ) : ?>
                                         <br><a href="<?php echo esc_url( $type_boat_page_url ); ?>">Відкрити сторінку довідника →</a>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_regional_fst]</code></th>
+                                <td>
+                                    <strong>Осередки федерації спортивного туризму</strong><br>
+                                    Виводить список членів осередків ФСТУ з інтерактивною картою, фільтрацією, compact-пагінацією та розділом «ПРОТОКОЛ». Перегляд доступний гостям, управління (CRUD) — ролям <code>administrator</code>, <code>globalregistrar</code> та <code>userregistrar</code>.
+                                    <?php if ( '' !== $regional_fst_page_url ) : ?>
+                                        <br><a href="<?php echo esc_url( $regional_fst_page_url ); ?>">Відкрити сторінку модуля →</a>
                                     <?php endif; ?>
                                 </td>
                             </tr>

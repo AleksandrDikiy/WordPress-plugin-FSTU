@@ -60,10 +60,20 @@ class Payment_Docs_List {
         wp_enqueue_style( 'fstu-payment-docs-css', FSTU_PLUGIN_URL . 'css/fstu-payment-docs.css', [], $ver );
         wp_enqueue_script( 'fstu-payment-docs-js', FSTU_PLUGIN_URL . 'js/fstu-payment-docs.js', [ 'jquery' ], $ver, true );
 
+        global $wpdb;
+        $unit_id = absint( $_GET['unit_id'] ?? 0 );
+        $region_id = absint( $_GET['region_id'] ?? 0 );
+
+        // Якщо передали region_id, знаходимо перший-ліпший Unit_ID для цього регіону
+        if ( $region_id > 0 && ! $unit_id ) {
+            $unit_id = (int) $wpdb->get_var( $wpdb->prepare( "SELECT Unit_ID FROM S_Unit WHERE Region_ID = %d LIMIT 1", $region_id ) );
+        }
+
         wp_localize_script( 'fstu-payment-docs-js', 'fstuPaymentDocs', [
             'ajaxUrl'  => admin_url( 'admin-ajax.php' ),
             'nonce'    => wp_create_nonce( 'fstu_payment_docs_nonce' ),
             'isAdmin'  => current_user_can( 'manage_options' ) ? '1' : '0',
+            'unitId'   => $unit_id,
         ] );
     }
 

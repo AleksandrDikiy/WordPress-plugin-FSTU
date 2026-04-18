@@ -19,6 +19,9 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
             <button type="button" class="fstu-btn fstu-btn--secondary fstu-btn--open-modal" data-modal="fstu-modal-doc-editor" id="fstu-pd-btn-add">
                 <span class="fstu-btn__icon">➕</span> Створити документ
             </button>
+            <button type="button" class="fstu-btn fstu-btn--primary" id="fstu-pd-btn-yearly-dues" style="display: none; margin-left: 10px;">
+                <span class="fstu-btn__icon">💳</span> Внески осередку (Portmone)
+            </button>
         </div>
 
         <div class="fstu-filter-bar" style="margin-bottom: 15px; padding: 10px; background: var(--fstu-secondary); border-radius: var(--fstu-radius);">
@@ -102,5 +105,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
         <?php
         // Підключаємо модалку редактора
         include __DIR__ . '/modals/edit-doc.php';
+        // Підключаємо модалку внесків осередку
+        include __DIR__ . '/modals/yearly-dues.php';
         ?>
     </div>

@@ -21,6 +21,7 @@ class Payment_Docs_Ajax {
         add_action( 'wp_ajax_fstu_save_payment_doc', [ $this, 'handle_save_payment_doc' ] );
         add_action( 'wp_ajax_fstu_delete_payment_doc', [ $this, 'handle_delete_payment_doc' ] );
         add_action( 'wp_ajax_fstu_get_payment_doc', [ $this, 'handle_get_payment_doc' ] );
+        add_action( 'wp_ajax_fstu_get_yearly_unit_dues', [ $this, 'handle_get_yearly_unit_dues' ] );
     }
 
     public function handle_get_payment_docs(): void {
@@ -409,6 +410,110 @@ class Payment_Docs_Ajax {
 		", $doc_id ), ARRAY_A );
 
         wp_send_json_success( [ 'header' => $header, 'rows' => $rows ] );
+    }
+    /**
+     * Отримує статус щорічних внесків осередку та генерує кнопки Portmone.
+     */
+    public function handle_get_yearly_unit_dues(): void {
+        check_ajax_referer( 'fstu_payment_docs_nonce', 'nonce' );
+
+        $unit_id = absint( $_POST['unit_id'] ?? 0 );
+        if ( ! $unit_id ) {
+            wp_send_json_error( [ 'message' => 'Осередок не обрано.' ] );
+        }
+
+        $user_roles = (array) wp_get_current_user()->roles;
+        $current_user_id = get_current_user_id();
+
+        // Перевірка прав (UserRegistrar може бачити тільки свої осередки)
+        if ( ! in_array( 'administrator', $user_roles, true ) && ! in_array( 'globalregistrar', $user_roles, true ) ) {
+            global $wpdb;
+            $is_registrar = $wpdb->get_var( $wpdb->prepare( "SELECT 1 FROM vUserRegion WHERE User_ID = %d AND Unit_ID = %d", $current_user_id, $unit_id ) );
+            if ( ! $is_registrar ) {
+                wp_send_json_error( [ 'message' => 'Ви можете керувати внесками тільки свого осередку.' ] );
+            }
+        }
+
+        global $wpdb;
+
+        // Отримуємо налаштування сум з БД
+        $amount     = (float) $wpdb->get_var( "SELECT ParamValue FROM Settings WHERE ParamName='Unit_Dues_Amount'" );
+        $commission = (float) $wpdb->get_var( "SELECT ParamValue FROM Settings WHERE ParamName='Unit_Dues_Commission'" );
+        $bill_amount = $amount + $commission;
+
+        $fio = get_user_meta( $current_user_id, 'last_name', true ) . ' ' . get_user_meta( $current_user_id, 'first_name', true ) . ' ' . get_user_meta( $current_user_id, 'Patronymic', true );
+
+        $year_reg  = 2021;
+        $this_year = (int) gmdate( 'Y' );
+        $html      = '';
+
+        for ( $y = $this_year; $y >= $year_reg; $y-- ) {
+            // Шукаємо оплату внеску осередку.
+            // Оскільки внески можуть вносити різні люди, ми шукаємо по приналежності до Unit_ID.
+            // Внесок осередку ідентифікуємо за сумою (вона має бути >= Unit_Dues_Amount).
+            $query = "
+                SELECT d.Dues_ID, d.Dues_Summa, d.Dues_URL, d.Dues_DateCreate, d.Dues_ShopBillid, d.Dues_ApprovalCode, u.FIOshort
+                FROM vUserDues d 
+                JOIN vUser u ON u.User_ID = d.UserCreate
+                JOIN vUserRegion ur ON ur.User_ID = d.User_ID
+                WHERE ur.Unit_ID = %d 
+                  AND d.Year_Name = %d 
+                  AND d.Dues_Summa >= %f
+                ORDER BY d.Dues_DateCreate DESC LIMIT 1
+            ";
+            $payment = $wpdb->get_row( $wpdb->prepare( $query, $unit_id, $y, $amount ), ARRAY_A );
+
+            $html .= '<tr class="fstu-row">';
+            $html .= '<td class="fstu-td" style="text-align:center; font-weight:bold;">' . esc_html( $y ) . '</td>';
+
+            if ( $payment ) {
+                $html .= '<td class="fstu-td" style="text-align:right;">' . esc_html( $payment['Dues_Summa'] ) . ' ₴</td>';
+                $html .= '<td class="fstu-td">' . esc_html( $payment['Dues_DateCreate'] ) . '</td>';
+                $html .= '<td class="fstu-td">' . esc_html( $payment['FIOshort'] ) . '</td>';
+
+                $html .= '<td class="fstu-td" style="text-align:center;">';
+                if ( ! empty( $payment['Dues_URL'] ) ) {
+                    $html .= '<a href="' . esc_url( $payment['Dues_URL'] ) . '" target="_blank" style="color:var(--fstu-success); font-weight:bold;">Квитанція</a>';
+                } elseif ( ! empty( $payment['Dues_ShopBillid'] ) ) {
+                    $html .= '<span title="ID: ' . esc_attr( $payment['Dues_ShopBillid'] ) . ' | Код: ' . esc_attr( $payment['Dues_ApprovalCode'] ) . '" style="color:var(--fstu-success); font-weight:bold;">Сплачено (Еквайринг)</span>';
+                } else {
+                    $html .= '<span style="color:var(--fstu-success); font-weight:bold;">Сплачено</span>';
+                }
+                $html .= '</td>';
+            } else {
+                $html .= '<td class="fstu-td" style="text-align:right;">' . number_format( $amount, 2, '.', '' ) . ' ₴</td>';
+                $html .= '<td class="fstu-td" style="color:var(--fstu-text-light);">—</td>';
+                $html .= '<td class="fstu-td" style="color:var(--fstu-text-light);">—</td>';
+
+                // Формуємо кнопку Portmone
+                $desc = 'Благодійна допомога у вигляді членських внесків за ' . $y . ' рік, платник ' . $fio;
+                $success_url = site_url( "/personal/rejestr-platizhok/?success={$current_user_id}&unit_id={$unit_id}" );
+                $failure_url = site_url( "/personal/rejestr-platizhok/?failure={$current_user_id}&unit_id={$unit_id}" );
+
+                $html .= '<td class="fstu-td" style="text-align:center;">';
+                $html .= '<form action="https://www.portmone.com.ua/gateway/" method="post" style="margin:0;">';
+                $html .= '<input type="hidden" name="payee_id" value="28935">';
+                // Робимо номер замовлення унікальним для КОЖНОЇ спроби за допомогою time(),
+                // щоб Portmone не кешував старі тестові або неуспішні платежі
+                $unique_order_id = $y . '_' . $unit_id . '_' . time();
+                $html .= '<input type="hidden" name="shop_order_number" value="' . esc_attr( $unique_order_id ) . '">';
+                $html .= '<input type="hidden" name="bill_amount" value="' . esc_attr( $bill_amount ) . '">';
+                $html .= '<input type="hidden" name="description" value="' . esc_attr( $desc ) . '">';
+                $html .= '<input type="hidden" name="success_url" value="' . esc_url( $success_url ) . '">';
+                $html .= '<input type="hidden" name="failure_url" value="' . esc_url( $failure_url ) . '">';
+                $html .= '<input type="hidden" name="attribute1" value="' . esc_attr( $y ) . '">';
+                $html .= '<input type="hidden" name="attribute2" value="' . esc_attr( $current_user_id ) . '">';
+                $html .= '<input type="hidden" name="lang" value="uk">';
+                $html .= '<input type="hidden" name="encoding" value="UTF-8">';
+                $html .= '<input type="hidden" name="exp_time" value="400">';
+                $html .= '<button type="submit" class="fstu-btn fstu-btn--primary" style="padding:4px 8px; font-size:12px;" title="До сплати ' . esc_attr( $bill_amount ) . ' ₴ (включно з комісією)">Сплатити ' . number_format( $amount, 2, '.', '' ) . ' ₴</button>';
+                $html .= '</form>';
+                $html .= '</td>';
+            }
+            $html .= '</tr>';
+        }
+
+        wp_send_json_success( [ 'html' => $html ] );
     }
     // кінець класу
 }

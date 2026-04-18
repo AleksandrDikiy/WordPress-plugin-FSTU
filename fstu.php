@@ -403,6 +403,14 @@ if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Presidium/class-presidium-
     require_once FSTU_PLUGIN_DIR . 'includes/Modules/Presidium/class-presidium-list.php';
     require_once FSTU_PLUGIN_DIR . 'includes/Modules/Presidium/class-presidium-ajax.php';
 }
+// RegionalFST — Осередки ФСТУ
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/RegionalFST/class-regional-fst-repository.php' ) ) {
+    require_once FSTU_PLUGIN_DIR . 'includes/Modules/RegionalFST/class-regional-fst-repository.php';
+    require_once FSTU_PLUGIN_DIR . 'includes/Modules/RegionalFST/class-regional-fst-protocol-service.php';
+    require_once FSTU_PLUGIN_DIR . 'includes/Modules/RegionalFST/class-regional-fst-service.php';
+    require_once FSTU_PLUGIN_DIR . 'includes/Modules/RegionalFST/class-regional-fst-list.php';
+    require_once FSTU_PLUGIN_DIR . 'includes/Modules/RegionalFST/class-regional-fst-ajax.php';
+}
 // PersonalCabinet — Особистий кабінет ФСТУ (2026-04-09)
 if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/PersonalCabinet/class-personal-cabinet-repository.php' ) ) {
 	require_once FSTU_PLUGIN_DIR . 'includes/Modules/PersonalCabinet/class-personal-cabinet-repository.php';
@@ -617,6 +625,11 @@ function fstu_init(): void {
     if ( class_exists( 'FSTU\Modules\Presidium\Presidium_List' ) ) {
         ( new FSTU\Modules\Presidium\Presidium_List() )->init();
         ( new FSTU\Modules\Presidium\Presidium_Ajax() )->init();
+    }
+    // ── Осередки ФСТУ ─────────────────────────────────────────────────────────
+    if ( class_exists( 'FSTU\Modules\RegionalFST\Class_Regional_FST_List' ) ) {
+        ( new FSTU\Modules\RegionalFST\Class_Regional_FST_List() )->init();
+        ( new FSTU\Modules\RegionalFST\Class_Regional_FST_Ajax() )->init();
     }
 	// ── Реєстр стернових ФСТУ ─────────────────────────────────────────────────
 	if ( class_exists( 'FSTU\Modules\Registry\Steering\Steering_List' ) ) {
