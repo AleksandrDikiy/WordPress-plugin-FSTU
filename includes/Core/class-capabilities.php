@@ -171,6 +171,11 @@ class Capabilities {
     public const MANAGE_REGIONAL_FST         = 'fstu_manage_regional_fst';
     public const DELETE_REGIONAL_FST         = 'fstu_delete_regional_fst';
     public const VIEW_REGIONAL_FST_PROTOCOL  = 'fstu_view_regional_fst_protocol';
+    public const VIEW_BOARD                  = 'fstu_view_board';
+    public const MANAGE_BOARD                = 'fstu_manage_board';
+    public const DELETE_BOARD                = 'fstu_delete_board';
+    public const VIEW_BOARD_PROTOCOL         = 'fstu_view_board_protocol';
+    public const VOTE_BOARD                  = 'fstu_vote_board';
 	/**
 	 * Ініціалізує capability-модель для поточного запиту.
 	 */
@@ -345,7 +350,12 @@ class Capabilities {
                 self::MANAGE_REGIONAL_FST        => true,
                 self::DELETE_REGIONAL_FST        => true,
                 self::VIEW_REGIONAL_FST_PROTOCOL => true,
-			],
+                self::VIEW_BOARD                 => true,
+                self::MANAGE_BOARD               => true,
+                self::DELETE_BOARD               => true,
+                self::VIEW_BOARD_PROTOCOL        => true,
+                self::VOTE_BOARD                 => true,
+            ],
 			'sailadministrator' => [
 				self::ACCESS_ADMIN                  => true,
 				self::VIEW_SAILBOATS                => true,
@@ -465,7 +475,12 @@ class Capabilities {
                 self::MANAGE_REGIONAL_FST        => true,
                 self::DELETE_REGIONAL_FST        => true,
                 self::VIEW_REGIONAL_FST_PROTOCOL => true,
-			],
+                self::VIEW_BOARD                 => true,
+                self::MANAGE_BOARD               => true,
+                self::DELETE_BOARD               => true,
+                self::VIEW_BOARD_PROTOCOL        => true,
+                self::VOTE_BOARD                 => true,
+            ],
 			'userregistrar' => [
 				self::ACCESS_ADMIN             => true,
 				self::VIEW_PARTICIPATION_TYPE  => true,
@@ -565,6 +580,8 @@ class Capabilities {
                 self::VIEW_TYPE_BOAT => true,
                 self::VIEW_DIRECTORY             => true,
                 self::SUBMIT_DIRECTORY_POLL      => true,
+                self::VIEW_BOARD                 => true,
+                self::VOTE_BOARD                 => true,
 			],
 			'referee' => [
 				self::VIEW_REFEREES               => true,
@@ -2096,6 +2113,26 @@ class Capabilities {
             'canManage'   => current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_REGIONAL_FST ),
             'canDelete'   => current_user_can( 'manage_options' ) || current_user_can( self::DELETE_REGIONAL_FST ),
             'canProtocol' => current_user_can( 'manage_options' ) || current_user_can( self::VIEW_REGIONAL_FST_PROTOCOL ),
+        ];
+    }
+
+    /**
+     * Повертає прапорці прав для модуля Комісій (Board).
+     *
+     * @return array<string,bool>
+     */
+    public static function get_board_permissions(): array {
+        $current_user = wp_get_current_user();
+        $user_roles   = $current_user instanceof \WP_User ? array_map( 'strval', (array) $current_user->roles ) : [];
+        $can_view_contacts = current_user_can( 'manage_options' ) || ! empty( array_intersect( [ 'administrator', 'globalregistrar', 'userregistrar' ], $user_roles ) );
+
+        return [
+            'canView'         => current_user_can( 'manage_options' ) || current_user_can( self::VIEW_BOARD ),
+            'canManage'       => current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_BOARD ),
+            'canDelete'       => current_user_can( 'manage_options' ) || current_user_can( self::DELETE_BOARD ),
+            'canProtocol'     => current_user_can( 'manage_options' ) || current_user_can( self::VIEW_BOARD_PROTOCOL ),
+            'canVote'         => current_user_can( 'manage_options' ) || current_user_can( self::VOTE_BOARD ),
+            'canViewContacts' => $can_view_contacts,
         ];
     }
     //----------

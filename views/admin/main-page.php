@@ -377,6 +377,16 @@ $regional_fst_page_url = isset( $regional_fst_page_url ) ? (string) $regional_fs
                                 </td>
                             </tr>
                             <tr>
+                                <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_board]</code></th>
+                                <td>
+                                    <strong>Комісії з видів туризму (Опитування та Склад)</strong><br>
+                                    Виводить довідник складу комісій, систему опитувань та виборів кандидатів з підрахунком голосів, візуалізацією квот (50%+1) та перевіркою оплати членських внесків. Має розділ «ПРОТОКОЛ» та інтеграцію розсилки повідомлень.
+                                    <?php if ( '' !== ( $board_page_url ?? '' ) ) : ?>
+                                        <br><a href="<?php echo esc_url( (string) ( $board_page_url ?? '' ) ); ?>">Відкрити сторінку модуля →</a>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                            <tr>
                                 <th scope="row"><code style="font-size: 16px; padding: 5px 10px;">[fstu_dictionaries_hub]</code></th>
                                 <td>
                                     <strong>Довідники (Хаб)</strong><br>

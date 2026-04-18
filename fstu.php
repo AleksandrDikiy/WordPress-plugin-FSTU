@@ -147,6 +147,26 @@ require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/SailGroupType/class-sail-g
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/TypeBoat/class-type-boat-list.php';
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/TypeBoat/class-type-boat-ajax.php';
 
+// ── Комісії з видів туризму (Board) ───────────────────────────────────────
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Commissions/class-commissions-repository.php' ) ) {
+    require_once FSTU_PLUGIN_DIR . 'includes/Modules/Commissions/class-commissions-repository.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Commissions/class-commissions-protocol-service.php' ) ) {
+    require_once FSTU_PLUGIN_DIR . 'includes/Modules/Commissions/class-commissions-protocol-service.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Commissions/class-commissions-mailer.php' ) ) {
+    require_once FSTU_PLUGIN_DIR . 'includes/Modules/Commissions/class-commissions-mailer.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Commissions/class-commissions-service.php' ) ) {
+    require_once FSTU_PLUGIN_DIR . 'includes/Modules/Commissions/class-commissions-service.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Commissions/class-commissions-list.php' ) ) {
+    require_once FSTU_PLUGIN_DIR . 'includes/Modules/Commissions/class-commissions-list.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Commissions/class-commissions-ajax.php' ) ) {
+    require_once FSTU_PLUGIN_DIR . 'includes/Modules/Commissions/class-commissions-ajax.php';
+}
+
 // Admin
 if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Admin/class-admin-menu.php' ) ) {
 	require_once FSTU_PLUGIN_DIR . 'includes/Admin/class-admin-menu.php';
@@ -553,7 +573,15 @@ function fstu_init(): void {
 		( new FSTU\PaymentDocs\Payment_Docs_Ajax() )->init();
 	}
 
-	// ── Заявки в ФСТУ ───────────────────────────────────────────────────────
+    // ── Комісії з видів туризму (Board / Опитування) ────────────────────────
+    if ( class_exists( 'FSTU\\Modules\\Commissions\\Commissions_List' ) ) {
+        ( new FSTU\Modules\Commissions\Commissions_List() )->init();
+    }
+    if ( class_exists( 'FSTU\\Modules\\Commissions\\Commissions_Ajax' ) ) {
+        ( new FSTU\Modules\Commissions\Commissions_Ajax() )->init();
+    }
+
+    // ── Заявки в ФСТУ ───────────────────────────────────────────────────────
 	if ( class_exists( 'FSTU\\Modules\\Applications\\Applications_List' ) ) {
 		( new FSTU\Modules\Applications\Applications_List() )->init();
 	}
