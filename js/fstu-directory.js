@@ -76,6 +76,12 @@ jQuery(document).ready(function($) {
         });
 
         html += '</div>';
+
+        // Додаємо підсумок: загальна кількість
+        html += '<div class="fstu-directory-total" style="margin-top: 20px; font-weight: 500; text-align: right; color: #64748b; font-size: 14px; padding-right: 10px;">';
+        html += 'Загальна кількість: <strong>' + items.length + '</strong>';
+        html += '</div>';
+
         $viewContainer.html(html).show();
     }
 

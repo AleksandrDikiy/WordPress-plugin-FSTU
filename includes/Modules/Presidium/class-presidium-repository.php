@@ -40,7 +40,7 @@ class Presidium_Repository {
 						 FROM RegionalFST r 
                          JOIN vMemberRegional m ON m.MemberRegional_ID = r.MemberRegional_ID 
                          JOIN S_Unit su ON su.Unit_ID = r.Unit_ID 
-						 WHERE r.User_ID = u.User_ID AND r.MemberRegional_ID = 1 
+						 WHERE r.User_ID = u.User_ID 
                          ORDER BY m.MemberRegional_Order ASC LIMIT 1)
 					) AS MemberGuidance_Name,
 					COALESCE(
@@ -52,7 +52,7 @@ class Presidium_Repository {
 						(SELECT (100 + m.MemberRegional_Order) 
 						 FROM RegionalFST r 
                          JOIN vMemberRegional m ON m.MemberRegional_ID = r.MemberRegional_ID 
-						 WHERE r.User_ID = u.User_ID AND r.MemberRegional_ID = 1 
+						 WHERE r.User_ID = u.User_ID 
                          ORDER BY m.MemberRegional_Order ASC LIMIT 1),
 						1000
 					) AS PostOrder
@@ -61,7 +61,16 @@ class Presidium_Repository {
 					UNION
 					SELECT User_ID FROM Guidance WHERE TypeGuidance_ID IN (2, 3) AND MemberGuidance_ID IN (19, 21)
 					UNION
-					SELECT User_ID FROM RegionalFST WHERE MemberRegional_ID = 1
+					SELECT User_ID FROM (
+						SELECT 
+							(SELECT r.User_ID 
+							 FROM RegionalFST r 
+							 JOIN vMemberRegional m ON m.MemberRegional_ID = r.MemberRegional_ID 
+							 WHERE r.Region_ID = reg.Region_ID 
+							 ORDER BY m.MemberRegional_Order ASC 
+							 LIMIT 1) AS User_ID
+						FROM vRegion reg
+					) AS reg_users WHERE User_ID IS NOT NULL
 				) AS base
 				JOIN vUserFSTU u ON u.User_ID = base.User_ID
 				ORDER BY PostOrder ASC, u.FIO ASC";

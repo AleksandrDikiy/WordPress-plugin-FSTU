@@ -1,9 +1,9 @@
 <?php
 /**
- * Контролер відображення модуля Directory (Виконком та Опитування).
+ * Контролер відображення модуля Directory = Виконком.
  *
  * Version:     1.0.0
- * Date_update: 2026-04-16
+ * Date_update: 2026-04-18
  *
  * @package FSTU\Modules\Directory
  */
