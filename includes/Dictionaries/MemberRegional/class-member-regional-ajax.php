@@ -2,8 +2,8 @@
 /**
  * AJAX-обробники модуля "Довідник посад федерацій".
  *
- * Version:     1.0.1
- * Date_update: 2026-04-14
+ * Version:     1.1.0
+ * Date_update: 2026-04-18
  *
  * @package FSTU\Dictionaries\MemberRegional
  */
@@ -24,9 +24,6 @@ class Member_Regional_Ajax {
     private const LOG_NAME              = 'MemberRegional';
     private const PROTECTED_IDS         = [ 1 ];
 
-    /**
-     * Реєструє AJAX-обробники.
-     */
     public function init(): void {
         add_action( 'wp_ajax_fstu_member_regional_get_list', [ $this, 'handle_get_list' ] );
         add_action( 'wp_ajax_fstu_member_regional_get_single', [ $this, 'handle_get_single' ] );
@@ -34,11 +31,9 @@ class Member_Regional_Ajax {
         add_action( 'wp_ajax_fstu_member_regional_update', [ $this, 'handle_update' ] );
         add_action( 'wp_ajax_fstu_member_regional_delete', [ $this, 'handle_delete' ] );
         add_action( 'wp_ajax_fstu_member_regional_get_protocol', [ $this, 'handle_get_protocol' ] );
+        add_action( 'wp_ajax_fstu_member_regional_reorder', [ $this, 'handle_reorder' ] );
     }
 
-    /**
-     * Повертає список записів.
-     */
     public function handle_get_list(): void {
         check_ajax_referer( Member_Regional_List::NONCE_ACTION, 'nonce' );
 
@@ -94,9 +89,6 @@ class Member_Regional_Ajax {
         );
     }
 
-    /**
-     * Повертає один запис.
-     */
     public function handle_get_single(): void {
         check_ajax_referer( Member_Regional_List::NONCE_ACTION, 'nonce' );
 
@@ -117,7 +109,6 @@ class Member_Regional_Ajax {
         $response = [
             'member_regional_id'    => (int) $item['MemberRegional_ID'],
             'member_regional_name'  => (string) $item['MemberRegional_Name'],
-            'member_regional_order' => (int) ( $item['MemberRegional_Order'] ?? 0 ),
         ];
 
         if ( $this->current_user_can_admin_meta() ) {
@@ -128,9 +119,6 @@ class Member_Regional_Ajax {
         wp_send_json_success( [ 'item' => $response ] );
     }
 
-    /**
-     * Створює запис.
-     */
     public function handle_create(): void {
         check_ajax_referer( Member_Regional_List::NONCE_ACTION, 'nonce' );
 
@@ -151,11 +139,11 @@ class Member_Regional_Ajax {
 
         global $wpdb;
 
-        $order = $data['member_regional_order'];
-        if ( null === $order ) {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-            $order = (int) $wpdb->get_var( 'SELECT COALESCE(MAX(MemberRegional_Order), 0) FROM S_MemberRegional' ) + 1;
-        }
+        // Завжди останній у списку при створенні
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+        $order = (int) $wpdb->get_var( 'SELECT COALESCE(MAX(MemberRegional_Order), 0) FROM S_MemberRegional' ) + 1;
+
+        $wpdb->query( 'START TRANSACTION' );
 
         $inserted = $wpdb->insert(
             'S_MemberRegional',
@@ -169,18 +157,22 @@ class Member_Regional_Ajax {
         );
 
         if ( false === $inserted ) {
-            $this->log_action( 'I', __( 'Помилка додавання посади федерації.', 'fstu' ), $wpdb->last_error ?: 'DB error' );
+            $wpdb->query( 'ROLLBACK' );
+            $this->log_action_safe( 'I', __( 'Помилка додавання посади федерації.', 'fstu' ), $wpdb->last_error ?: 'DB error' );
             wp_send_json_error( [ 'message' => __( 'Помилка при збереженні запису.', 'fstu' ) ] );
         }
 
-        $this->log_action( 'I', sprintf( 'Додано посаду федерації: %s', $data['member_regional_name'] ), '✓' );
+        $log_ok = $this->log_action_transactional( 'I', sprintf( 'Додано посаду федерації: %s', $data['member_regional_name'] ), '✓' );
 
+        if ( ! $log_ok ) {
+            $wpdb->query( 'ROLLBACK' );
+            wp_send_json_error( [ 'message' => __( 'Помилка при збереженні запису (log error).', 'fstu' ) ] );
+        }
+
+        $wpdb->query( 'COMMIT' );
         wp_send_json_success( [ 'message' => __( 'Запис успішно додано.', 'fstu' ) ] );
     }
 
-    /**
-     * Оновлює запис.
-     */
     public function handle_update(): void {
         check_ajax_referer( Member_Regional_List::NONCE_ACTION, 'nonce' );
 
@@ -210,35 +202,35 @@ class Member_Regional_Ajax {
         }
 
         global $wpdb;
-
-        $order = null === $data['member_regional_order']
-            ? (int) ( $item['MemberRegional_Order'] ?? 0 )
-            : $data['member_regional_order'];
+        $wpdb->query( 'START TRANSACTION' );
 
         $updated = $wpdb->update(
             'S_MemberRegional',
             [
-                'MemberRegional_Name'  => $data['member_regional_name'],
-                'MemberRegional_Order' => $order,
+                'MemberRegional_Name' => $data['member_regional_name'],
             ],
             [ 'MemberRegional_ID' => $member_regional_id ],
-            [ '%s', '%d' ],
+            [ '%s' ],
             [ '%d' ]
         );
 
         if ( false === $updated ) {
-            $this->log_action( 'U', sprintf( 'Помилка оновлення посади федерації: %s', (string) $item['MemberRegional_Name'] ), $wpdb->last_error ?: 'DB error' );
+            $wpdb->query( 'ROLLBACK' );
+            $this->log_action_safe( 'U', sprintf( 'Помилка оновлення посади: %s', (string) $item['MemberRegional_Name'] ), $wpdb->last_error ?: 'DB error' );
             wp_send_json_error( [ 'message' => __( 'Помилка при збереженні запису.', 'fstu' ) ] );
         }
 
-        $this->log_action( 'U', sprintf( 'Оновлено посаду федерації: %s', $data['member_regional_name'] ), '✓' );
+        $log_ok = $this->log_action_transactional( 'U', sprintf( 'Оновлено посаду федерації: %s', $data['member_regional_name'] ), '✓' );
 
+        if ( ! $log_ok ) {
+            $wpdb->query( 'ROLLBACK' );
+            wp_send_json_error( [ 'message' => __( 'Помилка при збереженні запису (log error).', 'fstu' ) ] );
+        }
+
+        $wpdb->query( 'COMMIT' );
         wp_send_json_success( [ 'message' => __( 'Запис успішно оновлено.', 'fstu' ) ] );
     }
 
-    /**
-     * Видаляє запис.
-     */
     public function handle_delete(): void {
         check_ajax_referer( Member_Regional_List::NONCE_ACTION, 'nonce' );
 
@@ -261,21 +253,72 @@ class Member_Regional_Ajax {
         }
 
         global $wpdb;
+        $wpdb->query( 'START TRANSACTION' );
+
         $deleted = $wpdb->delete( 'S_MemberRegional', [ 'MemberRegional_ID' => $member_regional_id ], [ '%d' ] );
 
         if ( false === $deleted ) {
-            $this->log_action( 'D', sprintf( 'Помилка видалення посади федерації: %s', (string) $item['MemberRegional_Name'] ), $wpdb->last_error ?: 'DB error' );
+            $wpdb->query( 'ROLLBACK' );
+            $this->log_action_safe( 'D', sprintf( 'Помилка видалення посади: %s', (string) $item['MemberRegional_Name'] ), $wpdb->last_error ?: 'DB error' );
             wp_send_json_error( [ 'message' => __( 'Не вдалося видалити запис.', 'fstu' ) ] );
         }
 
-        $this->log_action( 'D', sprintf( 'Видалено посаду федерації: %s', (string) $item['MemberRegional_Name'] ), '✓' );
+        $log_ok = $this->log_action_transactional( 'D', sprintf( 'Видалено посаду федерації: %s', (string) $item['MemberRegional_Name'] ), '✓' );
 
+        if ( ! $log_ok ) {
+            $wpdb->query( 'ROLLBACK' );
+            wp_send_json_error( [ 'message' => __( 'Не вдалося видалити запис (log error).', 'fstu' ) ] );
+        }
+
+        $wpdb->query( 'COMMIT' );
         wp_send_json_success( [ 'message' => __( 'Запис успішно видалено.', 'fstu' ) ] );
     }
 
-    /**
-     * Повертає протокол модуля.
-     */
+    public function handle_reorder(): void {
+        check_ajax_referer( Member_Regional_List::NONCE_ACTION, 'nonce' );
+
+        if ( ! $this->current_user_can_manage() ) {
+            wp_send_json_error( [ 'message' => __( 'Недостатньо прав для зміни порядку.', 'fstu' ) ] );
+        }
+
+        $ids = isset( $_POST['ids'] ) && is_array( $_POST['ids'] ) ? array_map( 'absint', wp_unslash( $_POST['ids'] ) ) : [];
+
+        if ( empty( $ids ) ) {
+            wp_send_json_error( [ 'message' => __( 'Не передані ідентифікатори.', 'fstu' ) ] );
+        }
+
+        global $wpdb;
+        $wpdb->query( 'START TRANSACTION' );
+
+        foreach ( $ids as $index => $id ) {
+            if ( $id <= 0 ) continue;
+
+            $updated = $wpdb->update(
+                'S_MemberRegional',
+                [ 'MemberRegional_Order' => $index + 1 ],
+                [ 'MemberRegional_ID' => $id ],
+                [ '%d' ],
+                [ '%d' ]
+            );
+
+            if ( false === $updated ) {
+                $wpdb->query( 'ROLLBACK' );
+                $this->log_action_safe( 'U', 'Помилка зміни порядку сортування', $wpdb->last_error ?: 'DB error' );
+                wp_send_json_error( [ 'message' => __( 'Помилка при збереженні порядку.', 'fstu' ) ] );
+            }
+        }
+
+        $log_ok = $this->log_action_transactional( 'U', 'Змінено порядок сортування посад федерації', '✓' );
+
+        if ( ! $log_ok ) {
+            $wpdb->query( 'ROLLBACK' );
+            wp_send_json_error( [ 'message' => __( 'Помилка збереження порядку (log error).', 'fstu' ) ] );
+        }
+
+        $wpdb->query( 'COMMIT' );
+        wp_send_json_success( [ 'message' => __( 'Порядок сортування збережено.', 'fstu' ) ] );
+    }
+
     public function handle_get_protocol(): void {
         check_ajax_referer( Member_Regional_List::NONCE_ACTION, 'nonce' );
 
@@ -330,16 +373,10 @@ class Member_Regional_Ajax {
         );
     }
 
-    /**
-     * Будує HTML рядків таблиці.
-     *
-     * @param array<int,array<string,mixed>> $items       Рядки таблиці.
-     * @param int                            $offset      Зсув пагінації.
-     * @param array<string,bool>             $permissions Права поточного користувача.
-     */
     private function build_rows( array $items, int $offset, array $permissions ): string {
         $show_admin_meta = ! empty( $permissions['canAdminMeta'] );
-        $colspan         = $show_admin_meta ? 5 : 3;
+        $can_manage      = ! empty( $permissions['canManage'] );
+        $colspan         = ( $show_admin_meta ? 5 : 3 ) + ( $can_manage ? 1 : 0 );
 
         if ( empty( $items ) ) {
             return '<tr class="fstu-row"><td colspan="' . esc_attr( (string) $colspan ) . '" class="fstu-no-results">' . esc_html__( 'Немає записів, які б відповідали критеріям пошуку.', 'fstu' ) . '</td></tr>';
@@ -358,17 +395,23 @@ class Member_Regional_Ajax {
             $date_display         = '' !== $date_create ? wp_date( 'd.m.Y H:i', strtotime( $date_create ) ) : '';
 
             $actions   = [];
-            $actions[] = '<button type="button" class="fstu-member-regional-dropdown__item fstu-member-regional-view-btn" data-member-regional-id="' . esc_attr( (string) $member_regional_id ) . '">' . esc_html__( 'Перегляд', 'fstu' ) . '</button>';
+            $actions[] = '<button type="button" class="fstu-dropdown-item fstu-member-regional-view-btn" data-member-regional-id="' . esc_attr( (string) $member_regional_id ) . '">👁️ ' . esc_html__( 'Перегляд', 'fstu' ) . '</button>';
 
-            if ( ! empty( $permissions['canManage'] ) ) {
-                $actions[] = '<button type="button" class="fstu-member-regional-dropdown__item fstu-member-regional-edit-btn" data-member-regional-id="' . esc_attr( (string) $member_regional_id ) . '">' . esc_html__( 'Редагування', 'fstu' ) . '</button>';
+            if ( $can_manage ) {
+                $actions[] = '<button type="button" class="fstu-dropdown-item fstu-member-regional-edit-btn" data-member-regional-id="' . esc_attr( (string) $member_regional_id ) . '">✏️ ' . esc_html__( 'Редагувати', 'fstu' ) . '</button>';
             }
 
             if ( ! empty( $permissions['canDelete'] ) ) {
-                $actions[] = '<button type="button" class="fstu-member-regional-dropdown__item fstu-member-regional-dropdown__item--danger fstu-member-regional-delete-btn" data-member-regional-id="' . esc_attr( (string) $member_regional_id ) . '">' . esc_html__( 'Видалення', 'fstu' ) . '</button>';
+                $actions[] = '<button type="button" class="fstu-dropdown-item fstu-dropdown-item--danger fstu-member-regional-delete-btn" data-member-regional-id="' . esc_attr( (string) $member_regional_id ) . '">🗑️ ' . esc_html__( 'Видалити', 'fstu' ) . '</button>';
             }
 
-            $html .= '<tr class="fstu-row">';
+            // Додаємо ідентифікатор рядка для sortable
+            $html .= '<tr class="fstu-row fstu-sortable-row" data-id="' . esc_attr( (string) $member_regional_id ) . '">';
+
+            if ( $can_manage ) {
+                $html .= '<td class="fstu-td fstu-td--drag"><span class="fstu-drag-handle" style="cursor: grab; color: #a0a0a0; font-size: 16px;">☰</span></td>';
+            }
+
             $html .= '<td class="fstu-td fstu-td--num">' . esc_html( (string) $index ) . '</td>';
             $html .= '<td class="fstu-td fstu-td--name"><button type="button" class="fstu-member-regional-link-button fstu-member-regional-view-btn" data-member-regional-id="' . esc_attr( (string) $member_regional_id ) . '">' . esc_html( $member_regional_name ) . '</button></td>';
 
@@ -378,9 +421,9 @@ class Member_Regional_Ajax {
             }
 
             $html .= '<td class="fstu-td fstu-td--actions">';
-            $html .= '<div class="fstu-member-regional-dropdown">';
-            $html .= '<button type="button" class="fstu-member-regional-dropdown__toggle" aria-expanded="false" title="' . esc_attr__( 'Меню дій', 'fstu' ) . '">▼</button>';
-            $html .= '<div class="fstu-member-regional-dropdown__menu">' . implode( '', $actions ) . '</div>';
+            $html .= '<div class="fstu-dropdown">';
+            $html .= '<button type="button" class="fstu-dropdown-toggle" aria-expanded="false" title="' . esc_attr__( 'Меню дій', 'fstu' ) . '">▼</button>';
+            $html .= '<div class="fstu-dropdown-menu">' . implode( '', $actions ) . '</div>';
             $html .= '</div>';
             $html .= '</td>';
             $html .= '</tr>';
@@ -389,11 +432,6 @@ class Member_Regional_Ajax {
         return $html;
     }
 
-    /**
-     * Будує HTML рядків протоколу.
-     *
-     * @param array<int,array<string,mixed>> $items Рядки протоколу.
-     */
     private function build_protocol_rows( array $items ): string {
         if ( empty( $items ) ) {
             return '<tr class="fstu-row"><td colspan="6" class="fstu-no-results">' . esc_html__( 'Записи протоколу відсутні.', 'fstu' ) . '</td></tr>';
@@ -415,30 +453,14 @@ class Member_Regional_Ajax {
         return $html;
     }
 
-    /**
-     * Повертає очищені дані форми.
-     *
-     * @return array<string,mixed>
-     */
     private function sanitize_form_data(): array {
-        $order_raw = sanitize_text_field( wp_unslash( $_POST['member_regional_order'] ?? '' ) );
-
         return [
-            'member_regional_name'      => sanitize_text_field( wp_unslash( $_POST['member_regional_name'] ?? '' ) ),
-            'member_regional_order_raw' => $order_raw,
-            'member_regional_order'     => '' === $order_raw ? null : absint( $order_raw ),
+            'member_regional_name' => sanitize_text_field( wp_unslash( $_POST['member_regional_name'] ?? '' ) ),
         ];
     }
 
-    /**
-     * Валідує форму.
-     *
-     * @param array<string,mixed> $data               Дані форми.
-     * @param int                 $member_regional_id Поточний ID для update.
-     */
     private function validate_form_data( array $data, int $member_regional_id = 0 ): string {
-        $name      = (string) ( $data['member_regional_name'] ?? '' );
-        $order_raw = (string) ( $data['member_regional_order_raw'] ?? '' );
+        $name = (string) ( $data['member_regional_name'] ?? '' );
 
         if ( mb_strlen( $name ) < 2 ) {
             return __( 'Поле «Найменування» є обов’язковим.', 'fstu' );
@@ -448,10 +470,6 @@ class Member_Regional_Ajax {
             return __( 'Поле «Найменування» не може бути довшим за 255 символів.', 'fstu' );
         }
 
-        if ( '' !== $order_raw && ! preg_match( '/^\d+$/', $order_raw ) ) {
-            return __( 'Поле «Сортування» повинно містити лише невід’ємне число.', 'fstu' );
-        }
-
         if ( $this->member_regional_name_exists( $name, $member_regional_id ) ) {
             return __( 'Запис з таким найменуванням уже існує.', 'fstu' );
         }
@@ -459,63 +477,35 @@ class Member_Regional_Ajax {
         return '';
     }
 
-    /**
-     * Перевіряє honeypot.
-     */
     private function validate_honeypot(): bool {
         $honeypot = sanitize_text_field( wp_unslash( $_POST['fstu_website'] ?? '' ) );
         return '' === $honeypot;
     }
 
-    /**
-     * Повертає права для поточного користувача.
-     *
-     * @return array<string,bool>
-     */
     private function get_permissions(): array {
         return Capabilities::get_member_regional_permissions();
     }
 
-    /**
-     * Чи може користувач переглядати модуль.
-     */
     private function current_user_can_view(): bool {
         return Capabilities::current_user_can_view_member_regional();
     }
 
-    /**
-     * Чи може користувач керувати модулем.
-     */
     private function current_user_can_manage(): bool {
         return Capabilities::current_user_can_manage_member_regional();
     }
 
-    /**
-     * Чи може користувач видаляти записи.
-     */
     private function current_user_can_delete(): bool {
         return Capabilities::current_user_can_delete_member_regional();
     }
 
-    /**
-     * Чи може користувач переглядати протокол.
-     */
     private function current_user_can_protocol(): bool {
         return Capabilities::current_user_can_view_member_regional_protocol();
     }
 
-    /**
-     * Чи може користувач бачити admin-only поля.
-     */
     private function current_user_can_admin_meta(): bool {
         return Capabilities::current_user_can_delete_member_regional();
     }
 
-    /**
-     * Повертає запис довідника за ID.
-     *
-     * @return array<string,mixed>|null
-     */
     private function get_member_regional_by_id( int $member_regional_id ): ?array {
         global $wpdb;
 
@@ -539,9 +529,6 @@ class Member_Regional_Ajax {
         return is_array( $item ) ? $item : null;
     }
 
-    /**
-     * Перевіряє, чи існує запис з таким найменуванням.
-     */
     private function member_regional_name_exists( string $member_regional_name, int $exclude_id = 0 ): bool {
         global $wpdb;
 
@@ -561,10 +548,26 @@ class Member_Regional_Ajax {
         return null !== $existing_id;
     }
 
-    /**
-     * Записує подію у таблицю Logs.
-     */
-    private function log_action( string $type, string $text, string $status ): void {
+    private function log_action_transactional( string $type, string $text, string $status ): bool {
+        global $wpdb;
+
+        $inserted = $wpdb->insert(
+            'Logs',
+            [
+                'User_ID'         => get_current_user_id(),
+                'Logs_DateCreate' => current_time( 'mysql' ),
+                'Logs_Type'       => $type,
+                'Logs_Name'       => self::LOG_NAME,
+                'Logs_Text'       => $text,
+                'Logs_Error'      => $status,
+            ],
+            [ '%d', '%s', '%s', '%s', '%s', '%s' ]
+        );
+
+        return false !== $inserted;
+    }
+
+    private function log_action_safe( string $type, string $text, string $status ): void {
         global $wpdb;
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery

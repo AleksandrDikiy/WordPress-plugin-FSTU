@@ -1,9 +1,8 @@
 /**
  * JS модуля "Довідник посад федерацій".
- * Список, пошук, пагінація, протокол і модальна форма create/edit/view.
  *
- * Version:     1.0.0
- * Date_update: 2026-04-06
+ * Version:     1.1.0
+ * Date_update: 2026-04-18
  *
  * @package FSTU
  */
@@ -56,17 +55,17 @@ jQuery( document ).ready( function ( $ ) {
 
 	function bindGlobalEvents() {
 		$( document ).on( 'click', function ( event ) {
-			if ( ! $( event.target ).closest( '.fstu-member-regional-dropdown' ).length ) {
+			if ( ! $( event.target ).closest( '.fstu-dropdown' ).length ) {
 				closeAllDropdowns();
 			}
 		} );
+
+		// Закриваємо випадаюче меню при скролі, бо воно fixed
+		$( window ).on( 'scroll', closeAllDropdowns );
+		$( '.fstu-table-wrap' ).on( 'scroll', closeAllDropdowns );
 	}
 
 	function bindListEvents() {
-		$( document ).on( 'click', '#fstu-member-regional-refresh-btn', function () {
-			loadList();
-		} );
-
 		$( document ).on( 'input', '#fstu-member-regional-search', debounce( function () {
 			listState.search = $( this ).val().trim();
 			listState.page = 1;
@@ -101,11 +100,11 @@ jQuery( document ).ready( function ( $ ) {
 			}
 		} );
 
-		$( document ).on( 'click', '.fstu-member-regional-dropdown__toggle', function ( event ) {
+		$( document ).on( 'click', '.fstu-dropdown-toggle', function ( event ) {
 			event.preventDefault();
 			event.stopPropagation();
 
-			const $dropdown = $( this ).closest( '.fstu-member-regional-dropdown' );
+			const $dropdown = $( this ).closest( '.fstu-dropdown' );
 			const isOpen = $dropdown.hasClass( 'is-open' );
 
 			closeAllDropdowns();
@@ -254,6 +253,7 @@ jQuery( document ).ready( function ( $ ) {
 				listState.perPage = parseInt( response.data.per_page, 10 ) || 10;
 				listState.totalPages = parseInt( response.data.total_pages, 10 ) || 1;
 				updateListPagination();
+				initSortable();
 			} else {
 				showTableError( '#fstu-member-regional-tbody', getTableColspan(), response.data.message || fstuMemberRegionalL10n.messages.error );
 			}
@@ -262,6 +262,54 @@ jQuery( document ).ready( function ( $ ) {
 		} ).always( function () {
 			listState.loading = false;
 		} );
+	}
+
+	function initSortable() {
+		const $tbody = $( '#fstu-member-regional-tbody' );
+
+		// Активуємо drag-and-drop лише якщо є права, немає пошуку та ми на 1-й сторінці (або показуємо весь список)
+		if ( permissions.canManage && listState.search === '' && $.fn.sortable ) {
+			$tbody.sortable({
+				handle: '.fstu-drag-handle',
+				items: '> .fstu-sortable-row',
+				axis: 'y',
+				opacity: 0.8,
+				cursor: 'grabbing',
+				update: function () {
+					const ids = [];
+					$tbody.find( '.fstu-sortable-row' ).each( function () {
+						const id = parseInt( $( this ).attr( 'data-id' ), 10 );
+						if ( id > 0 ) ids.push( id );
+					});
+
+					if ( ids.length > 0 ) {
+						saveOrder( ids );
+					}
+				}
+			});
+		} else if ( $.fn.sortable && $tbody.hasClass( 'ui-sortable' ) ) {
+			$tbody.sortable( 'destroy' );
+		}
+	}
+
+	function saveOrder( ids ) {
+		$.ajax({
+			url: fstuMemberRegionalL10n.ajaxUrl,
+			method: 'POST',
+			data: {
+				action: 'fstu_member_regional_reorder',
+				nonce: fstuMemberRegionalL10n.nonce,
+				ids: ids
+			}
+		}).done( function ( response ) {
+			if ( ! response.success ) {
+				window.alert( response.data.message || fstuMemberRegionalL10n.messages.reorderError );
+				loadList(); // Відкат до попереднього стану
+			}
+		}).fail( function () {
+			window.alert( fstuMemberRegionalL10n.messages.reorderError );
+			loadList();
+		});
 	}
 
 	function loadProtocol() {
@@ -441,7 +489,6 @@ jQuery( document ).ready( function ( $ ) {
 	function fillForm( item ) {
 		$( '#fstu-member-regional-id' ).val( item.member_regional_id || 0 );
 		$( '#fstu-member-regional-name' ).val( item.member_regional_name || '' );
-		$( '#fstu-member-regional-order' ).val( item.member_regional_order || 0 );
 
 		const hasMeta = !!( item.member_regional_date_create || item.member_regional_fio );
 		if ( hasMeta ) {
@@ -474,25 +521,41 @@ jQuery( document ).ready( function ( $ ) {
 	}
 
 	function closeAllDropdowns() {
-		$( '.fstu-member-regional-dropdown' ).removeClass( 'is-open is-dropup' );
-		$( '.fstu-member-regional-dropdown__toggle' ).attr( 'aria-expanded', 'false' );
+		$( '.fstu-dropdown' ).removeClass( 'is-open is-dropup' );
+		$( '.fstu-dropdown-toggle' ).attr( 'aria-expanded', 'false' );
+		// Скидаємо динамічні стилі меню
+		$( '.fstu-dropdown-menu' ).css({ position: '', top: '', left: '', zIndex: '' });
 	}
 
 	function positionDropdown( $dropdown ) {
-		const menu = $dropdown.find( '.fstu-member-regional-dropdown__menu' ).get( 0 );
-		const toggle = $dropdown.find( '.fstu-member-regional-dropdown__toggle' ).get( 0 );
-		if ( ! menu || ! toggle ) {
-			return;
-		}
+		const $menu = $dropdown.find( '.fstu-dropdown-menu' );
+		const toggle = $dropdown.find( '.fstu-dropdown-toggle' ).get( 0 );
+		if ( ! $menu.length || ! toggle ) return;
 
-		const menuHeight = menu.offsetHeight || 180;
+		// Використовуємо position: fixed за вимогами AGENTS.md,
+		// щоб запобігти обрізанню блоку з overflow-x: auto (таблиці)
 		const rect = toggle.getBoundingClientRect();
+		const menuHeight = $menu.outerHeight() || 150;
 		const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
-		if ( rect.bottom + menuHeight > viewportHeight && rect.top > menuHeight ) {
+
+		let topPos = rect.bottom;
+		if ( topPos + menuHeight > viewportHeight && rect.top > menuHeight ) {
+			topPos = rect.top - menuHeight;
 			$dropdown.addClass( 'is-dropup' );
 		} else {
 			$dropdown.removeClass( 'is-dropup' );
 		}
+
+		// Вирівнюємо по правому краю кнопки
+		const leftPos = rect.right - $menu.outerWidth();
+
+		$menu.css({
+			position: 'fixed',
+			top: topPos + 'px',
+			left: leftPos + 'px',
+			zIndex: 100000,
+			minWidth: '120px'
+		});
 	}
 
 	function openModal( modalId ) {
@@ -516,7 +579,7 @@ jQuery( document ).ready( function ( $ ) {
 	}
 
 	function getTableColspan() {
-		return permissions.canAdminMeta ? 5 : 3;
+		return fstuMemberRegionalL10n.table.colspan || 4;
 	}
 
 	function buildPaginationButtons( currentPage, totalPages, buttonClass ) {
@@ -581,4 +644,3 @@ jQuery( document ).ready( function ( $ ) {
 			.replace( /'/g, '&#039;' );
 	}
 } );
-

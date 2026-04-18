@@ -34,7 +34,7 @@ class Payment_Docs_List {
         }
 
         $user_roles = (array) wp_get_current_user()->roles;
-        $allowed_roles = [ 'administrator', 'userregistrar', 'groupauditor' ];
+        $allowed_roles = [ 'administrator', 'globalregistrar', 'userregistrar', 'groupauditor' ];
 
         if ( empty( array_intersect( $allowed_roles, $user_roles ) ) ) {
             return '<div class="fstu-alert fstu-alert--error">У вас немає доступу до цього модуля.</div>';

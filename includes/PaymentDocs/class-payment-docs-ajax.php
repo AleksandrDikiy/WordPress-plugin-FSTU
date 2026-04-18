@@ -28,7 +28,7 @@ class Payment_Docs_Ajax {
         check_ajax_referer( 'fstu_payment_docs_nonce', 'nonce' );
 
         $user_roles = (array) wp_get_current_user()->roles;
-        if ( empty( array_intersect( [ 'administrator', 'userregistrar', 'groupauditor' ], $user_roles ) ) ) {
+        if ( empty( array_intersect( [ 'administrator', 'globalregistrar', 'userregistrar', 'groupauditor' ], $user_roles ) ) ) {
             wp_send_json_error( [ 'message' => 'Недостатньо прав.' ] );
         }
 
@@ -62,8 +62,8 @@ class Payment_Docs_Ajax {
             $params[] = $year;
         }
 
-        // Обмеження для Реєстраторів (бачать тільки свої осередки)
-        if ( ! in_array( 'administrator', $user_roles, true ) && ! in_array( 'groupauditor', $user_roles, true ) ) {
+        // Обмеження для Реєстраторів (бачать тільки свої осередки). Адміни та Глобальні реєстратори бачать усе.
+        if ( ! in_array( 'administrator', $user_roles, true ) && ! in_array( 'globalregistrar', $user_roles, true ) && ! in_array( 'groupauditor', $user_roles, true ) ) {
             $where_parts[] = "dp.Doc_DuesPayment_UnitID IN (SELECT Unit_ID FROM UserRegion WHERE User_ID = %d)";
             $params[] = get_current_user_id();
         }
@@ -140,7 +140,7 @@ class Payment_Docs_Ajax {
         check_ajax_referer( 'fstu_payment_docs_nonce', 'nonce' );
 
         $user_roles = (array) wp_get_current_user()->roles;
-        if ( empty( array_intersect( [ 'administrator', 'userregistrar' ], $user_roles ) ) ) {
+        if ( empty( array_intersect( [ 'administrator', 'globalregistrar', 'userregistrar' ], $user_roles ) ) ) {
             wp_send_json_error( [ 'message' => 'Недостатньо прав для збереження.' ] );
         }
 
@@ -324,9 +324,10 @@ class Payment_Docs_Ajax {
     public function handle_delete_payment_doc(): void {
         check_ajax_referer( 'fstu_payment_docs_nonce', 'nonce' );
 
-        // Тільки адміністратори мають право видаляти фінансові документи
-        if ( ! current_user_can( 'manage_options' ) ) {
-            wp_send_json_error( [ 'message' => 'Тільки Адміністратори можуть видаляти платіжні документи.' ] );
+        $user_roles = (array) wp_get_current_user()->roles;
+        // Тільки адміністратори та глобальні реєстратори мають право видаляти фінансові документи
+        if ( ! current_user_can( 'manage_options' ) && ! in_array( 'globalregistrar', $user_roles, true ) ) {
+            wp_send_json_error( [ 'message' => 'Тільки Адміністратори та Глобальні реєстратори можуть видаляти платіжні документи.' ] );
         }
 
         $doc_id = absint( $_POST['doc_id'] ?? 0 );
@@ -385,7 +386,7 @@ class Payment_Docs_Ajax {
         check_ajax_referer( 'fstu_payment_docs_nonce', 'nonce' );
 
         $user_roles = (array) wp_get_current_user()->roles;
-        if ( empty( array_intersect( [ 'administrator', 'userregistrar', 'groupauditor' ], $user_roles ) ) ) {
+        if ( empty( array_intersect( [ 'administrator', 'globalregistrar', 'userregistrar', 'groupauditor' ], $user_roles ) ) ) {
             wp_send_json_error( [ 'message' => 'Недостатньо прав.' ] );
         }
 
