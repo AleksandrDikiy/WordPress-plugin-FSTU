@@ -18,6 +18,10 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
                 <input type="hidden" name="nonce" value="">
                 <input type="hidden" name="question_id" id="modal-poll-id" value="">
 
+                <input type="hidden" name="commission_type_id" id="modal-poll-type" value="">
+                <input type="hidden" name="region_id" id="modal-poll-region" value="">
+                <input type="hidden" name="s_commission_id" id="modal-poll-s-commission" value="">
+
                 <div class="fstu-form-group">
                     <label for="modal-poll-name">* Найменування опитування:</label>
                     <input type="text" id="modal-poll-name" name="question_name" class="fstu-input" required maxlength="70" placeholder="Введіть найменування">
@@ -31,20 +35,26 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
                 <div class="fstu-form-group" style="display: flex; gap: 15px;">
                     <div style="flex: 1;">
                         <label for="modal-poll-start">* Дата початку:</label>
-                        <input type="date" id="modal-poll-start" name="question_date_begin" class="fstu-input" required>
+                        <input type="date" id="modal-poll-start" name="question_date_begin" class="fstu-input" required value="<?php echo date('Y-m-d'); ?>">
                     </div>
                     <div style="flex: 1;">
                         <label for="modal-poll-end">* Дата закінчення:</label>
-                        <input type="date" id="modal-poll-end" name="question_date_end" class="fstu-input" required>
+                        <input type="date" id="modal-poll-end" name="question_date_end" class="fstu-input" required value="<?php echo date('Y-m-d', strtotime('+7 days')); ?>">
                     </div>
                 </div>
 
-                <div class="fstu-form-group">
-                    <label for="modal-poll-state">* Статус:</label>
-                    <select id="modal-poll-state" name="question_state" class="fstu-input" required>
-                        <option value="0">Публічний</option>
-                        <option value="1">Приватний</option>
-                    </select>
+                <div class="fstu-form-group" style="display: flex; gap: 15px;">
+                    <div style="flex: 1;">
+                        <label for="modal-poll-count">* Квота (переможців):</label>
+                        <input type="number" id="modal-poll-count" name="set_commission_count" class="fstu-input" required min="1" value="1">
+                    </div>
+                    <div style="flex: 1;">
+                        <label for="modal-poll-state">* Статус:</label>
+                        <select id="modal-poll-state" name="question_state" class="fstu-input" required>
+                            <option value="0">Публічний</option>
+                            <option value="1">Приватний</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="fstu-form-group">

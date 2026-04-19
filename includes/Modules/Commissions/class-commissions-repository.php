@@ -24,6 +24,19 @@ class Commissions_Repository {
     public function get_members_list( int $year_id, int $commission_type_id, int $s_commission_id, int $region_id, int $page = 1, int $per_page = 10, string $search = '' ): array {
         global $wpdb;
 
+        // "Магічне" визначення поточного складу (шукаємо останній рік формування комісії)
+        if ( $year_id === 0 ) {
+            $sql_max = "SELECT MAX(Year_ID) FROM Commission WHERE CommissionType_ID = %d AND SCommission_ID = %d";
+            $args_max = [ $commission_type_id, $s_commission_id ];
+            if ( 1 !== $commission_type_id ) {
+                $sql_max .= " AND Region_ID = %d";
+                $args_max[] = $region_id;
+            }
+            $found_year = (int) $wpdb->get_var( $wpdb->prepare( $sql_max, ...$args_max ) );
+            // Якщо комісія хоч раз формувалася, беремо її останній рік. Інакше залишаємо поточний календарний.
+            $year_id = $found_year > 0 ? $found_year : (int) date('Y');
+        }
+
         // Замість vCommission використовуємо vUserFSTUnew для точного отримання ПІБ
         // Конвертуємо FIO з BLOB у CHAR
         $sql = "
@@ -33,6 +46,7 @@ class Commissions_Repository {
 				CAST(COALESCE(vu.FIO, u.display_name) AS CHAR) AS FIO,
 				u.user_email,
 				sc.Commission_Name,
+				sc.Commission_Number AS post_id,
 				ct.CommissionType_Name,
 				m.Member_Name,
 				r.Region_Name
@@ -82,52 +96,75 @@ class Commissions_Repository {
             $row['Phones'] = implode( '<br>', $phones );
         }
 
+        // Отримуємо ID прив'язаної сторінки (незалежно від того, чи є люди в комісії)
+        $post_id = (int) $wpdb->get_var( $wpdb->prepare( "SELECT Commission_Number FROM S_Commission WHERE Commission_ID = %d", $s_commission_id ) );
+
+        // Перевіряємо права для показу кнопки "Редагувати опис"
+        $can_edit = current_user_can('administrator') ||
+            current_user_can('globalregistrar') ||
+            current_user_can('userregistrar') ||
+            current_user_can('sailadministrator');
+
         return [
-            'items'       => $items,
-            'total'       => $total,
-            'page'        => $page,
-            'per_page'    => $per_page,
-            'total_pages' => ceil( $total / $per_page )
+            'items'              => $items,
+            'total'              => $total,
+            'page'               => $page,
+            'per_page'           => $per_page,
+            'total_pages'        => ceil( $total / $per_page ),
+            'resolved_year'      => $year_id, // Передаємо знайдений рік на фронтенд
+            'commission_post_id' => $post_id,
+            'can_edit_page'      => $can_edit
         ];
     }
 
     /**
-     * Отримує список опитувань для конкретної комісії (заміна vQuestionCommission).
+     * Отримує список опитувань для конкретної комісії.
      *
      * @param int $question_type_id   Тип опитування (1 - рішення, 2 - вибори).
      * @param int $commission_type_id Тип комісії.
      * @param int $s_commission_id    Код комісії.
      * @param int $region_id          Код регіону.
-     * @param int $question_state     Статус (0 - публічний, 1 - приватний).
+     * @param int $question_state     Статус (-1 - всі, 0 - публічний, 1 - приватний).
      * @return array
      */
     public function get_polls_list( int $question_type_id, int $commission_type_id, int $s_commission_id, int $region_id, int $question_state = 0 ): array {
         global $wpdb;
 
+        // Використовуємо готовий View бази даних ФСТУ (vQuestionCommission),
+        // де вже зібрані всі дати, ліміти та назви з потрібних таблиць.
         $sql = "
 			SELECT 
-				qc.QuestionCommission_ID, qc.Question_ID, qc.Commission_ID, 
-				qc.Question_DateCreate, qc.Question_DateBegin, qc.Question_DateEnd, 
-				qc.QuestionType_ID, qc.Question_Name, qc.Question_State, qc.Question_URL,
-				qc.SetCommission_CountMembers,
-				sc.Commission_Name,
-				(SELECT COUNT(*) FROM CandidatesCommissionResult cr WHERE cr.Question_ID = qc.Question_ID) as votes_count
-			FROM QuestionCommission qc
-			LEFT JOIN S_Commission sc ON sc.Commission_ID = qc.Commission_ID
-			WHERE qc.QuestionType_ID = %d
-			  AND qc.Commission_ID = %d
-			  AND qc.CommissionType_ID = %d
-			  AND qc.Question_State = %d
+				QuestionCommission_ID, Question_ID, Commission_ID, 
+				Question_DateCreate, Question_DateBegin, Question_DateEnd, 
+				QuestionType_ID, Question_Name, Question_State, Question_URL,
+				SetCommission_CountMembers,
+				Commission_Name,
+				(
+                    SELECT COUNT(DISTINCT cr.User_ID) 
+                    FROM CandidatesCommissionResult cr
+                    INNER JOIN CandidatesCommission cc ON cc.CandidatesCommission_ID = cr.CandidatesCommission_ID
+                    WHERE cc.Question_ID = vqc.Question_ID
+                ) as votes_count
+			FROM vQuestionCommission vqc
+			WHERE QuestionType_ID = %d
+			  AND Commission_ID = %d
+			  AND CommissionType_ID = %d
 		";
 
-        $args = [ $question_type_id, $s_commission_id, $commission_type_id, $question_state ];
+        $args = [ $question_type_id, $s_commission_id, $commission_type_id ];
+
+        // Якщо $question_state == -1, показуємо і публічні, і приватні опитування
+        if ( $question_state !== -1 ) {
+            $sql .= " AND Question_State = %d";
+            $args[] = $question_state;
+        }
 
         if ( 1 !== $commission_type_id ) {
-            $sql .= " AND qc.Region_ID = %d";
+            $sql .= " AND Region_ID = %d";
             $args[] = $region_id;
         }
 
-        $sql .= " ORDER BY qc.Question_DateCreate DESC";
+        $sql .= " ORDER BY Question_DateCreate DESC";
 
         return $wpdb->get_results( $wpdb->prepare( $sql, ...$args ), ARRAY_A ) ?? [];
     }
@@ -212,17 +249,25 @@ class Commissions_Repository {
         $wpdb->query( 'COMMIT' );
         return true;
     }
-
     /**
      * Розрахунок статистики для прогрес-барів.
      */
     public function get_voting_stats( int $question_id ): array {
         global $wpdb;
-        // Отримуємо квоту та кількість тих, хто сплатив внески (легітимність)
-        $sql = "SELECT qc.SetCommission_CountMembers as quota, 
-                (SELECT COUNT(*) FROM CandidatesCommissionResult WHERE Question_ID = qc.Question_ID) as total_voted
-                FROM QuestionCommission qc WHERE qc.Question_ID = %d";
-        return $wpdb->get_row( $wpdb->prepare( $sql, $question_id ), ARRAY_A ) ?? [];
+        // Отримуємо квоту через View та рахуємо кількість унікальних користувачів
+        $sql = "
+            SELECT 
+                SetCommission_CountMembers as quota, 
+                (
+                    SELECT COUNT(DISTINCT cr.User_ID) 
+                    FROM CandidatesCommissionResult cr
+                    INNER JOIN CandidatesCommission cc ON cc.CandidatesCommission_ID = cr.CandidatesCommission_ID
+                    WHERE cc.Question_ID = %d
+                ) as total_voted
+            FROM vQuestionCommission 
+            WHERE Question_ID = %d LIMIT 1
+        ";
+        return $wpdb->get_row( $wpdb->prepare( $sql, $question_id, $question_id ), ARRAY_A ) ?? [];
     }
 
     /**
@@ -231,8 +276,8 @@ class Commissions_Repository {
     public function search_users( string $search_query ): array {
         global $wpdb;
 
-        // 1. Отримуємо всіх активних членів (Цей простий запит без LIKE працює бездоганно)
-        $sql = "SELECT User_ID, CAST(FIO AS CHAR) AS FIO FROM vUserFSTUnew WHERE UserFSTU = '1' OR UserFSTU = 1";
+        // 1. Отримуємо всіх активних членів та групуємо за User_ID, щоб уникнути дублікатів через осередки
+        $sql = "SELECT User_ID, CAST(FIO AS CHAR) AS FIO FROM vUserFSTUnew WHERE UserFSTU = '1' OR UserFSTU = 1 GROUP BY User_ID";
         $all_users = $wpdb->get_results( $sql, ARRAY_A );
 
         if ( empty( $all_users ) ) {
@@ -272,4 +317,63 @@ class Commissions_Repository {
 
         return $results;
     }
+    /**
+     * Додає кандидата до опитування через існуючу збережену процедуру бази даних.
+     *
+     * @param int    $question_id ID опитування.
+     * @param int    $user_id     ID користувача (кандидата).
+     * @param string $direction   Напрямок.
+     * @param string $development Програма розвитку.
+     * @param string $url         Посилання.
+     * @return bool|string True у разі успіху, або текст помилки.
+     */
+    public function save_candidate( int $question_id, int $user_id, string $direction, string $development, string $url ) {
+        global $wpdb;
+
+        $wpdb->get_var(
+            $wpdb->prepare(
+                "call InsertCandidatesCommission(%d, %d, %d, %s, %s, %s, @ResultID)",
+                get_current_user_id(), // Хто додає
+                $user_id,              // Кого додають (кандидат)
+                $question_id,
+                $direction,
+                $development,
+                $url
+            )
+        );
+
+        $result_id = $wpdb->get_var( "SELECT @ResultID" );
+
+        if ( $result_id == 1 ) {
+            return true;
+        }
+
+        return $wpdb->last_error ?: 'Помилка бази даних при додаванні кандидата.';
+    }
+    /**
+     * Отримує список користувачів, які проголосували за кандидата.
+     *
+     * @param int $candidate_id ID кандидата в комісію.
+     * @return array
+     */
+    public function get_voters_for_candidate( int $candidate_id ): array {
+        global $wpdb;
+
+        // Отримуємо результати та з'єднуємо з vUserFSTUnew для коректного ПІБ
+        $sql = "
+            SELECT 
+                r.User_ID, 
+                CAST(COALESCE(vu.FIO, u.display_name) AS CHAR) AS FIO,
+                r.CandidatesCommissionResult_Value AS VoteValue
+            FROM CandidatesCommissionResult r
+            LEFT JOIN {$wpdb->users} u ON u.ID = r.User_ID
+            LEFT JOIN vUserFSTUnew vu ON vu.User_ID = r.User_ID
+            WHERE r.CandidatesCommission_ID = %d
+            GROUP BY r.User_ID
+            ORDER BY FIO ASC
+        ";
+
+        return $wpdb->get_results( $wpdb->prepare( $sql, $candidate_id ), ARRAY_A ) ?? [];
+    }
+    //----
 }

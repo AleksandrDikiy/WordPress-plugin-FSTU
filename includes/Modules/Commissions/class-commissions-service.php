@@ -44,96 +44,105 @@ class Commissions_Service {
 		";
         return (int) $wpdb->get_var( $wpdb->prepare( $sql, $question_id, $user_id ) );
     }
-
     /**
-     * Здійснює голосування користувача за кандидата.
+     * Записує голос користувача за кандидата з перевірками квот та правил самовідводу.
      *
-     * @param int $user_id      ID користувача.
-     * @param int $candidate_id ID кандидата (CandidatesCommission_ID).
-     * @param int $vote_value   Голос: 0 - Утримався, 1 - ЗА, 2 - ПРОТИ.
-     * @return \WP_Error|true
+     * @param int $user_id      ID користувача, що голосує.
+     * @param int $candidate_id ID запису кандидата.
+     * @param int $vote_value   Голос (1 - ЗА, 2 - ПРОТИ, 0 - УТРИМ).
+     * @return bool|string|\WP_Error True у разі успіху, строка 'self_removed' при самовідводі, або WP_Error.
      */
     public function cast_vote( int $user_id, int $candidate_id, int $vote_value ) {
         global $wpdb;
 
-        // 1. Отримуємо Question_ID та ліміт комісії
+        // 1. Отримуємо Question_ID, квоту та User_ID самого кандидата
         $sql_info = "
-			SELECT c.Question_ID, qc.SetCommission_CountMembers, u.display_name
+			SELECT c.Question_ID, vqc.SetCommission_CountMembers, u.display_name, c.User_ID as Candidate_User_ID
 			FROM CandidatesCommission c
-			INNER JOIN QuestionCommission qc ON qc.Question_ID = c.Question_ID
+			INNER JOIN vQuestionCommission vqc ON vqc.Question_ID = c.Question_ID
 			LEFT JOIN {$wpdb->users} u ON u.ID = c.User_ID
 			WHERE c.CandidatesCommission_ID = %d
 		";
-        $info = $wpdb->get_row( $wpdb->prepare( $sql_info, $candidate_id ) );
+        $info = $wpdb->get_row( $wpdb->prepare( $sql_info, $candidate_id ), ARRAY_A );
 
         if ( ! $info ) {
-            return new \WP_Error( 'not_found', __( 'Кандидата не знайдено.', 'fstu' ) );
+            return new \WP_Error( 'not_found', 'Кандидата не знайдено.' );
         }
 
-        // 2. Бізнес-правило: Перевірка сплати внесків
-        if ( ! $this->has_paid_dues_current_year( $user_id ) ) {
-            return new \WP_Error( 'no_dues', __( 'Голосування неможливе. Ви не сплатили членський внесок за поточний рік.', 'fstu' ) );
+        $question_id    = (int) $info['Question_ID'];
+        $quota          = (int) $info['SetCommission_CountMembers'];
+        $candidate_uid  = (int) $info['Candidate_User_ID'];
+        $candidate_name = $info['display_name'] ?: 'Невідомий';
+
+        // 2. Правила само-голосування
+        if ( $user_id === $candidate_uid ) {
+            if ( $vote_value === 1 ) {
+                return new \WP_Error( 'self_vote_yes', 'Ви не можете голосувати ЗА себе. Дозволено лише УТРИМАВСЯ.' );
+            }
+            if ( $vote_value === 2 ) {
+                // Зняття своєї кандидатури (Самовідвід)
+                $wpdb->query( 'START TRANSACTION' );
+                $wpdb->delete( 'CandidatesCommissionResult', [ 'CandidatesCommission_ID' => $candidate_id ], [ '%d' ] );
+                $res = $wpdb->delete( 'CandidatesCommission', [ 'CandidatesCommission_ID' => $candidate_id ], [ '%d' ] );
+
+                if ( false === $res ) {
+                    $wpdb->query( 'ROLLBACK' );
+                    return new \WP_Error( 'db_error', 'Помилка бази даних при знятті кандидатури.' );
+                }
+
+                $this->protocol->log_action( 'D', "Кандидат {$candidate_name} зняв свою кандидатуру (самовідвід) в опитуванні ID: {$question_id}", '✓' );
+                $wpdb->query( 'COMMIT' );
+
+                return 'self_removed'; // Спеціальний статус для AJAX
+            }
         }
 
-        // 3. Перевірка чи існує вже голос
-        $existing_vote_id = $wpdb->get_var( $wpdb->prepare(
+        // 3. Елегантне обмеження: якщо голосуємо "ЗА", всі інші "ЗА" цього юзера
+        // в цьому опитуванні автоматично стають "УТРИМАВСЯ" (0)
+        if ( $vote_value === 1 ) {
+            $sql_reset = "
+                UPDATE CandidatesCommissionResult cr
+                INNER JOIN CandidatesCommission cc ON cc.CandidatesCommission_ID = cr.CandidatesCommission_ID
+                SET cr.CandidatesCommissionResult_Value = 0
+                WHERE cc.Question_ID = %d 
+                  AND cr.User_ID = %d 
+                  AND cr.CandidatesCommissionResult_Value = 1
+                  AND cr.CandidatesCommission_ID != %d
+            ";
+            $wpdb->query( $wpdb->prepare( $sql_reset, $question_id, $user_id, $candidate_id ) );
+        }
+
+        // 4. Записуємо голос
+        $existing = $wpdb->get_var( $wpdb->prepare(
             "SELECT CandidatesCommissionResult_ID FROM CandidatesCommissionResult WHERE CandidatesCommission_ID = %d AND User_ID = %d",
             $candidate_id, $user_id
         ) );
 
-        // 4. Бізнес-правило: Ліміт голосів "ЗА" (якщо це новий голос "ЗА" або зміна на "ЗА")
-        if ( 1 === $vote_value ) {
-            $current_yes = $this->get_user_yes_votes_count( $user_id, (int) $info->Question_ID );
-
-            // Якщо голос вже існує і він був "ЗА", то ми його не плюсуємо до ліміту
-            $is_already_yes = $existing_vote_id ? ( 1 === (int) $wpdb->get_var( $wpdb->prepare( "SELECT CandidatesCommissionResult_Value FROM CandidatesCommissionResult WHERE CandidatesCommissionResult_ID = %d", $existing_vote_id ) ) ) : false;
-
-            if ( ! $is_already_yes && $current_yes >= (int) $info->SetCommission_CountMembers ) {
-                return new \WP_Error( 'limit_reached', sprintf( __( 'Ви вже вичерпали ліміт голосів "ЗА" (%d).', 'fstu' ), $info->SetCommission_CountMembers ) );
-            }
-        }
-
-        $protocol = new Commissions_Protocol_Service();
-        $vote_labels = [ 0 => 'УТРИМАВСЯ', 1 => 'ЗА', 2 => 'ПРОТИ' ];
-        $label = $vote_labels[ $vote_value ] ?? 'НЕВІДОМО';
-        $log_text = sprintf( 'Голосування: %s за кандидата %s', $label, $info->display_name );
-
-        // 5. Транзакційне збереження
-        $wpdb->query( 'START TRANSACTION' );
-
-        if ( $existing_vote_id ) {
+        if ( $existing ) {
             $result = $wpdb->update(
                 'CandidatesCommissionResult',
                 [ 'CandidatesCommissionResult_Value' => $vote_value ],
-                [ 'CandidatesCommissionResult_ID' => $existing_vote_id ],
+                [ 'CandidatesCommissionResult_ID' => $existing ],
                 [ '%d' ],
                 [ '%d' ]
             );
-            $log_type = 'U';
         } else {
             $result = $wpdb->insert(
                 'CandidatesCommissionResult',
                 [
-                    'CandidatesCommissionResult_DateCreate' => current_time( 'mysql' ),
-                    'CandidatesCommission_ID'               => $candidate_id,
-                    'User_ID'                               => $user_id,
-                    'CandidatesCommissionResult_Value'      => $vote_value,
+                    'CandidatesCommission_ID'          => $candidate_id,
+                    'User_ID'                          => $user_id,
+                    'CandidatesCommissionResult_Value' => $vote_value,
                 ],
-                [ '%s', '%d', '%d', '%d' ]
+                [ '%d', '%d', '%d' ]
             );
-            $log_type = 'I';
         }
 
         if ( false === $result ) {
-            $wpdb->query( 'ROLLBACK' );
-            $protocol->log_action( $log_type, $log_text, 'error' );
-            return new \WP_Error( 'db_error', __( 'Помилка збереження голосу.', 'fstu' ) );
+            return new \WP_Error( 'db_error', 'Помилка збереження в базу даних.' );
         }
-
-        // Логування в межах транзакції
-        $protocol->log_action( $log_type, $log_text, '✓' );
-        $wpdb->query( 'COMMIT' );
 
         return true;
     }
+    //---
 }
