@@ -2,8 +2,8 @@
 /**
  * Контролер модуля "Осередки федерації спортивного туризму".
  *
- * Version:     1.0.0
- * Date_update: 2026-04-18
+ * Version:     1.0.1
+ * Date_update: 2026-04-20
  *
  * @package FSTU\Modules\RegionalFST
  */
@@ -46,8 +46,16 @@ class Class_Regional_FST_List {
 
         $ver = '1.0.1';
 
+        // Підключаємо Select2 для модального вікна (якщо він ще не підключений темою)
+        if ( ! wp_style_is( 'select2', 'enqueued' ) ) {
+            wp_enqueue_style( 'select2', 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css', [], '4.1.0' );
+        }
+        if ( ! wp_script_is( 'select2', 'enqueued' ) ) {
+            wp_enqueue_script( 'select2', 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js', [ 'jquery' ], '4.1.0', true );
+        }
+
         wp_enqueue_style( 'fstu-regional-fst', FSTU_PLUGIN_URL . 'css/fstu-regional-fst.css', [], $ver );
-        wp_enqueue_script( 'fstu-regional-fst', FSTU_PLUGIN_URL . 'js/fstu-regional-fst.js', [ 'jquery' ], $ver, true );
+        wp_enqueue_script( 'fstu-regional-fst', FSTU_PLUGIN_URL . 'js/fstu-regional-fst.js', [ 'jquery', 'select2' ], $ver, true );
 
         // Передаємо права та налаштування у JS
         wp_localize_script( 'fstu-regional-fst', 'fstuRegionalFST', [

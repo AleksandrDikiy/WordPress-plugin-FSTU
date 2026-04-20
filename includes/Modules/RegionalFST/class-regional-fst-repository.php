@@ -3,8 +3,8 @@
  * Репозиторій модуля "Осередки федерації спортивного туризму".
  * Відповідає за всі SQL-запити до БД (читання даних).
  *
- * Version:     1.0.0
- * Date_update: 2026-04-18
+ * Version:     1.0.1
+ * Date_update: 2026-04-20
  *
  * @package FSTU\Modules\RegionalFST
  */
@@ -106,40 +106,56 @@ class Class_Regional_FST_Repository {
     }
 
     /**
-     * Швидкий пошук користувачів (Select2) через прямий SQL запит.
-     * Оминає повільний vUserFSTU для миттєвої видачі результатів.
+     * Пошук користувачів для AJAX Autocomplete (Надійна фільтрація на стороні PHP).
      *
-     * @param string $search Текст пошуку.
-     * @param int    $limit  Максимальна кількість результатів.
-     * @return array Масив [ id => ПІБ ]
+     * @param string $search_query Текст пошуку.
+     * @return array Масив з 'results' та 'query' (для Select2).
      */
-    public function search_users_for_select2( string $search, int $limit = 20 ): array {
+    public function search_users_for_select2( string $search_query ): array {
         global $wpdb;
 
-        if ( empty( $search ) ) {
-            return [];
+        if ( empty( $search_query ) ) {
+            return [ 'results' => [], 'query' => 'empty' ];
         }
 
-        $like_search = '%' . $wpdb->esc_like( $search ) . '%';
-        $cap_key     = $wpdb->prefix . 'capabilities';
+        // 1. Отримуємо всіх активних членів та групуємо за User_ID (використовуємо CAST як у Комісіях)
+        $sql = "SELECT User_ID, CAST(FIO AS CHAR) AS FIO FROM vUserFSTUnew WHERE UserFSTU = '1' OR UserFSTU = 1 GROUP BY User_ID";
+        $all_users = $wpdb->get_results( $sql, ARRAY_A );
 
-        // Використовуємо HAVING для фільтрації по згенерованому ПІБ
-        // Шукаємо тільки тих, хто має роль/capability 'userfstu'
-        $sql = "
-			SELECT u.ID as id,
-			       CONCAT_WS(' ',
-			           (SELECT meta_value FROM {$wpdb->usermeta} WHERE user_id = u.ID AND meta_key = 'last_name' LIMIT 1),
-			           (SELECT meta_value FROM {$wpdb->usermeta} WHERE user_id = u.ID AND meta_key = 'first_name' LIMIT 1),
-			           (SELECT meta_value FROM {$wpdb->usermeta} WHERE user_id = u.ID AND meta_key = 'Patronymic' LIMIT 1)
-			       ) as text
-			FROM {$wpdb->users} u
-			INNER JOIN {$wpdb->usermeta} cap ON cap.user_id = u.ID AND cap.meta_key = %s AND cap.meta_value LIKE '%userfstu%'
-			HAVING text LIKE %s OR u.user_email LIKE %s
-			ORDER BY text ASC
-			LIMIT %d
-		";
+        if ( empty( $all_users ) ) {
+            return [ 'results' => [], 'query' => $sql ];
+        }
 
-        return $wpdb->get_results( $wpdb->prepare( $sql, $cap_key, $like_search, $like_search, $limit ), ARRAY_A ) ?? [];
+        $results = [];
+        $search_lower = mb_strtolower( trim( $search_query ), 'UTF-8' );
+
+        // 2. Фільтруємо масив засобами PHP (обходимо всі проблеми з LIKE та кодуваннями)
+        foreach ( $all_users as $user ) {
+            if ( empty( $user['FIO'] ) ) {
+                continue;
+            }
+
+            $fio_lower = mb_strtolower( $user['FIO'], 'UTF-8' );
+
+            if ( mb_strpos( $fio_lower, $search_lower, 0, 'UTF-8' ) !== false ) {
+                // Select2 очікує саме ключі 'id' та 'text'
+                $results[] = [
+                    'id'   => $user['User_ID'],
+                    'text' => $user['FIO']
+                ];
+            }
+
+            if ( count( $results ) >= 30 ) {
+                break;
+            }
+        }
+
+        // Сортуємо результати за алфавітом
+        usort( $results, function( $a, $b ) {
+            return strcmp( $a['text'], $b['text'] );
+        } );
+
+        return $results;
     }
 
     /**

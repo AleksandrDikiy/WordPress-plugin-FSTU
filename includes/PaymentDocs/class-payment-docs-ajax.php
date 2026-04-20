@@ -2,8 +2,8 @@
 /**
  * AJAX-обробники модуля "Реєстр платіжних документів".
  *
- * Version:     1.0.0
- * Date_update: 2026-04-05
+ * Version:     1.0.1
+ * Date_update: 2026-04-20
  *
  * @package FSTU\PaymentDocs
  */
@@ -442,7 +442,8 @@ class Payment_Docs_Ajax {
         $commission = (float) $wpdb->get_var( "SELECT ParamValue FROM Settings WHERE ParamName='Unit_Dues_Commission'" );
         $bill_amount = $amount + $commission;
 
-        $fio = get_user_meta( $current_user_id, 'last_name', true ) . ' ' . get_user_meta( $current_user_id, 'first_name', true ) . ' ' . get_user_meta( $current_user_id, 'Patronymic', true );
+        // Витягуємо ПІБ через швидку в'юху, як вимагають стандарти
+        $fio = $wpdb->get_var( $wpdb->prepare( "SELECT FIO FROM vUserFSTUnew WHERE User_ID = %d", $current_user_id ) );
 
         $year_reg  = 2021;
         $this_year = (int) gmdate( 'Y' );
@@ -456,7 +457,7 @@ class Payment_Docs_Ajax {
                 SELECT d.Dues_ID, d.Dues_Summa, d.Dues_URL, d.Dues_DateCreate, d.Dues_ShopBillid, d.Dues_ApprovalCode, u.FIOshort
                 FROM vUserDues d 
                 JOIN vUser u ON u.User_ID = d.UserCreate
-                JOIN vUserRegion ur ON ur.User_ID = d.User_ID
+                JOIN vUserRegion ur ON ur.User_ID = d.UserCreate
                 WHERE ur.Unit_ID = %d 
                   AND d.Year_Name = %d 
                   AND d.Dues_Summa >= %f

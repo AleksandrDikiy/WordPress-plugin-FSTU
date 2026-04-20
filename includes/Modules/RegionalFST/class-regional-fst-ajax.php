@@ -2,8 +2,8 @@
 /**
  * Клас обробки AJAX запитів модуля "Осередки федерації спортивного туризму".
  *
- * Version:     1.0.0
- * Date_update: 2026-04-18
+ * Version:     1.0.1
+ * Date_update: 2026-04-20
  *
  * @package FSTU\Modules\RegionalFST
  */
@@ -33,6 +33,7 @@ class Class_Regional_FST_Ajax {
         add_action( 'wp_ajax_fstu_get_regional_fst_protocol', [ $this, 'handle_get_protocol' ] );
 
         add_action( 'wp_ajax_fstu_get_regional_fst_item', [ $this, 'handle_get_item' ] );
+        add_action( 'wp_ajax_fstu_search_users_for_regional', [ $this, 'handle_search_users' ] );
     }
 
     /**
@@ -194,7 +195,7 @@ class Class_Regional_FST_Ajax {
         $repo   = new Class_Regional_FST_Repository();
         $users  = $repo->search_users_for_select2( $search );
 
-        // Select2 очікує масив об'єктів з полями id та text
+        // Повертаємо результати та запит
         wp_send_json_success( [ 'results' => $users ] );
     }
     /**

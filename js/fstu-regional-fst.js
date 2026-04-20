@@ -1,7 +1,7 @@
 /**
  * Клієнтська логіка модуля "Осередки федерації спортивного туризму"
- * Version: 1.0.0
- * Date_update: 2026-04-18
+ * Version: 1.0.1
+ * Date_update: 2026-04-20
  */
 jQuery(document).ready(function($) {
     var state = {
@@ -112,8 +112,72 @@ jQuery(document).ready(function($) {
         });
 
         $('#fstu-regional-pagination-wrap').show();
-        // Тут виклик функції рендеру пагінації (опущено для лаконічності)
+        buildRegionalPagination(data.page, data.total_pages, data.total);
     }
+
+    // Генерація кнопок пагінації
+    function buildRegionalPagination(current, totalPages, totalItems) {
+        if (totalItems === 0) {
+            $('#fstu-regional-info').text('');
+            $('#fstu-regional-pagination').html('');
+            return;
+        }
+
+        var from = ((current - 1) * state.perPage) + 1;
+        var to = Math.min(current * state.perPage, totalItems);
+        $('#fstu-regional-info').text('Показано ' + from + '–' + to + ' з ' + totalItems + ' записів');
+
+        if (totalPages <= 1) {
+            $('#fstu-regional-pagination').html('');
+            return;
+        }
+
+        var html = '';
+        html += '<button type="button" class="fstu-btn fstu-btn--secondary fstu-btn--page-nav" id="reg-page-first" ' + (current <= 1 ? 'disabled' : '') + '>«</button>';
+        html += '<button type="button" class="fstu-btn fstu-btn--secondary fstu-btn--page-nav" id="reg-page-prev" ' + (current <= 1 ? 'disabled' : '') + '>‹</button>';
+
+        var start = Math.max(1, current - 2);
+        var end = Math.min(totalPages, current + 2);
+
+        if (start > 1) {
+            html += '<button type="button" class="fstu-btn fstu-btn--page" data-page="1">1</button>';
+            if (start > 2) html += '<span class="fstu-pagination__ellipsis" style="padding: 0 5px; color: #7f8c8d;">…</span>';
+        }
+
+        for (var i = start; i <= end; i++) {
+            var active = (i === current) ? ' fstu-btn--page-active' : '';
+            html += '<button type="button" class="fstu-btn fstu-btn--page' + active + '" data-page="' + i + '">' + i + '</button>';
+        }
+
+        if (end < totalPages) {
+            if (end < totalPages - 1) html += '<span class="fstu-pagination__ellipsis" style="padding: 0 5px; color: #7f8c8d;">…</span>';
+            html += '<button type="button" class="fstu-btn fstu-btn--page" data-page="' + totalPages + '">' + totalPages + '</button>';
+        }
+
+        html += '<button type="button" class="fstu-btn fstu-btn--secondary fstu-btn--page-nav" id="reg-page-next" ' + (current >= totalPages ? 'disabled' : '') + '>›</button>';
+        html += '<button type="button" class="fstu-btn fstu-btn--secondary fstu-btn--page-nav" id="reg-page-last" ' + (current >= totalPages ? 'disabled' : '') + '>»</button>';
+
+        $('#fstu-regional-pagination').html(html);
+    }
+
+    // Обробники кліків по пагінації
+    $(document).on('click', '#reg-page-first', function() { if (!$(this).prop('disabled')) { state.page = 1; loadTable(); } });
+    $(document).on('click', '#reg-page-prev', function() { if (!$(this).prop('disabled')) { state.page--; loadTable(); } });
+    $(document).on('click', '#reg-page-next', function() { if (!$(this).prop('disabled')) { state.page++; loadTable(); } });
+    $(document).on('click', '#reg-page-last', function() {
+        if (!$(this).prop('disabled')) {
+            // Витягуємо останню сторінку з тексту інфо або можемо зберегти її в state
+            var totalStr = $('#fstu-regional-info').text().match(/з (\d+)/)[1];
+            state.page = Math.ceil(parseInt(totalStr) / state.perPage);
+            loadTable();
+        }
+    });
+    $(document).on('click', '#fstu-regional-pagination .fstu-btn--page', function() {
+        if (!$(this).hasClass('fstu-btn--page-active')) {
+            state.page = parseInt($(this).data('page'));
+            loadTable();
+        }
+    });
 
     // 3. ПОШУК ТА ПАГІНАЦІЯ
     $('#fstu-regional-search').on('keyup', function(e) {
@@ -195,7 +259,7 @@ jQuery(document).ready(function($) {
                         };
                     },
                     processResults: function (data) {
-                        return { results: data.data.results };
+                        return { results: (data.success && data.data && data.data.results) ? data.data.results : [] };
                     },
                     cache: true
                 },
