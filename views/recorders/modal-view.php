@@ -5,7 +5,7 @@
  * Version:     1.0.0
  * Date_update: 2026-04-11
  *
- * @package FSTU\Modules\Registry\Recorders
+ * @package FSTU\Modules\UserFstu\Recorders
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

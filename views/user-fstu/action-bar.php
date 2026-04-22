@@ -5,7 +5,7 @@
  * Version:     1.0.1
  * Date_update: 2026-04-06
  *
- * @package FSTU\Registry\Views
+ * @package FSTU\UserFstu\Views
  *
  * @var bool   $is_admin         Чи є поточний користувач адміністратором.
  * @var bool   $is_logged_in     Чи авторизований поточний користувач.
@@ -35,14 +35,6 @@ $link_postanova   = $link_postanova ?? 'https://www.fstu.com.ua/postanova/';   /
 			<span class="fstu-btn__icon" aria-hidden="true">+</span> Заявка
 		</button>
 	<?php endif; ?>
-
-	<!-- Оновити список -->
-	<button type="button"
-	        class="fstu-btn fstu-btn--secondary"
-	        id="fstu-btn-refresh"
-	        title="Оновити список">
-		<span class="fstu-btn__icon" aria-hidden="true">↻</span> Оновити
-	</button>
 
     <?php if ( $is_admin || in_array( 'userregistrar', (array) wp_get_current_user()->roles, true ) ) : ?>
 		<!-- Протокол — тільки для авторизованих -->

@@ -242,7 +242,7 @@ jQuery( document ).ready( function ( $ ) {
 
 		$( document ).on( 'click', '#fstu-calendar-applications-back-to-events', function () {
 			resetApplicationsProtocolView();
-			activateShellTab( 'registry' );
+			activateShellTab( 'user-fstu' );
 		} );
 
 		$( document ).on( 'click', '#fstu-calendar-applications-protocol-btn', function () {
@@ -488,7 +488,7 @@ jQuery( document ).ready( function ( $ ) {
 		} );
 
 		$( document ).on( 'click', '#fstu-calendar-results-back-to-events', function () {
-			activateShellTab( 'registry' );
+			activateShellTab( 'user-fstu' );
 		} );
 
 		$( document ).on( 'click', '#fstu-calendar-add-race-btn', function () {

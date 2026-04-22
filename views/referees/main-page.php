@@ -5,7 +5,7 @@
  * Version:     1.1.0
  * Date_update: 2026-04-09
  *
- * @package FSTU\Modules\Registry\Referees
+ * @package FSTU\Modules\UserFstu\Referees
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

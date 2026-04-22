@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Version:     1.0.2
  * Date_update: 2026-04-11
  *
- * @package FSTU\Modules\Registry\Recorders
+ * @package FSTU\Modules\UserFstu\Recorders
  */
 class Recorders_Service {
 

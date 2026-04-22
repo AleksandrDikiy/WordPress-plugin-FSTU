@@ -5,7 +5,7 @@
  * Version:     2.0.0
  * Date_update: 2026-04-14
  *
- * @package FSTU\Modules\Registry\Steering
+ * @package FSTU\Modules\UserFstu\Steering
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

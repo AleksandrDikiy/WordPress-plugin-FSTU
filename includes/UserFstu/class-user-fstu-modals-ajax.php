@@ -2,23 +2,47 @@
 /**
  * AJAX-обробники для модальних вікон (Картка, Клуб, Протокол, Звіт) модуля "Реєстр".
  *
- * Version:     1.3.0
- * Date_update: 2026-04-07
+ * Version:     1.3.1
+ * Date_update: 2026-04-21
  *
- * @package FSTU\Registry
+ * @package FSTU\UserFstu
  */
 
-namespace FSTU\Registry;
+namespace FSTU\UserFstu;
+
+use FSTU\Core\Capabilities;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class Registry_Modals_Ajax {
+class User_Fstu_Modals_Ajax {
 
-	/**
-	 * Реєструє AJAX хуки WordPress для модальних вікон.
-	 */
+    private const LOG_NAME = 'UserFstu';
+
+    /**
+     * Хелпер логування (транзакційний).
+     */
+    private function log_action( string $type, string $text, string $status ): bool {
+        global $wpdb;
+        $inserted = $wpdb->insert(
+            'Logs',
+            [
+                'User_ID'         => get_current_user_id(),
+                'Logs_DateCreate' => current_time( 'mysql' ),
+                'Logs_Type'       => $type,
+                'Logs_Name'       => self::LOG_NAME,
+                'Logs_Text'       => $text,
+                'Logs_Error'      => $status,
+            ],
+            [ '%d', '%s', '%s', '%s', '%s', '%s' ]
+        );
+        return $inserted !== false;
+    }
+
+    /**
+     * Реєструє AJAX хуки WordPress для модальних вікон.
+     */
 	public function init(): void {
 		// Авторизовані користувачі
 		add_action( 'wp_ajax_fstu_get_member_card', [ $this, 'handle_get_member_card' ] );
@@ -41,7 +65,7 @@ class Registry_Modals_Ajax {
      * Отримує дані для вкладок "Картки члена ФСТУ".
      */
     public function handle_get_member_card(): void {
-        check_ajax_referer( Registry_List::NONCE_ACTION, 'nonce' );
+        check_ajax_referer( User_Fstu_List::NONCE_ACTION, 'nonce' );
 
         $user_id = absint( $_POST['user_id'] ?? 0 );
         if ( ! $user_id ) {
@@ -461,7 +485,7 @@ class Registry_Modals_Ajax {
 	 * Отримує інформацію про клуб.
 	 */
 	public function handle_get_club_info(): void {
-		check_ajax_referer( Registry_List::NONCE_ACTION, 'nonce' );
+		check_ajax_referer( User_Fstu_List::NONCE_ACTION, 'nonce' );
 
 		$club_id = absint( $_POST['club_id'] ?? 0 );
 		if ( ! $club_id ) {
@@ -494,9 +518,9 @@ class Registry_Modals_Ajax {
      * Отримує дані для універсальної таблиці "Протокол".
      */
     public function handle_get_protocol(): void {
-        check_ajax_referer( Registry_List::NONCE_ACTION, 'nonce' );
+        check_ajax_referer( User_Fstu_List::NONCE_ACTION, 'nonce' );
 
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! Capabilities::can_view_user_fstu_protocol() ) {
             wp_send_json_error( [ 'message' => 'Недостатньо прав.' ] );
         }
 
@@ -556,7 +580,7 @@ class Registry_Modals_Ajax {
      * Отримує дані для таблиці "Звіт" (статистика по областях).
      */
     public function handle_get_report(): void {
-        check_ajax_referer( Registry_List::NONCE_ACTION, 'nonce' );
+        check_ajax_referer( User_Fstu_List::NONCE_ACTION, 'nonce' );
 
         $current_user = wp_get_current_user();
         $roles        = (array) $current_user->roles;
@@ -654,10 +678,10 @@ class Registry_Modals_Ajax {
      * Отримує дані для заповнення форми редагування.
      */
     public function handle_get_user_edit_data(): void {
-        check_ajax_referer( Registry_List::NONCE_ACTION, 'nonce' );
+        check_ajax_referer( User_Fstu_List::NONCE_ACTION, 'nonce' );
         $user_id = absint( $_POST['user_id'] ?? 0 );
 
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! Capabilities::can_manage_user_fstu() ) {
             wp_send_json_error( [ 'message' => 'Недостатньо прав.' ] );
         }
 
@@ -687,10 +711,10 @@ class Registry_Modals_Ajax {
      * Зберігає оновлені персональні дані.
      */
     public function handle_save_user_edit_data(): void {
-        check_ajax_referer( Registry_List::NONCE_ACTION, 'nonce' );
+        check_ajax_referer( User_Fstu_List::NONCE_ACTION, 'nonce' );
         $user_id = absint( $_POST['edit_user_id'] ?? 0 );
 
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! Capabilities::can_manage_user_fstu() ) {
             wp_send_json_error( [ 'message' => 'Недостатньо прав.' ] );
         }
 
@@ -727,16 +751,15 @@ class Registry_Modals_Ajax {
             }
         }
 
-        // Записуємо в Протокол (як у старому коді)
         global $wpdb;
-        $wpdb->insert( 'Logs', [
-            'Logs_DateCreate' => current_time( 'mysql' ),
-            'User_ID'         => get_current_user_id(),
-            'Logs_Type'       => 'U',
-            'Logs_Name'       => 'Personal',
-            'Logs_Text'       => "Оновлено дані користувача ID: {$user_id}",
-            'Logs_Error'      => 'успішно'
-        ], [ '%s', '%d', '%s', '%s', '%s', '%s' ] );
+        $wpdb->query( 'START TRANSACTION' );
+
+        // Записуємо в Протокол через транзакцію
+        if ( ! $this->log_action( 'U', "Оновлено дані користувача ID: {$user_id}", '✓' ) ) {
+            $wpdb->query( 'ROLLBACK' );
+            wp_send_json_error( [ 'message' => 'Помилка запису в протокол.' ] );
+        }
+        $wpdb->query( 'COMMIT' );
 
         wp_send_json_success( [ 'message' => 'Дані успішно оновлено!' ] );
     }
@@ -744,9 +767,9 @@ class Registry_Modals_Ajax {
      * Зберігає прив'язку користувача до клубу.
      */
     public function handle_save_user_club(): void {
-        check_ajax_referer( Registry_List::NONCE_ACTION, 'nonce' );
+        check_ajax_referer( User_Fstu_List::NONCE_ACTION, 'nonce' );
 
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! Capabilities::can_manage_user_fstu() ) {
             wp_send_json_error( [ 'message' => 'Недостатньо прав.' ] );
         }
 
@@ -758,6 +781,8 @@ class Registry_Modals_Ajax {
         }
 
         global $wpdb;
+        $wpdb->query( 'START TRANSACTION' );
+
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery
         $result = $wpdb->insert(
             'UserClub',
@@ -770,28 +795,25 @@ class Registry_Modals_Ajax {
         );
 
         if ( $result === false ) {
-            wp_send_json_error( [ 'message' => 'Помилка бази даних: ' . $wpdb->last_error ] );
+            $wpdb->query( 'ROLLBACK' );
+            wp_send_json_error( [ 'message' => 'Помилка бази даних під час збереження клубу.' ] );
         }
 
-        // Записуємо в Протокол
-        $wpdb->insert( 'Logs', [
-            'Logs_DateCreate' => current_time( 'mysql' ),
-            'User_ID'         => get_current_user_id(),
-            'Logs_Type'       => 'I',
-            'Logs_Name'       => 'UserClub',
-            'Logs_Text'       => "Додано клуб ID: {$club_id} користувачу ID: {$user_id}",
-            'Logs_Error'      => 'успішно'
-        ], [ '%s', '%d', '%s', '%s', '%s', '%s' ] );
+        if ( ! $this->log_action( 'I', "Додано клуб ID: {$club_id} користувачу ID: {$user_id}", '✓' ) ) {
+            $wpdb->query( 'ROLLBACK' );
+            wp_send_json_error( [ 'message' => 'Помилка запису в протокол.' ] );
+        }
 
+        $wpdb->query( 'COMMIT' );
         wp_send_json_success( [ 'message' => 'Клуб успішно додано!' ] );
     }
     /**
      * Надсилає користувачу стандартне посилання для скидання пароля.
      */
     public function handle_reset_send_password(): void {
-        check_ajax_referer( Registry_List::NONCE_ACTION, 'nonce' );
+        check_ajax_referer( User_Fstu_List::NONCE_ACTION, 'nonce' );
 
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! Capabilities::can_manage_user_fstu() ) {
             wp_send_json_error( [ 'message' => 'Недостатньо прав.' ] );
         }
 
@@ -844,8 +866,10 @@ class Registry_Modals_Ajax {
      * Отримує поточний ОФСТ користувача для відображення у селекті.
      */
     public function handle_get_user_ofst(): void {
-        check_ajax_referer( Registry_List::NONCE_ACTION, 'nonce' );
-        if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error( [ 'message' => 'Недостатньо прав.' ] );
+        check_ajax_referer( User_Fstu_List::NONCE_ACTION, 'nonce' );
+        if ( ! Capabilities::can_manage_user_fstu() ) {
+            wp_send_json_error( [ 'message' => 'Недостатньо прав.' ] );
+        }
 
         $user_id = absint( $_POST['user_id'] ?? 0 );
         global $wpdb;
@@ -864,8 +888,10 @@ class Registry_Modals_Ajax {
      * Зберігає новий ОФСТ для користувача.
      */
     public function handle_save_user_ofst(): void {
-        check_ajax_referer( Registry_List::NONCE_ACTION, 'nonce' );
-        if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error( [ 'message' => 'Недостатньо прав.' ] );
+        check_ajax_referer( User_Fstu_List::NONCE_ACTION, 'nonce' );
+        if ( ! Capabilities::can_manage_user_fstu() ) {
+            wp_send_json_error( [ 'message' => 'Недостатньо прав.' ] );
+        }
 
         $user_id = absint( $_POST['user_id'] ?? 0 );
         $unit_id = absint( $_POST['unit_id'] ?? 0 );
@@ -917,9 +943,9 @@ class Registry_Modals_Ajax {
      * Надсилає користувачу нагадування про сплату членських внесків.
      */
     public function handle_notify_dues(): void {
-        check_ajax_referer( Registry_List::NONCE_ACTION, 'nonce' );
+        check_ajax_referer( User_Fstu_List::NONCE_ACTION, 'nonce' );
 
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! Capabilities::can_manage_user_fstu() ) {
             wp_send_json_error( [ 'message' => 'Недостатньо прав.' ] );
         }
 
@@ -971,9 +997,9 @@ class Registry_Modals_Ajax {
      * "М'яке" видалення користувача з ФСТУ (зміна ролі).
      */
     public function handle_delete_user(): void {
-        check_ajax_referer( Registry_List::NONCE_ACTION, 'nonce' );
+        check_ajax_referer( User_Fstu_List::NONCE_ACTION, 'nonce' );
 
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! Capabilities::can_delete_user_fstu() ) {
             wp_send_json_error( [ 'message' => 'Недостатньо прав.' ] );
         }
 
@@ -1005,10 +1031,9 @@ class Registry_Modals_Ajax {
      * Отримує список років, за які користувач ЩЕ НЕ платив внески.
      */
     public function handle_get_user_dues_years(): void {
-        check_ajax_referer( Registry_List::NONCE_ACTION, 'nonce' );
-        $user_roles = (array) wp_get_current_user()->roles;
-        // доступ до ролей Адміністратор та Реєстратор
-        if ( empty( array_intersect( ['administrator', 'userregistrar'], $user_roles ) ) ) {
+        check_ajax_referer( User_Fstu_List::NONCE_ACTION, 'nonce' );
+
+        if ( ! Capabilities::can_manage_user_fstu() ) {
             wp_send_json_error( [ 'message' => 'Доступно лише адміністраторам та реєстраторам.' ] );
         }
 
@@ -1037,8 +1062,8 @@ class Registry_Modals_Ajax {
      * Зберігає квитанцію про сплату членського внеску та надсилає листи.
      */
     public function handle_save_user_dues(): void {
-        check_ajax_referer( Registry_List::NONCE_ACTION, 'nonce' );
-        if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error( [ 'message' => 'Недостатньо прав.' ] );
+        check_ajax_referer( User_Fstu_List::NONCE_ACTION, 'nonce' );
+        if ( ! Capabilities::can_manage_user_fstu() ) wp_send_json_error( [ 'message' => 'Недостатньо прав.' ] );
 
         $user_id = absint( $_POST['user_id'] ?? 0 );
         $year_id = absint( $_POST['year_id'] ?? 0 );

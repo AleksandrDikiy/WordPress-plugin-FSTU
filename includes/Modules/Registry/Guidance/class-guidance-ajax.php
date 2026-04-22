@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Version:     1.1.2
  * Date_update: 2026-04-12
  *
- * @package FSTU\Modules\Registry\Guidance
+ * @package FSTU\Modules\UserFstu\Guidance
  */
 class Guidance_Ajax {
 

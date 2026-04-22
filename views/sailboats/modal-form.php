@@ -5,7 +5,7 @@
  * Version:     1.8.0
  * Date_update: 2026-04-08
  *
- * @package FSTU\Modules\Registry\Sailboats
+ * @package FSTU\Modules\UserFstu\Sailboats
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

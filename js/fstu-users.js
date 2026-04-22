@@ -3,8 +3,8 @@
  * Обробка: фільтри, пагінація, модальні вікна, форма заявки.
  * Жодних inline-скриптів у PHP!
  *
- * Version:     1.4.0
- * Date_update: 2026-04-10
+ * Version:     1.4.1
+ * Date_update: 2026-04-20
  *
  * @package FSTU
  */
@@ -49,7 +49,7 @@ jQuery( document ).ready( function ( $ ) {
 	// ─── DOM-елементи ─────────────────────────────────────────────────────────
 	const $tbody        = $( '#fstu-registry-tbody' );
 	const $loader       = $( '#fstu-loader' );
-	const $paginInfo    = $( '#fstu-pagination-info' );
+	const $paginInfo    = $( '#fstu-pagination-info-text' );
 	const $paginPages   = $( '#fstu-page-numbers' );
 	const $btnFirst     = $( '#fstu-page-first' );
 	const $btnPrev      = $( '#fstu-page-prev' );
@@ -81,7 +81,7 @@ jQuery( document ).ready( function ( $ ) {
 			url:    fstuRegistry.ajaxUrl,
 			method: 'POST',
 			data:   {
-				action:   'fstu_get_registry',
+				action:   'fstu_get_users',
 				nonce:    fstuRegistry.nonce,
 				page:     state.page,
 				per_page: state.per_page,
@@ -91,10 +91,11 @@ jQuery( document ).ready( function ( $ ) {
 				if ( response.success ) {
 					renderTableRows( response.data.html );
 					updatePagination( response.data );
-					// ДОДАЄМО ВИВІД У КОНСОЛЬ ДЛЯ АДМІНІВ
+					/*/ ДОДАЄМО ВИВІД У КОНСОЛЬ ДЛЯ АДМІНІВ
 					if ( response.data.debug_sql ) {
 						console.log( '🔍 SQL ЗАПИТ ТАБЛИЦІ:\n', response.data.debug_sql );
 					}
+					*/
 				} else {
 					showTableError( fstuRegistry.strings.errorGeneric );
 				}
@@ -132,9 +133,9 @@ jQuery( document ).ready( function ( $ ) {
 		// Оновлення центрального блоку статистики (без дублювання "Усього")
 		if ( state.total > 0 ) {
 			$( '#fstu-stat-paid' ).text( data.total_paid || 0 );
-			$( '#fstu-stat-wrap' ).show();
+			$( '#fstu-stat-wrap' ).removeClass( 'fstu-hidden' );
 		} else {
-			$( '#fstu-stat-wrap' ).hide();
+			$( '#fstu-stat-wrap' ).addClass( 'fstu-hidden' );
 		}
 
 		if ( state.total === 0 ) {
@@ -158,7 +159,7 @@ jQuery( document ).ready( function ( $ ) {
 	function buildPageNumbers( current, total ) {
 		if ( total <= 1 ) return '';
 
-		const MAX_VISIBLE = 7;
+		const MAX_VISIBLE = 5;
 		let pages = [];
 
 		if ( total <= MAX_VISIBLE ) {
@@ -213,9 +214,6 @@ jQuery( document ).ready( function ( $ ) {
 			$( '#fstu-filter-search, .fstu-search-input' ).val( '' ).trigger( 'input' );
 		} );
 
-		$( document ).on( 'click', '#fstu-btn-refresh', function () {
-			fetchRegistry();
-		} );
 	}
 
 	// ─── Обробники подій: Пагінація ───────────────────────────────────────────
@@ -1640,33 +1638,56 @@ jQuery( document ).ready( function ( $ ) {
 			}
 		});
 	});
-	// ─── Обробка меню опцій (Розумне позиціонування) ──────────────────────────
+	// ─── Обробка меню опцій (Анти-обрізання через position: fixed) ────────────
 	$( document ).on( 'click', '.fstu-opts-btn', function ( e ) {
 		e.stopPropagation();
-		const $parent = $( this ).parent();
+		const $btn = $( this );
+		const $parent = $btn.parent();
+		const $menu = $parent.find( '.fstu-opts-list' );
 
 		// Закриваємо всі інші відкриті меню
 		$( '.fstu-opts' ).not( $parent ).removeClass( 'fstu-opts--open' );
+		$( '.fstu-opts-list' ).not( $menu ).css( { display: 'none' } );
 
-		// Розумне відкриття (вгору чи вниз)
-		const menuHeight = 280; // Приблизна висота меню
-		const windowHeight = $( window ).height();
-		const rect = this.getBoundingClientRect();
-
-		// Якщо знизу немає місця, але зверху є — відкриваємо вгору
-		if ( rect.bottom + menuHeight > windowHeight && rect.top > menuHeight ) {
-			$parent.addClass( 'fstu-dropup' );
-		} else {
-			$parent.removeClass( 'fstu-dropup' );
+		if ( $parent.hasClass( 'fstu-opts--open' ) ) {
+			$parent.removeClass( 'fstu-opts--open' );
+			$menu.css( { display: 'none' } );
+			return;
 		}
 
-		$parent.toggleClass( 'fstu-opts--open' );
+		$parent.addClass( 'fstu-opts--open' );
+		$menu.css( { display: 'block', position: 'fixed', zIndex: 999999 } );
+
+		// Розрахунок координат
+		const rect = $btn[0].getBoundingClientRect();
+		const menuHeight = $menu.outerHeight() || 280;
+		const windowHeight = $( window ).height();
+
+		let top = rect.bottom + 2; // за замовчуванням відкриваємо вниз
+		let left = rect.left - ($menu.outerWidth() - rect.width); // вирівнювання по правому краю кнопки
+
+		// Відкриття вгору, якщо знизу немає місця
+		if ( rect.bottom + menuHeight > windowHeight && rect.top > menuHeight ) {
+			top = rect.top - menuHeight - 2;
+		}
+
+		// Коригування, щоб не вилазило за лівий край
+		if ( left < 10 ) left = 10;
+
+		$menu.css( { top: top + 'px', left: left + 'px' } );
 	} );
 
-	// Закриття меню при кліку в будь-якому іншому місці
+	// Закриття меню при кліку в будь-якому іншому місці або при скролі
 	$( document ).on( 'click', function () {
-		$( '.fstu-opts' ).removeClass( 'fstu-opts--open' ).removeClass( 'fstu-dropup' );
+		$( '.fstu-opts' ).removeClass( 'fstu-opts--open' );
+		$( '.fstu-opts-list' ).css( { display: 'none' } );
 	} );
+
+	// Закриваємо меню при скролі (щоб зафіксоване меню не "відривалося" від кнопки)
+	window.addEventListener('scroll', function() {
+		$( '.fstu-opts' ).removeClass( 'fstu-opts--open' );
+		$( '.fstu-opts-list' ).css( { display: 'none' } );
+	}, true); // true = capture phase, важливо для скролу всередині таблиці
 
 	// ─── Старт ────────────────────────────────────────────────────────────────
 	init();

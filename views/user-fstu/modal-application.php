@@ -5,7 +5,7 @@
  * Version:     1.2.0
  * Date_update: 2026-04-07
  *
- * @package FSTU\Registry\Views
+ * @package FSTU\UserFstu\Views
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -51,7 +51,7 @@ $referee_categories = $wpdb->get_results( "
             </div>
 
             <form class="fstu-app-form fstu-hidden" id="fstu-application-form" novalidate>
-                <?php wp_nonce_field( \FSTU\Registry\Registry_List::NONCE_ACTION, 'fstu_app_nonce' ); ?>
+                <?php wp_nonce_field( \FSTU\UserFstu\User_Fstu_List::NONCE_ACTION, 'fstu_app_nonce' ); ?>
                 <div class="fstu-honeypot" aria-hidden="true">
                     <input type="text" name="fstu_website" tabindex="-1" autocomplete="off" value="">
                 </div>

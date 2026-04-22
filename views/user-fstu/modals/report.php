@@ -2,7 +2,7 @@
 /**
  * View: Модальне вікно "Звіт".
  *
- * @package FSTU\Registry\Views\Modals
+ * @package FSTU\UserFstu\Views\Modals
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

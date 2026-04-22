@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Version:     1.0.0
  * Date_update: 2026-04-12
  *
- * @package FSTU\Modules\Registry\Guidance
+ * @package FSTU\Modules\UserFstu\Guidance
  */
 class Guidance_List {
 

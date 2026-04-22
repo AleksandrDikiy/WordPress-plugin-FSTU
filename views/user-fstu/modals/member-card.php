@@ -6,7 +6,7 @@
  * Version:     1.2.0
  * Date_update: 2026-04-04
  *
- * @package FSTU\Registry\Views\Modals
+ * @package FSTU\UserFstu\Views\Modals
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

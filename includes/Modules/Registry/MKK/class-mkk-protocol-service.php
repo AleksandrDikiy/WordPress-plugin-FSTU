@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Version:     1.0.0
  * Date_update: 2026-04-12
  *
- * @package FSTU\Modules\Registry\MKK
+ * @package FSTU\Modules\UserFstu\MKK
  */
 class MKK_Protocol_Service {
 

@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Version:     1.2.0
  * Date_update: 2026-04-07
  *
- * @package FSTU\Modules\Registry\Sailboats
+ * @package FSTU\Modules\UserFstu\Sailboats
  */
 class Sailboats_Notification_Service {
 

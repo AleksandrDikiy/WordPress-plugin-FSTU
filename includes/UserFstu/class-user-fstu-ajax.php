@@ -3,13 +3,13 @@
  * AJAX-обробники модуля "Реєстр членів ФСТУ".
  * Всі запити до БД виконуються виключно через $wpdb->prepare().
  *
- * Version:     1.3.0
- * Date_update: 2026-04-10
+ * Version:     1.3.1
+ * Date_update: 2026-04-20
  *
- * @package FSTU\Registry
+ * @package FSTU\UserFstu
  */
 
-namespace FSTU\Registry;
+namespace FSTU\UserFstu;
 
 use FSTU\Core\Capabilities;
 
@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class Registry_Ajax {
+class User_Fstu_Ajax {
 
 	/** Кількість записів на сторінці за замовчуванням. */
 	private const DEFAULT_PER_PAGE = 10;
@@ -30,8 +30,8 @@ class Registry_Ajax {
 	 */
     public function init(): void {
         // Отримання списку членів (авторизовані та гості)
-        add_action( 'wp_ajax_fstu_get_registry',        [ $this, 'handle_get_registry' ] );
-        add_action( 'wp_ajax_nopriv_fstu_get_registry', [ $this, 'handle_get_registry' ] );
+        add_action( 'wp_ajax_fstu_get_users',        [ $this, 'handle_get_users' ] );
+        add_action( 'wp_ajax_nopriv_fstu_get_users', [ $this, 'handle_get_users' ] );
 
         // Перевірка email при реєстрації
         add_action( 'wp_ajax_fstu_check_email',        [ $this, 'handle_check_email' ] );
@@ -55,7 +55,7 @@ class Registry_Ajax {
      * Отримує список ОФСТ (осередків) для обраної області.
      */
     public function handle_get_units_by_region(): void {
-        check_ajax_referer( Registry_List::NONCE_ACTION, 'nonce' );
+        check_ajax_referer( User_Fstu_List::NONCE_ACTION, 'nonce' );
 
         $region_id = absint( $_POST['region_id'] ?? 0 );
 
@@ -81,7 +81,7 @@ class Registry_Ajax {
      * Отримує список Міст для обраної області.
      */
     public function handle_get_cities_by_region(): void {
-        check_ajax_referer( Registry_List::NONCE_ACTION, 'nonce' );
+        check_ajax_referer( User_Fstu_List::NONCE_ACTION, 'nonce' );
         $region_id = absint( $_POST['region_id'] ?? 0 );
         global $wpdb;
 
@@ -95,18 +95,18 @@ class Registry_Ajax {
 
 	// ─── Публічні AJAX обробники ─────────────────────────────────────────────
 
-	/**
-	 * Обробляє AJAX-запит отримання списку членів ФСТУ з фільтрами та пагінацією.
-	 */
-	public function handle_get_registry(): void {
-		// 1. Перевірка nonce (захист від CSRF)
-		check_ajax_referer( Registry_List::NONCE_ACTION, 'nonce' );
+    /**
+     * Обробляє AJAX-запит отримання списку членів ФСТУ з фільтрами та пагінацією.
+     */
+    public function handle_get_users(): void {
+        // 1. Перевірка nonce (захист від CSRF)
+        check_ajax_referer( User_Fstu_List::NONCE_ACTION, 'nonce' );
 
-		// 2. Санітизація вхідних параметрів
-		$filters = $this->sanitize_filters( $_POST );
+        // 2. Санітизація вхідних параметрів
+        $filters = $this->sanitize_filters( $_POST );
 
-		// 3. Отримання даних
-		$result = $this->get_registry_data( $filters );
+        // 3. Отримання даних
+        $result = $this->get_users_data( $filters );
 
 		// 4. Формування HTML рядків таблиці
 		$rows_html = $this->build_table_rows( $result['rows'], $filters['page'], $filters['per_page'] );
@@ -120,10 +120,11 @@ class Registry_Ajax {
             'total_pages' => (int) ceil( $result['total'] / $filters['per_page'] ),
         ];
 
-        // ДОДАЄМО ВИВІД ЗАПИТУ ДЛЯ ДЕБАГУ АДМІНІСТРАТОРАМ
+        /*/ ДОДАЄМО ВИВІД ЗАПИТУ ДЛЯ ДЕБАГУ АДМІНІСТРАТОРАМ
         if ( current_user_can( 'administrator' ) && ! empty( $result['debug_sql'] ) ) {
             $response_data['debug_sql'] = preg_replace('/\s+/', ' ', $result['debug_sql']);
         }
+        */
 
         wp_send_json_success( $response_data );
 	}
@@ -132,7 +133,7 @@ class Registry_Ajax {
 	 * Перевіряє, чи існує email у системі WordPress.
 	 */
 	public function handle_check_email(): void {
-		check_ajax_referer( Registry_List::NONCE_ACTION, 'nonce' );
+		check_ajax_referer( User_Fstu_List::NONCE_ACTION, 'nonce' );
 
 		$email = sanitize_email( wp_unslash( $_POST['email'] ?? '' ) );
 
@@ -151,7 +152,7 @@ class Registry_Ajax {
 	 */
 	public function handle_submit_application(): void {
 		// 1. Перевірка nonce
-		check_ajax_referer( Registry_List::NONCE_ACTION, 'nonce' );
+		check_ajax_referer( User_Fstu_List::NONCE_ACTION, 'nonce' );
 
 		// 2. Honeypot перевірка (якщо заповнено — бот)
 		$honeypot = sanitize_text_field( wp_unslash( $_POST['fstu_website'] ?? '' ) );
@@ -353,7 +354,7 @@ class Registry_Ajax {
 	 * @param array $filters Санітизовані фільтри.
 	 * @return array{rows: array, total: int}
 	 */
-	private function get_registry_data( array $filters ): array {
+    private function get_users_data( array $filters ): array {
 		global $wpdb;
 
 		$prev_year   = $filters['year'] - 1;
@@ -476,19 +477,19 @@ class Registry_Ajax {
 			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 			: $wpdb->prepare( $select_sql, $limit, $offset );
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery
-		$rows = $wpdb->get_results( $prepare_sql, ARRAY_A );
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery
+        $rows = $wpdb->get_results( $prepare_sql, ARRAY_A );
 
         if ( empty( $rows ) ) {
-            return [ 'rows' => [], 'total' => $total, 'debug_sql' => $prepare_sql ];
+            return [ 'rows' => [], 'total' => $total ];
         }
 
-		// ── Збагачення рядків додатковими даними ─────────────────────────────
-		$user_ids = array_column( $rows, 'user_id' );
-		$enriched = $this->enrich_rows( $rows, $user_ids, $prev_year, $curr_year, $filters );
+        // ── Збагачення рядків додатковими даними ─────────────────────────────
+        $user_ids = array_column( $rows, 'user_id' );
+        $enriched = $this->enrich_rows( $rows, $user_ids, $prev_year, $curr_year, $filters );
 
-        return [ 'rows' => $enriched, 'total' => $total, 'total_paid' => $total_paid, 'debug_sql' => $prepare_sql ];
-	}
+        return [ 'rows' => $enriched, 'total' => $total, 'total_paid' => $total_paid ];
+    }
 
 	/**
 	 * Збагачує список користувачів даними про членські квитки, внески та клуби.
@@ -641,12 +642,17 @@ class Registry_Ajax {
 			return '<tr><td colspan="11" class="fstu-no-results">Записів не знайдено.</td></tr>';
 		}
 
-		$is_admin     = current_user_can( 'manage_options' );
-		$is_logged_in = is_user_logged_in();
-		$member_card_permissions = Capabilities::get_member_card_applications_permissions();
-		$current_user_id = get_current_user_id();
+        $is_admin         = current_user_can( 'manage_options' );
+        $is_logged_in     = is_user_logged_in();
+        $member_card_permissions = Capabilities::get_member_card_applications_permissions();
+        $current_user_id  = get_current_user_id();
+        $can_view_sailing = Capabilities::can_view_sailing_dues_columns();
+        $can_manage_users = Capabilities::can_manage_user_fstu();
+        $can_delete_users = Capabilities::can_delete_user_fstu();
 
-		// Отримуємо базовий URL кабінету
+        // Отримуємо базовий URL кабінету
+
+        // Отримуємо базовий URL кабінету
 		$cabinet_base_url = class_exists( '\FSTU\Modules\PersonalCabinet\Personal_Cabinet_List' )
 			? \FSTU\Modules\PersonalCabinet\Personal_Cabinet_List::get_module_url()
 			: home_url( '/personal/' );
@@ -679,7 +685,7 @@ class Registry_Ajax {
 			// ПІБ як посилання на особистий кабінет
 			$profile_url = add_query_arg( 'ViewID', $uid, $cabinet_base_url );
 			$fio = sprintf(
-				'<a href="%s" target="_blank" class="fstu-registry-profile-link" style="color: inherit; text-decoration: underline;">%s</a>',
+				'<a href="%s" target="_blank" class="fstu-user-fstu-profile-link" style="color: inherit; text-decoration: underline;">%s</a>',
 				esc_url( $profile_url ),
 				$fio_text
 			);
@@ -735,50 +741,65 @@ class Registry_Ajax {
 			$sail_prev_html = $this->format_dues( $row['sail_prev'] );
 			$sail_curr_html = $this->format_dues( $row['sail_curr'] );
 
-			// Колонки внесків — тільки для авторизованих (захист даних)
-			$dues_html = $is_logged_in
-				? "<td class=\"fstu-td fstu-td--dues\">{$dues_prev_html}</td>
-				   <td class=\"fstu-td fstu-td--dues\">{$dues_curr_html}</td>
-				   <td class=\"fstu-td fstu-td--dues\">{$sail_prev_html}</td>
-				   <td class=\"fstu-td fstu-td--dues\">{$sail_curr_html}</td>"
-				: '<td colspan="4" class="fstu-td fstu-td--locked" title="Тільки для авторизованих">—</td>';
+            // Колонки внесків — тільки для авторизованих (захист даних)
+            if ( $is_logged_in ) {
+                $dues_html = "<td class=\"fstu-td fstu-td--dues\">{$dues_prev_html}</td><td class=\"fstu-td fstu-td--dues\">{$dues_curr_html}</td>";
+                if ( $can_view_sailing ) {
+                    $dues_html .= "<td class=\"fstu-td fstu-td--dues\">{$sail_prev_html}</td><td class=\"fstu-td fstu-td--dues\">{$sail_curr_html}</td>";
+                }
+            } else {
+                $colspan = $can_view_sailing ? 4 : 2;
+                $dues_html = '<td colspan="' . $colspan . '" class="fstu-td fstu-td--locked" title="Тільки для авторизованих">—</td>';
+            }
 
-			// ── Формування меню опцій (БЕЗ КОНФЛІКТІВ З ТЕМОЮ) ─────────────
-			$btn_html = '';
-			if ( $is_logged_in ) {
-				$btn_html = '
+            // ── Формування меню опцій (БЕЗ КОНФЛІКТІВ З ТЕМОЮ) ─────────────
+            $btn_html = '';
+            if ( $is_logged_in ) {
+                $btn_html = '
 				<div class="fstu-opts">
 					<button type="button" class="fstu-btn-action fstu-opts-btn" title="Опції">▾</button>
 					<ul class="fstu-opts-list">
 						<li><a href="#" class="fstu-action-view" data-id="'.$uid.'">🔍 Перегляд</a></li>';
 
-				if ( $is_admin ) {
-					$btn_html .= '
+                if ( $can_manage_users ) {
+                    $btn_html .= '
 						<li><a href="#" class="fstu-action-edit" data-id="'.$uid.'">📝 Редагування</a></li>
 						<li><a href="#" class="fstu-action-dues" data-id="'.$uid.'">💰 Додати чл. внесок</a></li>
 						<li><a href="#" class="fstu-action-club" data-id="'.$uid.'">👤 Додати клуб</a></li>
 						<li><a href="#" class="fstu-action-ofst" data-id="'.$uid.'">⛺ Змінити ОФСТ</a></li>
 						<li><hr class="fstu-opts-divider"></li>
 						<li><a href="#" class="fstu-action-password" data-id="'.$uid.'">✉️ Змінити пароль</a></li>
-						<li><a href="#" class="fstu-action-notify" data-id="'.$uid.'">📧 Повідомити про внесок</a></li>
+						<li><a href="#" class="fstu-action-notify" data-id="'.$uid.'">📧 Повідомити про внесок</a></li>';
+                }
+
+                if ( $can_delete_users ) {
+                    $btn_html .= '
 						<li><hr class="fstu-opts-divider"></li>
 						<li><a href="#" class="fstu-action-delete" data-id="'.$uid.'" style="color:#c0392b !important;">❌ Видалення</a></li>';
-				}
+                }
 
-				if ( $can_open_member_card ) {
-					$member_card_label = $current_user_id === $uid && ! empty( $member_card_permissions['canSelfService'] )
-						? ( $has_member_card ? '🪪 Моє посвідчення' : '🪪 Оформити посвідчення' )
-						: '🪪 Посвідчення ФСТУ';
-					$member_card_action = $can_view_member_card ? 'view' : 'create';
+                if ( $can_open_member_card ) {
+                    // Додаємо розділювач, якщо кнопка видалення відсутня, але є права на керування
+                    if ( $can_manage_users && ! $can_delete_users ) {
+                        $btn_html .= '<li><hr class="fstu-opts-divider"></li>';
+                    } elseif ( ! $can_manage_users ) {
+                        // Якщо це звичайний користувач (тільки перегляд і картка), теж додаємо розділювач
+                        $btn_html .= '<li><hr class="fstu-opts-divider"></li>';
+                    }
 
-					$btn_html .= '
+                    $member_card_label = $current_user_id === $uid && ! empty( $member_card_permissions['canSelfService'] )
+                        ? ( $has_member_card ? '🪪 Моє посвідчення' : '🪪 Оформити посвідчення' )
+                        : '🪪 Посвідчення ФСТУ';
+                    $member_card_action = $can_view_member_card ? 'view' : 'create';
+
+                    $btn_html .= '
 						<li><a href="#" class="fstu-action-member-card" data-id="'.$uid.'" data-member-card-action="'.$member_card_action.'">'.$member_card_label.'</a></li>';
-				}
+                }
 
-				$btn_html .= '
+                $btn_html .= '
 					</ul>
 				</div>';
-			}
+            }
 
 			$html .= "
 			<tr class=\"fstu-row\" data-user-id=\"{$uid}\">

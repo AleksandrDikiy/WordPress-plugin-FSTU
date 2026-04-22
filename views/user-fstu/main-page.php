@@ -2,20 +2,20 @@
 /**
  * View: Головний каркас модуля "Реєстр членів ФСТУ".
  *
- * @package FSTU\Registry\Views
+ * @package FSTU\UserFstu\Views
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-use FSTU\Registry\Registry_List;
+use FSTU\UserFstu\User_Fstu_List;
 
 // Дані для фільтрів
-$units        = Registry_List::get_units();
-$tourism_types = Registry_List::get_tourism_types();
-$clubs        = Registry_List::get_clubs();
-$years        = Registry_List::get_years();
+$units        = User_Fstu_List::get_units();
+$tourism_types = User_Fstu_List::get_tourism_types();
+$clubs        = User_Fstu_List::get_clubs();
+$years        = User_Fstu_List::get_years();
 $current_year = (int) date( 'Y' );
 $is_admin     = current_user_can( 'manage_options' );
 $is_logged_in = is_user_logged_in();

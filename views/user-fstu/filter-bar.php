@@ -18,14 +18,16 @@ $years         = $years ?? [];
 $current_year  = $current_year ?? gmdate( 'Y' );
 ?>
 <div class="fstu-filter-bar" role="search" aria-label="Фільтри реєстру">
-    <div class="fstu-filter-row fstu-filter-row--main" style="align-items: center; flex-wrap: wrap; gap: 10px;">
+    <div class="fstu-filter-row fstu-filter-row--main" style="align-items: center; flex-wrap: nowrap; gap: 10px; overflow-x: auto; padding-bottom: 4px;">
 
-        <div class="fstu-filter-item">
+        <div class="fstu-filter-item" style="flex-shrink: 0;">
             <select id="fstu-filter-unit" name="unit_id" class="fstu-select fstu-filter-trigger" data-filter="unit_id">
+
                 <option value="0">УСІ ОСЕРЕДКИ</option>
                 <?php foreach ( $units as $unit ) : ?>
                     <option value="<?php echo absint( $unit['Unit_ID'] ); ?>"><?php echo esc_html( $unit['Unit_ShortName'] ); ?></option>
                 <?php endforeach; ?>
+
             </select>
         </div>
 
@@ -38,7 +40,7 @@ $current_year  = $current_year ?? gmdate( 'Y' );
             </select>
         </div>
 
-        <div class="fstu-filter-item">
+        <div class="fstu-filter-item" style="max-width: 150px; flex-shrink: 1;">
             <select id="fstu-filter-club" name="club_id" class="fstu-select fstu-filter-trigger" data-filter="club_id">
                 <option value="0">ВСІ КЛУБИ</option>
                 <?php foreach ( $clubs as $club ) : ?>
@@ -60,12 +62,6 @@ $current_year  = $current_year ?? gmdate( 'Y' );
                 <input type="checkbox" id="fstu-filter-fstu-only" name="fstu_only" class="fstu-checkbox fstu-filter-trigger" data-filter="fstu_only" value="1" checked>
                 <span class="fstu-checkbox-text">ФСТУ</span>
             </label>
-        </div>
-
-        <div class="fstu-filter-item" style="position: relative; flex-grow: 1; min-width: 200px;">
-            <span class="fstu-search-icon" aria-hidden="true" style="position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 14px;">🔍</span>
-            <input type="text" id="fstu-filter-search" class="fstu-search-input fstu-filter-trigger fstu-select" placeholder="пошук за ПІБ" style="padding-left: 28px; width: 100%;">
-            <button type="button" class="fstu-search-clear fstu-hidden" id="fstu-search-clear" aria-label="Очистити пошук" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 12px; cursor: pointer;">✕</button>
         </div>
 
     </div>

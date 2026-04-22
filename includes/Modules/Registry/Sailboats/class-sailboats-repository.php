@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Version:     1.11.2
  * Date_update: 2026-04-14
  *
- * @package FSTU\Modules\Registry\Sailboats
+ * @package FSTU\Modules\UserFstu\Sailboats
  */
 class Sailboats_Repository {
 

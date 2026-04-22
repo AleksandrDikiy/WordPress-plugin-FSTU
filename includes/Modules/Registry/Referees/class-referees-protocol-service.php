@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Version:     1.0.0
  * Date_update: 2026-04-08
  *
- * @package FSTU\Modules\Registry\Referees
+ * @package FSTU\Modules\UserFstu\Referees
  */
 class Referees_Protocol_Service {
 

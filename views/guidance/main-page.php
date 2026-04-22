@@ -5,7 +5,7 @@
  * Version:     1.0.1
  * Date_update: 2026-04-12
  *
- * @package FSTU\Modules\Registry\Guidance
+ * @package FSTU\Modules\UserFstu\Guidance
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

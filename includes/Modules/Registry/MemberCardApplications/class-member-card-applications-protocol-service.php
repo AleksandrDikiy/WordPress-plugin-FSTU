@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Version:     1.0.0
  * Date_update: 2026-04-10
  *
- * @package FSTU\Modules\Registry\MemberCardApplications
+ * @package FSTU\Modules\UserFstu\MemberCardApplications
  */
 class Member_Card_Applications_Protocol_Service {
 

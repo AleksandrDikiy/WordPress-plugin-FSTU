@@ -33,7 +33,7 @@
 - `views/registry/table-list.php` — HTML самої таблиці (`<thead>`, `<tbody>`).
 
 **3. Скрипти та Стилі (Assets)**
-- `js/fstu-registry.js` — уся логіка на стороні клієнта (відправка AJAX, обробка кліків, ініціалізація модалок). Жодного inline-коду в PHP!
+- `js/fstu-users.js` — уся логіка на стороні клієнта (відправка AJAX, обробка кліків, ініціалізація модалок). Жодного inline-коду в PHP!
 - `css/fstu-registry.css` — стилі. Всі класи повинні мати обов'язковий префікс `.fstu-` (щоб уникнути конфліктів з темою).
 
 **4. Service / Repository шар для складних модулів**
@@ -131,7 +131,7 @@ fstu_new/
 │   └── ...
 │
 └── js/                         # ⚙️ Клієнтська логіка (jQuery)
-    ├── fstu-registry.js
+    ├── fstu-users.js
     ├── fstu-applications.js
     ├── fstu-sailboats.js
     └── ...

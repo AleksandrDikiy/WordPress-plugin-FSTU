@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Version:     1.1.0
  * Date_update: 2026-04-08
  *
- * @package FSTU\Modules\Registry\Steering
+ * @package FSTU\Modules\UserFstu\Steering
  */
 class Steering_Notification_Service {
 

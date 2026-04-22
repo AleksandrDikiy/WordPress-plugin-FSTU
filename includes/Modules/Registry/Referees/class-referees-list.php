@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Version:     1.1.1
  * Date_update: 2026-04-14
  *
- * @package FSTU\Modules\Registry\Referees
+ * @package FSTU\Modules\UserFstu\Referees
  */
 class Referees_List {
 

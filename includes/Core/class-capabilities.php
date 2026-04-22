@@ -176,9 +176,18 @@ class Capabilities {
     public const DELETE_BOARD                = 'fstu_delete_board';
     public const VIEW_BOARD_PROTOCOL         = 'fstu_view_board_protocol';
     public const VOTE_BOARD                  = 'fstu_vote_board';
-	/**
-	 * Ініціалізує capability-модель для поточного запиту.
-	 */
+
+    // Права для модуля реєстру членів ФСТУ (UserFstu)
+    public const VIEW_USER_FSTU          = 'fstu_view_user_fstu';
+    public const MANAGE_USER_FSTU        = 'fstu_manage_user_fstu';
+    public const DELETE_USER_FSTU        = 'fstu_delete_user_fstu';
+    public const VIEW_USER_FSTU_PROTOCOL = 'fstu_view_user_fstu_protocol';
+    public const VIEW_USER_FSTU_REPORT   = 'fstu_view_user_fstu_report';
+    public const VIEW_SAILING_DUES_COLUMNS = 'fstu_view_sailing_dues_columns';
+
+    /**
+     * Ініціалізує capability-модель для поточного запиту.
+     */
 	public static function bootstrap(): void {
 		static $bootstrapped = false;
 
@@ -355,8 +364,15 @@ class Capabilities {
                 self::DELETE_BOARD               => true,
                 self::VIEW_BOARD_PROTOCOL        => true,
                 self::VOTE_BOARD                 => true,
+                // UserFstu
+                self::VIEW_USER_FSTU             => true,
+                self::MANAGE_USER_FSTU           => true,
+                self::DELETE_USER_FSTU           => true,
+                self::VIEW_USER_FSTU_PROTOCOL    => true,
+                self::VIEW_USER_FSTU_REPORT      => true,
+                self::VIEW_SAILING_DUES_COLUMNS  => true,
             ],
-			'sailadministrator' => [
+            'sailadministrator' => [
 				self::ACCESS_ADMIN                  => true,
 				self::VIEW_SAILBOATS                => true,
 				self::SUBMIT_SAILBOATS_APPLICATIONS => true,
@@ -386,8 +402,9 @@ class Capabilities {
                 self::MANAGE_TYPE_BOAT        => true,
                 self::DELETE_TYPE_BOAT        => true,
                 self::VIEW_TYPE_BOAT_PROTOCOL => true,
-			],
-			'globalregistrar' => [
+                self::VIEW_SAILING_DUES_COLUMNS => true,
+            ],
+            'globalregistrar' => [
 				self::ACCESS_ADMIN                  => true,
 				self::VIEW_PARTICIPATION_TYPE       => true,
 				self::MANAGE_PARTICIPATION_TYPE     => true,
@@ -480,8 +497,14 @@ class Capabilities {
                 self::DELETE_BOARD               => true,
                 self::VIEW_BOARD_PROTOCOL        => true,
                 self::VOTE_BOARD                 => true,
+                // UserFstu
+                self::VIEW_USER_FSTU             => true,
+                self::MANAGE_USER_FSTU           => true,
+                self::DELETE_USER_FSTU           => true,
+                self::VIEW_USER_FSTU_PROTOCOL    => true,
+                self::VIEW_USER_FSTU_REPORT      => true,
             ],
-			'userregistrar' => [
+            'userregistrar' => [
 				self::ACCESS_ADMIN             => true,
 				self::VIEW_PARTICIPATION_TYPE  => true,
 				self::MANAGE_PARTICIPATION_TYPE => true,
@@ -550,8 +573,13 @@ class Capabilities {
                 self::MANAGE_REGIONAL_FST        => true,
                 self::DELETE_REGIONAL_FST        => true,
                 self::VIEW_REGIONAL_FST_PROTOCOL => true,
-			],
-			'userfstu' => [
+                // UserFstu
+                self::VIEW_USER_FSTU             => true,
+                self::MANAGE_USER_FSTU           => true,
+                self::VIEW_USER_FSTU_PROTOCOL    => true,
+                self::VIEW_USER_FSTU_REPORT      => true,
+            ],
+            'userfstu' => [
 				self::VIEW_PARTICIPATION_TYPE => true,
 				self::VIEW_TOURTYPE => true,
 				self::VIEW_HOURCATEGORIES => true,
@@ -605,8 +633,9 @@ class Capabilities {
                 self::VIEW_SAILBOATS_FINANCE_COLUMNS    => true,
                 self::VIEW_STEERING                     => true,
                 self::VIEW_STEERING_FINANCE_COLUMNS     => true,
-			],
-		];
+                self::VIEW_SAILING_DUES_COLUMNS         => true,
+            ],
+        ];
 
 		foreach ( $role_caps as $role_name => $caps ) {
 			$role = get_role( $role_name );
@@ -2135,5 +2164,51 @@ class Capabilities {
             'canViewContacts' => $can_view_contacts,
         ];
     }
+
+    /**
+     * Чи може користувач керувати реєстром ФСТУ.
+     */
+    public static function can_manage_user_fstu(): bool {
+        return current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_USER_FSTU );
+    }
+
+    /**
+     * Чи може користувач видаляти записи з реєстру ФСТУ.
+     */
+    public static function can_delete_user_fstu(): bool {
+        return current_user_can( 'manage_options' ) || current_user_can( self::DELETE_USER_FSTU );
+    }
+
+    /**
+     * Чи може користувач переглядати протокол реєстру ФСТУ.
+     */
+    public static function can_view_user_fstu_protocol(): bool {
+        return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_USER_FSTU_PROTOCOL );
+    }
+
+    /**
+     * Чи може користувач формувати звіт по областях.
+     */
+    public static function can_view_user_fstu_report(): bool {
+        return current_user_can( 'manage_options' ) || current_user_can( self::VIEW_USER_FSTU_REPORT );
+    }
+
+    /**
+     * Чи може користувач бачити вітрильні фінансові колонки (віт-2025, віт-2026).
+     */
+    public static function can_view_sailing_dues_columns(): bool {
+        if ( current_user_can( 'manage_options' ) || current_user_can( self::VIEW_SAILING_DUES_COLUMNS ) ) {
+            return true;
+        }
+
+        // Fallback: перевірка на специфічну роль 'usersail', якщо вона ще не вписана глобально
+        $current_user = wp_get_current_user();
+        if ( $current_user instanceof \WP_User && in_array( 'usersail', (array) $current_user->roles, true ) ) {
+            return true;
+        }
+
+        return false;
+    }
+
     //----------
 }

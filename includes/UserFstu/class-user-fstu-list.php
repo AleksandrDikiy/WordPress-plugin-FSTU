@@ -4,32 +4,32 @@
  * Реєструє шорткод [fstu_registry], підключає скрипти/стилі,
  * передає локалізовані змінні у JS.
  *
- * Version:     1.1.0
- * Date_update: 2026-04-10
+ * Version:     1.1.1
+ * Date_update: 2026-04-20
  *
- * @package FSTU\Registry
+ * @package FSTU\UserFstu
  */
 
-namespace FSTU\Registry;
+namespace FSTU\UserFstu;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-class Registry_List {
+class User_Fstu_List {
 
 	/** Slug для enqueue (JS/CSS handle). */
-	private const ASSET_HANDLE = 'fstu-registry';
+	private const ASSET_HANDLE = 'fstu-user-fstu';
 
-	/** Nonce action для AJAX-запитів реєстру. */
-	public const NONCE_ACTION = 'fstu_registry_nonce';
+    /** Nonce action для AJAX-запитів реєстру. */
+    public const NONCE_ACTION = 'fstu_registry_nonce';
 
-	/**
-	 * Реєструє WordPress хуки.
-	 */
-	public function init(): void {
-		add_shortcode( 'fstu_registry', [ $this, 'render_shortcode' ] );
-	}
+    /**
+     * Реєструє WordPress хуки.
+     */
+    public function init(): void {
+        add_shortcode( 'fstu_users', [ $this, 'render_shortcode' ] );
+    }
 
     /**
      * Рендерить HTML модуля реєстру.
@@ -61,7 +61,7 @@ class Registry_List {
         }
 
         ob_start();
-        include FSTU_PLUGIN_DIR . 'views/registry/main-page.php';
+        include FSTU_PLUGIN_DIR . 'views/user-fstu/main-page.php';
         return ob_get_clean();
     }
 
@@ -73,23 +73,23 @@ class Registry_List {
 		//$ver = FSTU_VERSION;
         $ver = time(); // Тимчасово для скидання кешу!
 		$member_card_module_url = class_exists( '\\FSTU\\Modules\\Registry\\MemberCardApplications\\Member_Card_Applications_List' )
-			? \FSTU\Modules\Registry\MemberCardApplications\Member_Card_Applications_List::get_module_url( 'registry' )
+			? \FSTU\Modules\Registry\MemberCardApplications\Member_Card_Applications_List::get_module_url( 'user-fstu' )
 			: '';
 
-		wp_enqueue_style(
-			self::ASSET_HANDLE,
-			FSTU_PLUGIN_URL . 'css/fstu-registry.css',
-			[],
-			$ver
-		);
+        wp_enqueue_style(
+            self::ASSET_HANDLE,
+            FSTU_PLUGIN_URL . 'css/fstu-users.css',
+            [],
+            $ver
+        );
 
-		wp_enqueue_script(
-			self::ASSET_HANDLE,
-			FSTU_PLUGIN_URL . 'js/fstu-registry.js',
-			[ 'jquery' ],
-			$ver,
-			true // у футері
-		);
+        wp_enqueue_script(
+            self::ASSET_HANDLE,
+            FSTU_PLUGIN_URL . 'js/fstu-users.js',
+            [ 'jquery' ],
+            $ver,
+            true // у футері
+        );
 
 		// Передаємо дані у JS (без inline-скриптів у PHP!)
 		wp_localize_script(

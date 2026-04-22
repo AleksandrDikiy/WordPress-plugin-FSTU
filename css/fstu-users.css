@@ -126,10 +126,10 @@
 	display:       inline-flex;
 	align-items:   center;
 	justify-content: center;
-	width:         24px;
-	height:        24px;
+	width:         22px;
+	height:        22px;
 	padding:       0;
-	font-size:     14px;
+	font-size:     12px;
 	border:        none;
 	border-radius: var(--fstu-radius);
 	cursor:        pointer;
@@ -251,6 +251,36 @@
 	background:   transparent;
 	height:       100%;
 }
+
+/* Пошук у шапці таблиці */
+.fstu-th-with-search {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	white-space: nowrap;
+}
+
+input.fstu-input--in-header.fstu-search-input {
+	background: rgba(255, 255, 255, 0.9) !important;
+	border: 1px solid #bbb !important;
+	height: 20px !important; /* Ультракомпактна висота */
+	max-height: 20px !important;
+	width: 210px !important; /* Ультракомпактна ширина */
+	max-width: 210px !important;
+	min-width: 110px !important;
+	padding: 0 4px !important;
+	font-size: 11px !important;
+	border-radius: 2px !important;
+	margin: 0 !important;
+	box-shadow: none !important;
+	flex: 0 0 110px !important; /* Забороняємо гнучке розтягування */
+}
+input.fstu-input--in-header.fstu-search-input:focus {
+	background: #fff !important;
+	border-color: var(--fstu-primary) !important;
+	outline: none !important;
+}
+
 .fstu-search-wrap:focus-within {
 	border-color: var(--fstu-primary);
 	box-shadow:   0 0 0 2px rgba(192,57,43,.15);
@@ -291,52 +321,67 @@
 }
 
 .fstu-table {
-	width:           100%;
-	border-collapse: collapse;
-	font-size:       var(--fstu-font-size);
-	table-layout:    auto;
+	width:           100% !important; /* Повертаємо 100% ширини */
+	border-collapse: collapse !important;
+	font-size:       12px !important;
+	table-layout:    auto !important; /* Авто-розподіл вільного простору між колонками ПІБ та ОФСТ */
+	margin:          0 !important;
 }
 
 /* Заголовок таблиці */
 .fstu-thead .fstu-th {
-	background:    var(--fstu-bg-header);
-	padding:       5px 6px;
-	text-align:    left;
-	font-weight:   600;
-	border:        1px solid #b7d7b7;
-	white-space:   nowrap;
-	font-size:     var(--fstu-font-size);
-	position:      sticky;
-	top:           0;
-	z-index:       2;
+	background:    var(--fstu-bg-header) !important;
+	padding:       3px 6px !important;
+	text-align:    left !important;
+	font-weight:   600 !important;
+	border:        1px solid #b7d7b7 !important;
+	white-space:   nowrap !important;
+	font-size:     12px !important;
+	position:      sticky !important;
+	top:           0 !important;
+	z-index:       2 !important;
 }
-.fstu-th--num     { width: 32px; text-align: center; }
-.fstu-th--fstu    { width: 36px; text-align: center; }
-.fstu-th--card    { width: 80px; }
-.fstu-th--fio     { min-width: 200px; }
-.fstu-th--ofst    { min-width: 140px; }
-.fstu-th--club    { min-width: 80px; }
-.fstu-th--dues    { width: 62px; text-align: center; }
-.fstu-th--dues-locked { width: 248px; text-align: center; color: var(--fstu-text-light); }
-.fstu-th--actions { width: 30px; text-align: center; }
+
+/* Ширини колонок - мінімальні */
+.fstu-th--num     { width: 25px !important; text-align: center !important; }
+.fstu-th--fstu    { width: 30px !important; text-align: center !important; }
+.fstu-th--card    { width: auto !important; white-space: nowrap !important; }
+.fstu-th--fio     { width: auto !important; white-space: nowrap !important; }
+.fstu-th--ofst    { width: auto !important; white-space: nowrap !important; }
+.fstu-th--club    { width: auto !important; white-space: nowrap !important; }
+.fstu-th--dues    { width: 45px !important; text-align: center !important; }
+.fstu-th--dues-locked { width: auto !important; text-align: center !important; color: var(--fstu-text-light) !important; }
+.fstu-th--actions { width: 30px !important; text-align: center !important; }
 
 /* Рядки тіла таблиці */
 .fstu-tbody .fstu-row:nth-child(odd)  { background: var(--fstu-bg-row-odd); }
 .fstu-tbody .fstu-row:nth-child(even) { background: var(--fstu-bg-row-even); }
 .fstu-tbody .fstu-row:hover           { background: var(--fstu-bg-row-hover); }
 
-.fstu-td {
-	padding:     3px 6px;
-	border:      1px solid var(--fstu-border);
-	vertical-align: middle;
-	font-size:   var(--fstu-font-size);
-	line-height: 1.4;
+/* Максимально сильний селектор (через ID), щоб гарантовано перебити стилі теми WordPress */
+table#fstu-registry-table tbody.fstu-tbody tr.fstu-row td.fstu-td {
+	padding:        3px 6px !important;
+	border:         1px solid var(--fstu-border) !important;
+	vertical-align: middle !important;
+	font-size:      12px !important;
+	line-height:    1.2 !important;
+	height:         auto !important;
 }
-.fstu-td--num     { text-align: center; color: var(--fstu-text-light); font-size: var(--fstu-font-size-sm); }
-.fstu-td--fstu    { text-align: center; }
-.fstu-td--dues    { text-align: right; }
-.fstu-td--actions { text-align: center; padding: 2px; }
-.fstu-td--locked  { text-align: center; color: var(--fstu-text-light); }
+
+/* Захист від глобальних стилів теми (обнуляємо відступи в посиланнях і тексті всередині клітинок) */
+table#fstu-registry-table tbody.fstu-tbody tr.fstu-row td.fstu-td a,
+table#fstu-registry-table tbody.fstu-tbody tr.fstu-row td.fstu-td span,
+table#fstu-registry-table tbody.fstu-tbody tr.fstu-row td.fstu-td p {
+	margin: 0 !important;
+	padding: 0 !important;
+	line-height: 1.2 !important;
+	display: inline-block;
+}
+.fstu-td--num     { text-align: center !important; color: var(--fstu-text-light) !important; font-size: 11px !important; }
+.fstu-td--fstu    { text-align: center !important; }
+.fstu-td--dues    { text-align: right !important; }
+.fstu-td--actions { text-align: center !important; padding: 2px !important; }
+.fstu-td--locked  { text-align: center !important; color: var(--fstu-text-light) !important; }
 
 /* Повідомлення "немає записів" */
 .fstu-no-results {
@@ -454,32 +499,46 @@
 	gap:         3px;
 }
 
+.fstu-select--compact {
+	width: 48px !important; /* Зменшено для компактності */
+	min-width: 48px !important;
+	max-width: 48px !important;
+	height: 26px !important;
+	padding: 2px 14px 2px 4px !important; /* Збільшено відступ справа для стрілочки */
+	font-size: 12px !important;
+	display: inline-block !important;
+	background-position: right 2px center !important; /* Зсуваємо стрілочку ближче до краю */
+}
+
 .fstu-btn--page {
-	min-width:     28px;
-	height:        28px;
-	padding:       0 6px;
-	font-size:     12px;
-	background:    #fff;
-	border:        1px solid var(--fstu-border);
-	border-radius: var(--fstu-radius);
-	color:         var(--fstu-text);
+	min-width:     28px !important;
+	height:        28px !important;
+	padding:       0 6px !important;
+	font-size:     12px !important;
+	background:    #f8f9fa !important;
+	border:        1px solid #d1d5db !important;
+	border-radius: var(--fstu-radius) !important;
+	color:         #333 !important;
 	cursor:        pointer;
-	transition:    background .12s, border-color .12s;
+	transition:    background .12s, border-color .12s, color .12s;
+	box-shadow:    none !important;
+	margin:        0 !important;
 }
 .fstu-btn--page:hover:not(:disabled) {
-	background:   var(--fstu-secondary);
-	border-color: #bbb;
+	background:   #e9ecef !important;
+	border-color: #b3b3b3 !important;
 }
 .fstu-btn--page-active,
 .fstu-btn--page-active:hover {
-	background:   var(--fstu-primary);
-	border-color: var(--fstu-primary);
-	color:        #fff;
-	font-weight:  600;
+	background:   var(--fstu-primary) !important;
+	border-color: var(--fstu-primary) !important;
+	color:        #fff !important;
+	font-weight:  600 !important;
 }
 .fstu-btn--page:disabled {
 	opacity: .4;
 	cursor:  not-allowed;
+	background: #fff !important;
 }
 
 .fstu-pagination__ellipsis {
@@ -487,6 +546,7 @@
 	color:    var(--fstu-text-light);
 	font-size: 12px;
 }
+
 
 /* ─── Honeypot (прихований від людей) ────────────────────────────────────── */
 .fstu-honeypot {
@@ -950,71 +1010,60 @@ body.fstu-modal-open { overflow: hidden; }
 }
 
 /* ==========================================================================
-   МЕНЮ ОПЦІЙ (Без конфліктів з Bootstrap та темою)
+   МЕНЮ ОПЦІЙ (Без конфліктів з Bootstrap та темою - FIXED POSITION)
    ========================================================================== */
-#fstu-registry .fstu-opts {
+.fstu-opts {
 	position: relative;
 	display: inline-block;
 }
 
 /* Кнопка */
-#fstu-registry .fstu-opts-btn {
+.fstu-opts-btn {
 	background-color: #c0392b !important;
 	color: #ffffff !important;
 	border: none !important;
-	padding: 4px 10px !important;
+	padding: 0 !important;
 	border-radius: 4px !important;
 	cursor: pointer !important;
 	font-size: 14px !important;
 	line-height: 1 !important;
 	box-shadow: none !important;
-	height: auto !important;
-	width: auto !important;
+	width: 26px !important;
+	height: 26px !important;
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
 }
-#fstu-registry .fstu-opts-btn:hover {
+.fstu-opts-btn:hover {
 	background-color: #a93226 !important;
 }
 
-/* Список меню */
-#fstu-registry ul.fstu-opts-list {
+/* Список меню (Position Fixed керується через JS) */
+ul.fstu-opts-list {
 	display: none;
-	position: absolute !important;
-	right: 0 !important;
-	top: 100% !important;
+	position: fixed !important; /* ВАЖЛИВО: Захист від overflow-x: auto таблиці */
 	min-width: 220px !important;
 	background: #ffffff !important;
 	border: 1px solid #ccc !important;
 	box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
 	padding: 5px 0 !important;
-	margin: 2px 0 0 0 !important;
-	z-index: 99999 !important;
-}
-#fstu-registry .fstu-opts--open ul.fstu-opts-list {
-	display: block !important;
-}
-
-/* Відкриття ВГОРУ (керується через JS) */
-#fstu-registry .fstu-opts.fstu-dropup ul.fstu-opts-list {
-	top: auto !important;
-	bottom: 100% !important;
-	margin-top: 0 !important;
-	margin-bottom: 2px !important;
-	box-shadow: 0 -4px 12px rgba(0,0,0,0.15) !important;
+	margin: 0 !important;
+	z-index: 999999 !important;
 }
 
 /* Елементи списку */
-#fstu-registry ul.fstu-opts-list li {
+ul.fstu-opts-list li {
 	padding: 0 !important;
 	margin: 0 !important;
 	list-style: none !important;
 	text-indent: 0 !important;
 }
-#fstu-registry ul.fstu-opts-list li::before {
+ul.fstu-opts-list li::before {
 	display: none !important;
 }
 
 /* Посилання в меню */
-#fstu-registry ul.fstu-opts-list li a {
+ul.fstu-opts-list li a {
 	padding: 8px 15px !important;
 	margin: 0 !important;
 	display: block !important;
@@ -1026,13 +1075,13 @@ body.fstu-modal-open { overflow: hidden; }
 	border: none !important;
 	background: transparent !important;
 }
-#fstu-registry ul.fstu-opts-list li a:hover {
+ul.fstu-opts-list li a:hover {
 	background-color: #f8f9fa !important;
 	color: #c0392b !important;
 }
 
 /* Розділювач */
-#fstu-registry hr.fstu-opts-divider {
+hr.fstu-opts-divider {
 	height: 1px !important;
 	background-color: #eee !important;
 	margin: 5px 0 !important;

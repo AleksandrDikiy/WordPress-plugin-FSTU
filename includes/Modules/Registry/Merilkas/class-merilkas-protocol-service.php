@@ -6,7 +6,7 @@
  * Version:     1.0.0
  * Date_update: 2026-04-09
  *
- * @package FSTU\Modules\Registry\Merilkas
+ * @package FSTU\Modules\UserFstu\Merilkas
  */
 
 namespace FSTU\Modules\Registry\Merilkas;

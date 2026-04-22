@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	 * Version:     1.9.1
  * Date_update: 2026-04-14
  *
- * @package FSTU\Modules\Registry\Steering
+ * @package FSTU\Modules\UserFstu\Steering
  */
 class Steering_Repository {
 
