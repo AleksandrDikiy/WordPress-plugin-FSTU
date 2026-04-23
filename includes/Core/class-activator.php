@@ -25,11 +25,17 @@ class Activator {
 	 * Виконується при активації плагіна.
 	 * Встановлює початкові опції, перевіряє версію БД.
 	 */
-	public static function activate(): void {
-		Capabilities::register_role_capabilities();
-		self::maybe_upgrade();
-		flush_rewrite_rules();
-	}
+    public static function activate(): void {
+        Capabilities::register_role_capabilities();
+        self::maybe_upgrade();
+
+        // Ініціалізуємо планування крону для виборів
+        if ( class_exists( 'FSTU\Modules\Elections\Elections_Cron' ) ) {
+            ( new \FSTU\Modules\Elections\Elections_Cron() )->init();
+        }
+
+        flush_rewrite_rules();
+    }
 
 	/**
 	 * Виконує відкладений upgrade для вже встановлених інсталяцій.
@@ -45,11 +51,16 @@ class Activator {
 
 		$installed_version = get_option( 'fstu_db_version', '0' );
 
-		if ( version_compare( $installed_version, FSTU_DB_VERSION, '<' ) ) {
-			if ( self::run_migrations() ) {
-				update_option( 'fstu_db_version', FSTU_DB_VERSION );
-			}
-		}
+        if ( version_compare( $installed_version, FSTU_DB_VERSION, '<' ) ) {
+            if ( self::run_migrations() ) {
+                // Запускаємо нову систему версіонованих міграцій
+                if ( class_exists( 'FSTU\Core\Database_Migrations' ) ) {
+                    \FSTU\Core\Database_Migrations::run( $installed_version, FSTU_DB_VERSION );
+                }
+
+                update_option( 'fstu_db_version', FSTU_DB_VERSION );
+            }
+        }
 	}
 
 	/**
@@ -63,10 +74,11 @@ class Activator {
 	 * Запускає міграції бази даних (за потреби).
 	 * Кастомні таблиці ФСТУ вже існують — тут лише налаштовуємо власні опції.
 	 */
-	private static function run_migrations(): bool {
-		if ( ! self::maybe_add_tourtype_order_column() ) {
-			return false;
-		}
+    private static function run_migrations(): bool {
+
+        if ( ! self::maybe_add_tourtype_order_column() ) {
+            return false;
+        }
 
 		if ( ! self::maybe_backfill_tourtype_order_column() ) {
 			return false;

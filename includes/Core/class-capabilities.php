@@ -185,6 +185,11 @@ class Capabilities {
     public const VIEW_USER_FSTU_REPORT   = 'fstu_view_user_fstu_report';
     public const VIEW_SAILING_DUES_COLUMNS = 'fstu_view_sailing_dues_columns';
 
+    // Права для модуля Електронних виборів STV
+    public const VIEW_ELECTIONS          = 'fstu_view_elections';
+    public const MANAGE_ELECTIONS        = 'fstu_manage_elections';
+    public const VIEW_ELECTIONS_PROTOCOL = 'fstu_view_elections_protocol';
+
     /**
      * Ініціалізує capability-модель для поточного запиту.
      */
@@ -371,6 +376,10 @@ class Capabilities {
                 self::VIEW_USER_FSTU_PROTOCOL    => true,
                 self::VIEW_USER_FSTU_REPORT      => true,
                 self::VIEW_SAILING_DUES_COLUMNS  => true,
+                // Elections
+                self::VIEW_ELECTIONS             => true,
+                self::MANAGE_ELECTIONS           => true,
+                self::VIEW_ELECTIONS_PROTOCOL    => true,
             ],
             'sailadministrator' => [
 				self::ACCESS_ADMIN                  => true,
@@ -610,6 +619,8 @@ class Capabilities {
                 self::SUBMIT_DIRECTORY_POLL      => true,
                 self::VIEW_BOARD                 => true,
                 self::VOTE_BOARD                 => true,
+                // Elections
+                self::VIEW_ELECTIONS             => true,
 			],
 			'referee' => [
 				self::VIEW_REFEREES               => true,
@@ -2208,6 +2219,19 @@ class Capabilities {
         }
 
         return false;
+    }
+
+    /**
+     * Повертає прапорці прав для модуля Електронні вибори STV.
+     *
+     * @return array<string,bool>
+     */
+    public static function get_elections_permissions(): array {
+        return [
+            'canView'     => current_user_can( 'manage_options' ) || current_user_can( self::VIEW_ELECTIONS ),
+            'canManage'   => current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_ELECTIONS ),
+            'canProtocol' => current_user_can( 'manage_options' ) || current_user_can( self::VIEW_ELECTIONS_PROTOCOL ),
+        ];
     }
 
     //----------

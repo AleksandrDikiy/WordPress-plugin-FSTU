@@ -3,7 +3,7 @@
  * Plugin Name:  FSTU Portal
  * Plugin URI:   https://www.fstu.com.ua/
  * Description:  Офіційний плагін Федерації спортивного туризму України. Enterprise ERP/CRM система управління реєстрами, структурою та фінансами федерації.
- * Version:      1.23.2
+ * Version:      1.23.3
  * Author:       Oleksandr Dykyi
  * Author URI:   https://www.fstu.com.ua/
  * Text Domain:  fstu
@@ -11,7 +11,7 @@
  * Requires PHP: 8.0
  * Requires at least: 6.0
  *
- * Date_update: 2026-04-13
+ * Date_update: 2026-04-22
  *
  * @package FSTU
  */
@@ -22,8 +22,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // ─── Константи плагіна ────────────────────────────────────────────────────────
 
-define( 'FSTU_VERSION',      '1.23.2' );
-define( 'FSTU_DB_VERSION',   '1.2.0' );
+define( 'FSTU_VERSION',      '1.23.3' );
+define( 'FSTU_DB_VERSION',   '1.3.1' );
 define( 'FSTU_PLUGIN_FILE',  __FILE__ );
 define( 'FSTU_PLUGIN_DIR',   plugin_dir_path( __FILE__ ) );
 define( 'FSTU_PLUGIN_URL',   plugin_dir_url( __FILE__ ) );
@@ -51,7 +51,11 @@ spl_autoload_register( function ( string $class ): void {
 
 // Core
 require_once FSTU_PLUGIN_DIR . 'includes/Core/class-capabilities.php';
+require_once FSTU_PLUGIN_DIR . 'includes/Core/class-database-migrations.php';
 require_once FSTU_PLUGIN_DIR . 'includes/Core/class-activator.php';
+
+// Migrations
+require_once FSTU_PLUGIN_DIR . 'includes/Migrations/class-migration-1-3-0.php';
 
 // UserFstu — Реєстр членів ФСТУ
 require_once FSTU_PLUGIN_DIR . 'includes/UserFstu/class-user-fstu-list.php';
@@ -431,9 +435,28 @@ if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/RegionalFST/class-regional
     require_once FSTU_PLUGIN_DIR . 'includes/Modules/RegionalFST/class-regional-fst-list.php';
     require_once FSTU_PLUGIN_DIR . 'includes/Modules/RegionalFST/class-regional-fst-ajax.php';
 }
+// Elections — Електронні вибори STV (2026-04-22)
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Elections/class-elections-stv-engine.php' ) ) {
+    require_once FSTU_PLUGIN_DIR . 'includes/Modules/Elections/class-elections-stv-engine.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Elections/class-elections-cron.php' ) ) {
+    require_once FSTU_PLUGIN_DIR . 'includes/Modules/Elections/class-elections-cron.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Elections/class-elections-repository.php' ) ) {
+    require_once FSTU_PLUGIN_DIR . 'includes/Modules/Elections/class-elections-repository.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Elections/class-elections-service.php' ) ) {
+    require_once FSTU_PLUGIN_DIR . 'includes/Modules/Elections/class-elections-service.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Elections/class-elections-list.php' ) ) {
+    require_once FSTU_PLUGIN_DIR . 'includes/Modules/Elections/class-elections-list.php';
+}
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Elections/class-elections-ajax.php' ) ) {
+    require_once FSTU_PLUGIN_DIR . 'includes/Modules/Elections/class-elections-ajax.php';
+}
 // PersonalCabinet — Особистий кабінет ФСТУ (2026-04-09)
 if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/PersonalCabinet/class-personal-cabinet-repository.php' ) ) {
-	require_once FSTU_PLUGIN_DIR . 'includes/Modules/PersonalCabinet/class-personal-cabinet-repository.php';
+    require_once FSTU_PLUGIN_DIR . 'includes/Modules/PersonalCabinet/class-personal-cabinet-repository.php';
 }
 if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/PersonalCabinet/class-personal-cabinet-protocol-service.php' ) ) {
 	require_once FSTU_PLUGIN_DIR . 'includes/Modules/PersonalCabinet/class-personal-cabinet-protocol-service.php';
@@ -674,9 +697,18 @@ function fstu_init(): void {
 	if ( class_exists( 'FSTU\Modules\Registry\MemberCardApplications\Member_Card_Applications_Ajax' ) ) {
 		( new FSTU\Modules\Registry\MemberCardApplications\Member_Card_Applications_Ajax() )->init();
 	}
-
-	// ── Особистий кабінет ФСТУ ───────────────────────────────────────────────
-	if ( class_exists( 'FSTU\Modules\PersonalCabinet\Personal_Cabinet_List' ) ) {
+    // ── Електронні вибори STV ─────────────────────────────────────────────────
+    if ( class_exists( 'FSTU\Modules\Elections\Elections_List' ) ) {
+        ( new \FSTU\Modules\Elections\Elections_List() )->init();
+    }
+    if ( class_exists( 'FSTU\Modules\Elections\Elections_Ajax' ) ) {
+        ( new \FSTU\Modules\Elections\Elections_Ajax() )->init();
+    }
+    if ( class_exists( 'FSTU\Modules\Elections\Elections_Cron' ) ) {
+        ( new \FSTU\Modules\Elections\Elections_Cron() )->init();
+    }
+    // ── Особистий кабінет ФСТУ ───────────────────────────────────────────────
+    if ( class_exists( 'FSTU\Modules\PersonalCabinet\Personal_Cabinet_List' ) ) {
 		( new FSTU\Modules\PersonalCabinet\Personal_Cabinet_List() )->init();
 	}
 	if ( class_exists( 'FSTU\Modules\PersonalCabinet\Personal_Cabinet_Ajax' ) ) {
