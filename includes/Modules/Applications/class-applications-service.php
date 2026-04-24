@@ -10,8 +10,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Бізнес-сервіс модуля "Заявки в ФСТУ".
  * Оркеструє транзакції, зміни ролей та критичні бізнес-операції.
  *
- * Version:     1.3.0
- * Date_update: 2026-04-07
+ * Version:     1.3.1
+ * Date_update: 2026-04-24
  */
 class Applications_Service {
 
@@ -236,51 +236,65 @@ class Applications_Service {
         }
 
         $current_row = $this->repository->get_current_ofst_record( $user_id );
-        if ( ! is_array( $current_row ) ) {
-            throw new \RuntimeException( 'current_ofst_not_found' );
-        }
 
-        $current_unit_id   = (int) ( $current_row['Unit_ID'] ?? 0 );
-        $current_region_id = (int) ( $current_row['Region_ID'] ?? 0 );
+        if ( is_array( $current_row ) ) {
+            $current_unit_id   = (int) ( $current_row['Unit_ID'] ?? 0 );
+            $current_region_id = (int) ( $current_row['Region_ID'] ?? 0 );
+            $record_id         = (int) ( $current_row['UserRegistationOFST_ID'] ?? 0 );
+            $current_date      = (string) ( $current_row['UserRegistationOFST_DateCreate'] ?? '' );
+
+            if ( $record_id <= 0 ) {
+                throw new \RuntimeException( 'current_ofst_record_invalid' );
+            }
+        } else {
+            // Якщо кандидат взагалі не мав ОФСТ (аномалія даних), готуємось створити запис з нуля
+            $current_unit_id   = 0;
+            $current_region_id = 0;
+            $record_id         = 0;
+            $current_date      = current_time( 'mysql' );
+        }
 
         if ( $current_unit_id === $unit_id && $current_region_id === $region_id ) {
             return [ 'status' => 'no_changes' ];
         }
 
-        $record_id = (int) ( $current_row['UserRegistationOFST_ID'] ?? 0 );
-        if ( $record_id <= 0 ) {
-            throw new \RuntimeException( 'current_ofst_record_invalid' );
-        }
-
-        $current_date = (string) ( $current_row['UserRegistationOFST_DateCreate'] ?? '' );
-        $next_date    = $this->build_next_ofst_datetime( $current_date );
+        $next_date = $this->build_next_ofst_datetime( $current_date );
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery
         $wpdb->query( 'START TRANSACTION' );
 
         try {
-            $update_result = $this->repository->update_current_ofst_record_conditionally(
-                $record_id,
-                $user_id,
-                $current_date,
-                $current_region_id,
-                $current_unit_id,
-                $region_id,
-                $unit_id,
-                $next_date
-            );
+            if ( $record_id > 0 ) {
+                // Стандартний флоу: оновлення існуючого + запис в історію
+                $update_result = $this->repository->update_current_ofst_record_conditionally(
+                    $record_id,
+                    $user_id,
+                    $current_date,
+                    $current_region_id,
+                    $current_unit_id,
+                    $region_id,
+                    $unit_id,
+                    $next_date
+                );
 
-            if ( is_wp_error( $update_result ) ) {
-                throw new \RuntimeException( (string) $update_result->get_error_code() );
-            }
+                if ( is_wp_error( $update_result ) ) {
+                    throw new \RuntimeException( (string) $update_result->get_error_code() );
+                }
 
-            if ( ! $update_result ) {
-                throw new \RuntimeException( 'ofst_state_conflict' );
-            }
+                if ( ! $update_result ) {
+                    throw new \RuntimeException( 'ofst_state_conflict' );
+                }
 
-            $history_result = $this->repository->insert_ofst_history_snapshot( $current_row );
-            if ( is_wp_error( $history_result ) ) {
-                throw new \RuntimeException( (string) $history_result->get_error_code() );
+                $history_result = $this->repository->insert_ofst_history_snapshot( $current_row );
+                if ( is_wp_error( $history_result ) ) {
+                    throw new \RuntimeException( (string) $history_result->get_error_code() );
+                }
+            } else {
+                // Виправлення: Створення нового запису ОФСТ, якщо він був відсутній
+                $insert_result = $this->repository->insert_new_ofst_record( $user_id, $region_id, $unit_id, $next_date );
+                if ( is_wp_error( $insert_result ) ) {
+                    throw new \RuntimeException( (string) $insert_result->get_error_code() );
+                }
             }
 
             $this->protocol_service->log_action(

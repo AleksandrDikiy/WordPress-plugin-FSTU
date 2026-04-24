@@ -10,8 +10,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Клас обробки AJAX запитів модуля "Заявки в ФСТУ".
  * Фаза 4: CRUD операції, Транзакції та Логування.
  *
- * Version:     1.7.0
- * Date_update: 2026-04-07
+ * Version:     1.7.1
+ * Date_update: 2026-04-24
  */
 class Applications_Ajax {
 
@@ -266,14 +266,15 @@ class Applications_Ajax {
             $actions      = $this->render_actions_dropdown( $user_id, $unit_id, $fio, $unit_name, $can_manage_actions );
 
             $html .= sprintf(
-                '<tr class="fstu-row"><td class="fstu-td fstu-td--num">%1$d</td><td class="fstu-td">%2$s</td><td class="fstu-td">%3$s</td><td class="fstu-td">%4$s</td><td class="fstu-td">%5$s</td><td class="fstu-td">%6$s</td><td class="fstu-td fstu-th--center">—</td><td class="fstu-td fstu-td--actions">%7$s</td></tr>',
+                '<tr class="fstu-row"><td class="fstu-td fstu-td--num">%1$d</td><td class="fstu-td"><a href="#" class="fstu-action-view fstu-app-card__link" data-id="%8$d" title="Переглянути заявку">%2$s</a></td><td class="fstu-td"><a href="/personal/?ViewID=%8$d" class="fstu-app-card__link" target="_blank" title="Перейти в кабінет">%3$s</a></td><td class="fstu-td">%4$s</td><td class="fstu-td">%5$s</td><td class="fstu-td">%6$s</td><td class="fstu-td fstu-th--center">—</td><td class="fstu-td fstu-td--actions">%7$s</td></tr>',
                 $row_number,
                 esc_html( $date ),
                 esc_html( $fio ),
                 esc_html( $email ?: '—' ),
                 esc_html( $unit_name ?: '—' ),
                 esc_html( $region_name ?: '—' ),
-                $actions
+                $actions,
+                $user_id
             );
         }
 
@@ -293,13 +294,13 @@ class Applications_Ajax {
 
         $items = [
             sprintf(
-                '<button type="button" class="fstu-applications-dropdown__item fstu-action-view" data-id="%1$d" data-candidate-name="%3$s">%2$s</button>',
+                '<button type="button" class="fstu-applications-dropdown__item fstu-action-view" data-id="%1$d" data-candidate-name="%3$s"><span class="fstu-dropdown-icon">👁️</span>%2$s</button>',
                 $user_id,
                 esc_html__( 'Перегляд', 'fstu' ),
                 $candidate_name_attr
             ),
             sprintf(
-                '<button type="button" class="fstu-applications-dropdown__item fstu-action-change-ofst" data-id="%1$d" data-unit-id="%2$d" data-candidate-name="%4$s" data-unit-name="%5$s">%3$s</button>',
+                '<button type="button" class="fstu-applications-dropdown__item fstu-action-change-ofst" data-id="%1$d" data-unit-id="%2$d" data-candidate-name="%4$s" data-unit-name="%5$s"><span class="fstu-dropdown-icon">🔄</span>%3$s</button>',
                 $user_id,
                 $unit_id,
                 esc_html__( 'Змінити ОФСТ', 'fstu' ),
@@ -307,7 +308,7 @@ class Applications_Ajax {
                 $unit_name_attr
             ),
             sprintf(
-                '<button type="button" class="fstu-applications-dropdown__item fstu-action-accept" data-id="%1$d" data-candidate-name="%3$s">%2$s</button>',
+                '<button type="button" class="fstu-applications-dropdown__item fstu-action-accept" data-id="%1$d" data-candidate-name="%3$s"><span class="fstu-dropdown-icon">✅</span>%2$s</button>',
                 $user_id,
                 esc_html__( 'Прийняти', 'fstu' ),
                 $candidate_name_attr
@@ -316,7 +317,7 @@ class Applications_Ajax {
 
         if ( $can_manage_actions ) {
             $items[] = sprintf(
-                '<button type="button" class="fstu-applications-dropdown__item fstu-applications-dropdown__item--danger fstu-action-reject" data-id="%1$d" data-candidate-name="%3$s">%2$s</button>',
+                '<button type="button" class="fstu-applications-dropdown__item fstu-applications-dropdown__item--danger fstu-action-reject" data-id="%1$d" data-candidate-name="%3$s"><span class="fstu-dropdown-icon">❌</span>%2$s</button>',
                 $user_id,
                 esc_html__( 'Відхилити', 'fstu' ),
                 $candidate_name_attr

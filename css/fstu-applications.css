@@ -1,8 +1,8 @@
 /**
  * CSS модуля "Заявки в ФСТУ".
  * Суворе дотримання корпоративних UI/UX стандартів ФСТУ.
- * Version:     1.5.0
- * Date_update: 2026-04-07
+ * Version:     1.5.1
+ * Date_update: 2026-04-24
  */
 
 .fstu-applications-wrap {
@@ -202,6 +202,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    white-space: nowrap;
 }
 
 .fstu-select--compact {
@@ -243,7 +244,11 @@
 .fstu-applications-dropdown {
     position: relative;
     display: inline-block;
-    z-index: 5;
+    z-index: auto;
+}
+
+.fstu-applications-dropdown.is-open {
+    z-index: 50;
 }
 
 .fstu-applications-dropdown__toggle {
@@ -269,10 +274,8 @@
 }
 
 .fstu-applications-dropdown__menu {
-    position: absolute;
-    right: 0;
-    top: calc(100% + 6px);
-    z-index: 40;
+    position: fixed; /* Змінено з absolute на fixed згідно AGENTS.md */
+    z-index: 100000; /* Перекриття всього сайту */
     min-width: 180px;
     padding: 6px 0;
     border: 1px solid #d1d5db;
@@ -293,6 +296,7 @@
 
 .fstu-applications-dropdown__item {
     display: flex;
+    align-items: center;
     width: 100%;
     padding: 9px 12px;
     border: 0;
@@ -301,6 +305,17 @@
     font-size: 13px;
     color: #374151;
     cursor: pointer;
+    transition: background-color .15s ease, color .15s ease;
+}
+
+.fstu-dropdown-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    margin-right: 8px;
+    font-size: 14px;
+    opacity: 0.8;
 }
 
 .fstu-applications-dropdown__item:hover {

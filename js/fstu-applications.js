@@ -2,8 +2,8 @@
  * Клієнтська логіка модуля "Заявки в ФСТУ".
  * Суворе дотримання стандартів: делегування подій, debounce, AJAX-безпека.
  *
- * Version:     1.9.0
- * Date_update: 2026-04-07
+ * Version:     1.9.1
+ * Date_update: 2026-04-24
  */
 
 /* global fstuApplications */
@@ -191,13 +191,28 @@ jQuery(document).ready(function ($) {
             return;
         }
 
-        const menuHeight = menu.offsetHeight || 180;
+        // Зкидаємо попередні стилі для коректного вимірювання
+        menu.style.position = 'fixed';
+        menu.style.top = '';
+        menu.style.bottom = '';
+        menu.style.left = '';
+        menu.style.right = '';
+
         const rect = toggle.getBoundingClientRect();
+        const menuHeight = menu.offsetHeight || 180;
+        const menuWidth = menu.offsetWidth || 180;
         const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
 
+        // Жорстке фіксоване позиціонування (Анти-обрізання)
+        menu.style.zIndex = '100000';
+        menu.style.width = menuWidth + 'px';
+        menu.style.left = (rect.right - menuWidth) + 'px';
+
         if (rect.bottom + menuHeight > viewportHeight && rect.top > menuHeight) {
+            menu.style.top = (rect.top - menuHeight - 6) + 'px';
             $dropdown.addClass('is-dropup');
         } else {
+            menu.style.top = (rect.bottom + 6) + 'px';
             $dropdown.removeClass('is-dropup');
         }
     }
@@ -607,8 +622,16 @@ jQuery(document).ready(function ($) {
                 $('.fstu-modal-overlay:not(.fstu-hidden)').each(function () {
                     closeModal($(this).attr('id'));
                 });
+                closeAllDropdowns();
             }
         });
+
+        // Закриття меню при скролі (Capture фаза, щоб ловити скрол контейнера таблиці)
+        window.addEventListener('scroll', function() {
+            if ($('.fstu-applications-dropdown.is-open').length > 0) {
+                closeAllDropdowns();
+            }
+        }, true);
 
         // --- ПЕРЕМИКАННЯ ЕКРАНІВ ---
         $('#fstu-btn-protocol').on('click', function () {

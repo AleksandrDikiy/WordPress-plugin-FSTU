@@ -10,8 +10,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Repository модуля "Заявки в ФСТУ".
  * Відповідає лише за доступ до даних та SQL-запити.
  *
- * Version:     1.9.0
- * Date_update: 2026-04-07
+ * Version:     1.9.1
+ * Date_update: 2026-04-24
  */
 class Applications_Repository {
 
@@ -180,6 +180,7 @@ class Applications_Repository {
     /**
      * Повертає FROM/JOIN SQL для джерела кандидатів у модулі заявок.
      * Підтримує як legacy blocked-користувачів, так і нові заявки з роллю applicants.
+     * Виключає користувачів, які вже отримали роль члена ФСТУ (userfstu).
      */
     private function get_candidates_from_sql(): string {
         global $wpdb;
@@ -193,7 +194,8 @@ class Applications_Repository {
         return "FROM {$wpdb->users} u
             INNER JOIN {$wpdb->usermeta} cap ON cap.user_id = u.ID
                 AND cap.meta_key = 'wp_capabilities'
-                AND (" . implode( ' OR ', $role_conditions ) . ')';
+                AND (" . implode( ' OR ', $role_conditions ) . ")
+                AND cap.meta_value NOT LIKE '%userfstu%'";
     }
 
     /**
@@ -346,10 +348,18 @@ class Applications_Repository {
     /**
      * Fallback-отримання кандидата без залежності від legacy view vUserBlocked.
      * Потрібно для нових заявок, які ще не потрапили у старе view.
+     * Використовує Object Cache для зниження навантаження на БД.
      *
      * @return array<string, mixed>|null
      */
     private function get_candidate_fallback_row( int $user_id ): ?array {
+        $cache_key = 'fstu_candidate_fallback_' . $user_id;
+        $cached    = wp_cache_get( $cache_key, 'fstu_applications' );
+
+        if ( false !== $cached ) {
+            return is_array( $cached ) ? $cached : null;
+        }
+
         global $wpdb;
 
         $names_sql       = $this->get_names_subquery_sql();
@@ -393,6 +403,9 @@ class Applications_Repository {
 
         $row['City_Name']         = $this->get_candidate_city_name( $user_id );
         $row['TourismType_Name']  = $this->get_candidate_tourism_type_name( $user_id );
+
+        // Кешуємо результат на 15 хвилин у Redis/RAM
+        wp_cache_set( $cache_key, $row, 'fstu_applications', 15 * MINUTE_IN_SECONDS );
 
         return $row;
     }
@@ -728,6 +741,34 @@ class Applications_Repository {
             return new \WP_Error(
                 $this->map_ofst_write_error_to_marker( (string) $wpdb->last_error, 'ofst_history_insert_failed' ),
                 'Не вдалося зберегти історію зміни ОФСТ.'
+            );
+        }
+
+        return true;
+    }
+
+    /**
+     * Створює абсолютно новий запис ОФСТ (використовується, якщо кандидат його не мав).
+     */
+    public function insert_new_ofst_record( int $user_id, int $region_id, int $unit_id, string $date ): bool|\WP_Error {
+        global $wpdb;
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+        $inserted = $wpdb->insert(
+            'UserRegistationOFST',
+            [
+                'UserRegistationOFST_DateCreate' => $date,
+                'Region_ID'                      => $region_id,
+                'Unit_ID'                        => $unit_id,
+                'User_ID'                        => $user_id,
+            ],
+            [ '%s', '%d', '%d', '%d' ]
+        );
+
+        if ( false === $inserted ) {
+            return new \WP_Error(
+                $this->map_ofst_write_error_to_marker( (string) $wpdb->last_error, 'ofst_insert_failed' ),
+                'Не вдалося створити новий запис ОФСТ.'
             );
         }
 
