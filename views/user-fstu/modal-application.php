@@ -87,6 +87,18 @@ $referee_categories = $wpdb->get_results( "
 
                 <div class="fstu-form-row fstu-form-row--2col">
                     <div class="fstu-form-group">
+                        <label class="fstu-label fstu-label--required">ІПН (РНОКПП)</label>
+                        <input type="text" name="ipn" class="fstu-input" placeholder="10 цифр" required maxlength="10" pattern="\d{10}">
+                        <small class="fstu-hint">Використовується для унікальної ідентифікації в базі.</small>
+                    </div>
+                    <div class="fstu-form-group">
+                        <label class="fstu-label fstu-label--required">Фото для квитка (JPG/PNG)</label>
+                        <input type="file" name="photo" class="fstu-input" accept="image/jpeg, image/png" required style="padding: 4px;">
+                    </div>
+                </div>
+
+                <div class="fstu-form-row fstu-form-row--2col">
+                    <div class="fstu-form-group">
                         <label class="fstu-label fstu-label--required">Телефон</label>
                         <input type="tel" name="phone" class="fstu-input" placeholder="+380XXXXXXXXX" required>
                     </div>
@@ -108,7 +120,7 @@ $referee_categories = $wpdb->get_results( "
                     </div>
                     <div class="fstu-form-group">
                         <label class="fstu-label fstu-label--required">Місто проживання</label>
-                        <select id="fstu-app-city" name="city_id" class="fstu-select" required disabled>
+                        <select id="fstu-app-city" name="city_id" class="fstu-select fstu-select2" style="width: 100%;" required disabled>
                             <option value="">— оберіть область —</option>
                         </select>
                     </div>

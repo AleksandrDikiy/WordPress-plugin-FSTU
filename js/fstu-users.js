@@ -1399,20 +1399,18 @@ jQuery( document ).ready( function ( $ ) {
 		$btnLoader.removeClass( 'fstu-hidden' );
 		$message.addClass( 'fstu-hidden' ).removeClass( 'fstu-message--success fstu-message--error' );
 
-		const formData = $form.serializeArray().reduce( function ( obj, item ) {
-			obj[ item.name ] = item.value;
-			return obj;
-		}, {} );
+		// Використовуємо FormData для підтримки відправки файлів (фото)
+		const formData = new FormData($form[0]);
+		formData.append('action', 'fstu_submit_application');
+		formData.append('nonce', fstuRegistry.nonce);
+		formData.append('cf_turnstile_response', state.turnstileToken);
 
 		$.ajax( {
 			url:    fstuRegistry.ajaxUrl,
 			method: 'POST',
-			data: {
-				action:               'fstu_submit_application',
-				nonce:                fstuRegistry.nonce,
-				cf_turnstile_response: state.turnstileToken,
-				...formData,
-			},
+			data: formData,
+			processData: false, // Обов'язково для FormData
+			contentType: false, // Обов'язково для FormData
 			success: function ( r ) {
 				if ( r.success ) {
 					$message
@@ -1420,10 +1418,16 @@ jQuery( document ).ready( function ( $ ) {
 						.addClass( 'fstu-message--success' )
 						.removeClass( 'fstu-hidden' );
 
-					setTimeout( function () {
-						closeModal( 'fstu-modal-application' );
-						fetchRegistry();
-					}, 3000 );
+					// Якщо сервер повернув кнопку оплати Portmone — показуємо її
+					if ( r.data.payment_html ) {
+						$message.append( '<div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #bbf7d0;">' + r.data.payment_html + '</div>' );
+						$submitBtn.addClass( 'fstu-hidden' ); // Ховаємо кнопку "Надіслати", щоб не дублювали заявку
+					} else {
+						setTimeout( function () {
+							closeModal( 'fstu-modal-application' );
+							fetchRegistry();
+						}, 3000 );
+					}
 				} else {
 					$message
 						.text( r.data.message || fstuRegistry.strings.errorGeneric )

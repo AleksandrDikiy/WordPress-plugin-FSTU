@@ -10,8 +10,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * AJAX-обробники модуля «Особистий кабінет ФСТУ».
  *
- * Version:     1.5.1
- * Date_update: 2026-04-14
+ * Version:     1.5.2
+ * Date_update: 2026-04-24
  */
 class Personal_Cabinet_Ajax {
 
@@ -244,6 +244,30 @@ class Personal_Cabinet_Ajax {
                     "Онлайн-оплату членського внеску за $year рік успішно зафіксовано через Portmone.", '✓'
                 );
             }
+
+            // --- АВТОМАТИЧНЕ ПРИЙНЯТТЯ КАНДИДАТА В ЧЛЕНИ ФСТУ ---
+            $user_obj = get_userdata( $profile_user_id );
+            if ( $user_obj && in_array( 'applicants', (array) $user_obj->roles, true ) ) {
+                if ( class_exists( '\FSTU\Modules\Applications\Applications_Service' ) ) {
+                    try {
+                        $repo        = new \FSTU\Modules\Applications\Applications_Repository();
+                        $proto       = new \FSTU\Modules\Applications\Applications_Protocol_Service();
+                        $mailer      = new \FSTU\Modules\Applications\Applications_Mailer();
+                        $app_service = new \FSTU\Modules\Applications\Applications_Service( $repo, $proto, $mailer );
+
+                        // Змінює роль на userfstu, генерує номер квитка та надсилає лист!
+                        $app_service->accept_candidate( $profile_user_id );
+
+                        $this->service->get_protocol_service()->log_action_for_user(
+                            $profile_user_id, 'I',
+                            "Автоматичне прийняття кандидата (ID {$profile_user_id}) після успішної оплати Portmone.", '✓'
+                        );
+                    } catch ( \Throwable $e ) {
+                        error_log( 'FSTU Auto-Accept Error: ' . $e->getMessage() );
+                    }
+                }
+            }
+            // ----------------------------------------------------
 
             // 5. Перенаправляємо назад до кабінету з повідомленням про успіх
             wp_safe_redirect( home_url("/personal/?ViewID={$profile_user_id}&payment_status=success&payment_year={$year}") );

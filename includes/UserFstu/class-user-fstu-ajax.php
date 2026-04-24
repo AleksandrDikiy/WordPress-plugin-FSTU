@@ -47,6 +47,10 @@ class User_Fstu_Ajax {
         // Завантаження міст по регіону
         add_action( 'wp_ajax_fstu_get_cities_by_region',        [ $this, 'handle_get_cities_by_region' ] );
         add_action( 'wp_ajax_nopriv_fstu_get_cities_by_region', [ $this, 'handle_get_cities_by_region' ] );
+
+        // Слухач успішних оплат від Portmone (Webhook)
+        add_action( 'wp_ajax_nopriv_fstu_portmone_webhook', [ $this, 'handle_portmone_webhook' ] );
+        add_action( 'wp_ajax_fstu_portmone_webhook',        [ $this, 'handle_portmone_webhook' ] );
     }
 
     // ─── Публічні AJAX обробники ─────────────────────────────────────────────
@@ -186,14 +190,56 @@ class User_Fstu_Ajax {
 			if ( is_wp_error( $result ) ) {
 				wp_send_json_error( $this->build_application_error_payload_from_wp_error( $result ) );
 			}
-		} catch ( \Throwable $throwable ) {
-			wp_send_json_error( $this->build_application_error_payload_from_throwable( $throwable ) );
-		}
+        } catch ( \Throwable $throwable ) {
+            wp_send_json_error( $this->build_application_error_payload_from_throwable( $throwable ) );
+        }
 
-		wp_send_json_success( [
-			'message' => 'Заявку успішно подано! Очікуйте підтвердження від регіонального адміністратора.',
-		] );
-	}
+        // Генеруємо HTML кнопки Portmone, використовуючи існуючий обробник кабінету!
+        $portmone_html = $this->generate_candidate_portmone_button( $result );
+
+        wp_send_json_success( [
+            'message'      => 'Заявку успішно збережено! Для автоматичного набуття членства ФСТУ сплатіть обов\'язковий внесок.',
+            'payment_html' => $portmone_html
+        ] );
+    }
+
+    /**
+     * Генерує HTML-кнопку Portmone для кандидата.
+     */
+    private function generate_candidate_portmone_button( int $user_id ): string {
+        global $wpdb;
+
+        // Беремо суму як у старому плагіні
+        $amount = floatval( $wpdb->get_var( "SELECT GetParamValueSettings('AnnualFee') as 'AnnualFee'" ) );
+        if ( $amount <= 0 ) $amount = 25;
+
+        $bill_amount = $amount + round(($amount * 0.023), 2); // Додаємо 2.3% комісії еквайрингу
+        $year = (int) gmdate( 'Y' );
+
+        $desc = 'Реєстраційний членський внесок ФСТУ за ' . $year . ' рік';
+
+        // ВАЖЛИВО: Використовуємо існуючий системний обробник (як у кабінеті)
+        $success_url = admin_url( "admin-post.php?action=fstu_personal_cabinet_portmone_return&result=success&user_id={$user_id}" );
+        $failure_url = admin_url( "admin-post.php?action=fstu_personal_cabinet_portmone_return&result=failure&user_id={$user_id}" );
+
+        $unique_order_id = $year . $user_id . '_' . time();
+
+        $html  = '<form action="https://www.portmone.com.ua/gateway/" method="post" style="margin:0; text-align: center;">';
+        $html .= '<input type="hidden" name="payee_id" value="28935">';
+        $html .= '<input type="hidden" name="shop_order_number" value="' . esc_attr( $unique_order_id ) . '">';
+        $html .= '<input type="hidden" name="bill_amount" value="' . esc_attr( $bill_amount ) . '">';
+        $html .= '<input type="hidden" name="description" value="' . esc_attr( $desc ) . '">';
+        $html .= '<input type="hidden" name="success_url" value="' . esc_url( $success_url ) . '">';
+        $html .= '<input type="hidden" name="failure_url" value="' . esc_url( $failure_url ) . '">';
+        $html .= '<input type="hidden" name="attribute1" value="' . esc_attr( $year ) . '">';
+        $html .= '<input type="hidden" name="attribute2" value="' . esc_attr( $user_id ) . '">';
+        $html .= '<input type="hidden" name="lang" value="uk">';
+        $html .= '<input type="hidden" name="encoding" value="UTF-8">';
+        $html .= '<button type="submit" class="fstu-btn fstu-btn--primary" style="padding:14px 24px; font-size:16px; width: 100%; background: #27ae60; border-color: #27ae60; color: white; border-radius: 6px;">💳 Сплатити ' . number_format( $bill_amount, 2, '.', '' ) . ' ₴ та автоматично вступити до ФСТУ</button>';
+        $html .= '</form>';
+
+        return $html;
+    }
 
 	/**
 	 * Формує безпечний payload помилки для публічної форми заявки з WP_Error.
@@ -292,6 +338,7 @@ class User_Fstu_Ajax {
             'email'             => sanitize_email( wp_unslash( $post['email'] ?? '' ) ),
             'password'          => wp_unslash( $post['password'] ?? '' ), // Пароль не можна жорстко санітизувати, щоб не зламати спецсимволи
             'phone'             => sanitize_text_field( wp_unslash( $post['phone'] ?? '' ) ),
+            'ipn'               => sanitize_text_field( wp_unslash( $post['ipn'] ?? '' ) ),
             'phone_alt'         => sanitize_text_field( wp_unslash( $post['phone_alt'] ?? '' ) ),
             'birth_date'        => sanitize_text_field( wp_unslash( $post['birth_date'] ?? '' ) ),
             'region_id'         => absint( $post['region_id'] ?? 0 ),
@@ -324,6 +371,16 @@ class User_Fstu_Ajax {
         }
         if ( ! is_email( $data['email'] ) ) {
             $errors[] = 'Невірний формат email.';
+        }
+        if ( ! preg_match( '/^\d{10}$/', $data['ipn'] ) ) {
+            $errors[] = 'ІПН (РНОКПП) повинен містити рівно 10 цифр.';
+        } else {
+            global $wpdb;
+            // Перевірка на унікальність ІПН у базі
+            $ipn_exists = $wpdb->get_var( $wpdb->prepare( "SELECT User_ID FROM UserParams WHERE UserParams_Name = 'IPN' AND UserParams_Value = %s LIMIT 1", $data['ipn'] ) );
+            if ( $ipn_exists ) {
+                $errors[] = 'Кандидат з таким ІПН вже зареєстрований в системі.';
+            }
         }
         if ( email_exists( $data['email'] ) ) {
             $errors[] = 'Користувач з таким email вже зареєстрований.';
@@ -916,92 +973,78 @@ class User_Fstu_Ajax {
      * @param array $data Валідовані дані.
      * @return int|\WP_Error User ID або помилка.
      */
-    /**
-     * Зберігає заявку на вступ до ФСТУ у БД.
-     *
-     * @param array $data Валідовані дані.
-     * @return int|\WP_Error User ID або помилка.
-     */
     private function save_application( array $data ): int|\WP_Error {
         global $wpdb;
 
-        // Використовуємо пароль з форми
         $password = $data['password'];
 
-		// Логін = email до @ з безпечним fallback і перевіркою унікальності.
-		$login          = $this->generate_unique_application_login( $data['email'] );
-		$applicant_role = get_role( 'applicants' ) instanceof \WP_Role ? 'applicants' : get_option( 'default_role', 'subscriber' );
+        $login          = $this->generate_unique_application_login( $data['email'] );
+        $applicant_role = get_role( 'applicants' ) instanceof \WP_Role ? 'applicants' : get_option( 'default_role', 'subscriber' );
 
-		$display_name = trim( implode( ' ', array_filter( [
-			$data['last_name'],
-			$data['first_name'],
-			$data['patronymic'],
-		] ) ) );
+        $display_name = trim( implode( ' ', array_filter( [
+            $data['last_name'],
+            $data['first_name'],
+            $data['patronymic'],
+        ] ) ) );
 
-		$user_id = wp_insert_user( [
-			'user_login'   => $login,
-			'user_pass'    => $password,
-			'user_email'   => $data['email'],
-	  'role'         => $applicant_role,
-			'display_name' => '' !== $display_name ? $display_name : $login,
-			'first_name'   => $data['first_name'],
-			'last_name'    => $data['last_name'],
-		] );
+        $user_id = wp_insert_user( [
+            'user_login'   => $login,
+            'user_pass'    => $password,
+            'user_email'   => $data['email'],
+            'role'         => $applicant_role,
+            'display_name' => '' !== $display_name ? $display_name : $login,
+            'first_name'   => $data['first_name'],
+            'last_name'    => $data['last_name'],
+        ] );
 
         if ( is_wp_error( $user_id ) ) {
             return $user_id;
         }
 
-        // Зберігаємо базові метадані
         update_user_meta( $user_id, 'last_name',  $data['last_name'] );
         update_user_meta( $user_id, 'first_name', $data['first_name'] );
         update_user_meta( $user_id, 'Patronymic', $data['patronymic'] );
         update_user_meta( $user_id, 'BirthDate',  $data['birth_date'] );
         update_user_meta( $user_id, 'Sex',        $data['sex'] );
         update_user_meta( $user_id, 'Phone',      $data['phone'] );
-		update_user_meta( $user_id, 'PhoneMobile', $data['phone'] );
+        update_user_meta( $user_id, 'PhoneMobile', $data['phone'] );
 
         if ( ! empty( $data['phone_alt'] ) ) {
             update_user_meta( $user_id, 'Phone_alt', $data['phone_alt'] );
-			update_user_meta( $user_id, 'Phone2', $data['phone_alt'] );
+            update_user_meta( $user_id, 'Phone2', $data['phone_alt'] );
         }
         if ( ! empty( $data['public_titles'] ) ) {
             update_user_meta( $user_id, 'Public_titles', $data['public_titles'] );
-			update_user_meta( $user_id, 'PublicTourism', $data['public_titles'] );
+            update_user_meta( $user_id, 'PublicTourism', $data['public_titles'] );
         }
 
-		$user = get_userdata( $user_id );
-		if ( $user instanceof \WP_User && get_role( 'bbp_blocked' ) instanceof \WP_Role ) {
-			$user->add_role( 'bbp_blocked' );
-		}
+        $user = get_userdata( $user_id );
+        if ( $user instanceof \WP_User && get_role( 'bbp_blocked' ) instanceof \WP_Role ) {
+            $user->add_role( 'bbp_blocked' );
+        }
 
-        // Прив'язка клубу
         if ( $data['club_id'] > 0 ) {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery
             $wpdb->insert( 'UserClub', [ 'User_ID' => $user_id, 'Club_ID' => $data['club_id'], 'UserClub_Date' => current_time('mysql') ], [ '%d', '%d', '%s' ] );
         }
 
-		if ( $data['tourism_type_id'] > 0 ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-			$tourism_inserted = $wpdb->insert(
-				'UserTourismType',
-				[
-					'User_ID'                    => $user_id,
-					'TourismType_ID'             => $data['tourism_type_id'],
-					'UserTourismType_DateCreate' => current_time( 'mysql' ),
-				],
-				[ '%d', '%d', '%s' ]
-			);
+        if ( $data['tourism_type_id'] > 0 ) {
+            $tourism_inserted = $wpdb->insert(
+                'UserTourismType',
+                [
+                    'User_ID'                    => $user_id,
+                    'TourismType_ID'             => $data['tourism_type_id'],
+                    'UserTourismType_DateCreate' => current_time( 'mysql' ),
+                ],
+                [ '%d', '%d', '%s' ]
+            );
 
-			if ( false === $tourism_inserted ) {
-				return new \WP_Error( 'tourism_insert_failed', 'Не вдалося зберегти основний вид туризму.' );
-			}
-		}
+            if ( false === $tourism_inserted ) {
+                return new \WP_Error( 'tourism_insert_failed', 'Не вдалося зберегти основний вид туризму.' );
+            }
+        }
 
-        // Реєстрація в ОФСТ
         if ( $data['unit_id'] > 0 && $data['region_id'] > 0 ) {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-			$ofst_inserted = $wpdb->insert(
+            $ofst_inserted = $wpdb->insert(
                 'UserRegistationOFST',
                 [
                     'User_ID'                        => $user_id,
@@ -1012,15 +1055,30 @@ class User_Fstu_Ajax {
                 [ '%d', '%d', '%d', '%s' ]
             );
 
-			if ( false === $ofst_inserted ) {
-				return new \WP_Error( 'ofst_insert_failed', 'Не вдалося зберегти реєстрацію в ОФСТ.' );
-			}
+            if ( false === $ofst_inserted ) {
+                return new \WP_Error( 'ofst_insert_failed', 'Не вдалося зберегти реєстрацію в ОФСТ.' );
+            }
         }
 
-        // Прив'язка міста
+        if ( ! empty( $data['ipn'] ) ) {
+            $wpdb->insert( 'UserParams', [ 'User_ID' => $user_id, 'UserParams_Name' => 'IPN', 'UserParams_Value' => $data['ipn'] ], [ '%d', '%s', '%s' ] );
+        }
+
+        if ( ! empty( $_FILES['photo']['tmp_name'] ) && 0 === $_FILES['photo']['error'] ) {
+            $photo_dir = ABSPATH . 'photo/';
+            if ( ! file_exists( $photo_dir ) ) {
+                wp_mkdir_p( $photo_dir );
+            }
+            $target_file = $photo_dir . $user_id . '.jpg';
+
+            $image_info = getimagesize( $_FILES['photo']['tmp_name'] );
+            if ( $image_info !== false ) {
+                move_uploaded_file( $_FILES['photo']['tmp_name'], $target_file );
+            }
+        }
+
         if ( $data['city_id'] > 0 ) {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-			$city_inserted = $wpdb->insert(
+            $city_inserted = $wpdb->insert(
                 'UserCity',
                 [
                     'User_ID'               => $user_id,
@@ -1030,15 +1088,12 @@ class User_Fstu_Ajax {
                 [ '%d', '%d', '%s' ]
             );
 
-			if ( false === $city_inserted ) {
-				return new \WP_Error( 'city_insert_failed', 'Не вдалося зберегти місто проживання.' );
-			}
+            if ( false === $city_inserted ) {
+                return new \WP_Error( 'city_insert_failed', 'Не вдалося зберегти місто проживання.' );
+            }
         }
 
-        // Надсилаємо стандартний email від WP (самому кандидату)
         wp_new_user_notification( $user_id, null, 'user' );
-
-        // Відправляємо сповіщення реєстраторам осередку
         $this->notify_registrars_about_new_application( $user_id, $data );
 
         return $user_id;
@@ -1133,4 +1188,6 @@ class User_Fstu_Ajax {
             }
         }
     }
+
+    //---
 }
