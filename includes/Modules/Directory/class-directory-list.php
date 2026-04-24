@@ -2,8 +2,8 @@
 /**
  * Контролер відображення модуля Directory = Виконком.
  *
- * Version:     1.0.0
- * Date_update: 2026-04-18
+ * Version:     1.1.0
+ * Date_update: 2026-04-24
  *
  * @package FSTU\Modules\Directory
  */
@@ -29,17 +29,10 @@ class Directory_List {
      * Обробка шорткоду [fstu_directory].
      */
     public function render_shortcode( $atts ): string {
-        // 1. Перевірка доступу (з матриці: тільки авторизовані з відповідними правами)
-        if ( ! is_user_logged_in() ) {
-            return '<div class="fstu-alert fstu-alert--danger">' . esc_html__( 'Доступ заборонено. Будь ласка, авторизуйтесь.', 'fstu' ) . '</div>';
-        }
-
         $permissions = Capabilities::get_directory_permissions();
 
-        // Якщо немає навіть базового права на перегляд списку
-        if ( empty( $permissions['canViewList'] ) ) {
-            return '<div class="fstu-alert fstu-alert--danger">' . esc_html__( 'У вас немає прав для перегляду цього розділу.', 'fstu' ) . '</div>';
-        }
+        // Довідник Виконкому є публічним, тому ми не блокуємо вивід базового шорткоду для гостей.
+        // Доступ до голосувань та протоколу контролюється окремо через JS та AJAX.
 
         // 2. Підключення активів (Assets)
         $this->enqueue_assets( $permissions );

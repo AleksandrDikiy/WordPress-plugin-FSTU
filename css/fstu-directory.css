@@ -1,8 +1,8 @@
 /**
  * Стилі модуля Directory.
  *
- * Version:     1.0.0
- * Date_update: 2026-04-16
+ * Version:     1.1.0
+ * Date_update: 2026-04-24
  */
 
 /* ==========================================================================
@@ -25,10 +25,11 @@
     gap: 10px !important;
 }
 
-/* Скидання стилів кнопок */
-.fstu-module button.fstu-btn {
+/* Скидання стилів кнопок та вкладок (Жорсткий захист від Astra/Elementor) */
+.fstu-module button.fstu-btn,
+.fstu-module .fstu-action-bar button.fstu-tab-btn {
     background-color: #f8f9fa !important;
-    color: #1e293b !important;
+    color: #333 !important;
     border: 1px solid #d1d5db !important;
     padding: 6px 12px !important;
     border-radius: 4px !important;
@@ -39,7 +40,7 @@
     justify-content: center !important;
     box-shadow: none !important;
     margin: 0 !important;
-    font-weight: 500 !important;
+    font-weight: 600 !important;
     cursor: pointer !important;
     transition: all 0.2s ease !important;
 }
@@ -53,7 +54,9 @@
 }
 
 .fstu-module button.fstu-btn:hover,
-.fstu-module button.fstu-btn--active {
+.fstu-module button.fstu-btn--active,
+.fstu-module .fstu-action-bar button.fstu-tab-btn:hover,
+.fstu-module .fstu-action-bar button.fstu-tab-btn.active {
     background-color: #d9534f !important;
     color: #fff !important;
     border-color: #d9534f !important;
@@ -346,8 +349,33 @@ select.fstu-select--compact {
     width: 70px !important;
     min-width: 70px !important;
     max-width: 70px !important;
-    height: 30px !important;
+    height: 26px !important;
     padding: 2px 6px !important;
-    font-size: 13px !important;
+    font-size: 12px !important;
     display: inline-block !important;
+}
+
+/* Захист кнопок пагінації від теми Astra */
+.fstu-module button.fstu-btn--page {
+    background-color: #f8f9fa !important;
+    border: 1px solid #d1d5db !important;
+    color: #333 !important;
+    padding: 2px 8px !important;
+    min-height: 26px !important;
+    font-size: 12px !important;
+    cursor: pointer !important;
+    box-shadow: none !important;
+    border-radius: 3px !important;
+    margin: 0 2px !important;
+    line-height: 1.5 !important;
+    display: inline-block !important;
+    width: auto !important;
+    font-weight: normal !important;
+}
+
+.fstu-module button.fstu-btn--page:hover,
+.fstu-module button.fstu-btn--page.active {
+    background-color: #d9534f !important;
+    border-color: #d9534f !important;
+    color: #fff !important;
 }
