@@ -3,8 +3,8 @@
  * AJAX-обробники модуля "Реєстр членів ФСТУ".
  * Всі запити до БД виконуються виключно через $wpdb->prepare().
  *
- * Version:     1.3.1
- * Date_update: 2026-04-20
+ * Version:     1.3.2
+ * Date_update: 2026-04-24
  *
  * @package FSTU\UserFstu
  */
@@ -341,6 +341,12 @@ class User_Fstu_Ajax {
         }
         if ( $data['region_id'] <= 0 ) {
             $errors[] = 'Оберіть область.';
+        }
+        if ( $data['city_id'] <= 0 ) {
+            $errors[] = 'Оберіть місто проживання.';
+        }
+        if ( $data['unit_id'] <= 0 ) {
+            $errors[] = 'Оберіть осередок (ОФСТ).';
         }
 
         return $errors;
@@ -1029,9 +1035,102 @@ class User_Fstu_Ajax {
 			}
         }
 
-        // Надсилаємо стандартний email від WP
+        // Надсилаємо стандартний email від WP (самому кандидату)
         wp_new_user_notification( $user_id, null, 'user' );
 
+        // Відправляємо сповіщення реєстраторам осередку
+        $this->notify_registrars_about_new_application( $user_id, $data );
+
         return $user_id;
+    }
+
+    /**
+     * Знаходить реєстраторів (локальних/глобальних) та керівництво осередку,
+     * і надсилає їм сповіщення про нову заявку.
+     */
+    private function notify_registrars_about_new_application( int $applicant_id, array $data ): void {
+        global $wpdb;
+
+        $unit_id = (int) $data['unit_id'];
+        $emails  = [];
+
+        // 1. Локальні реєстратори (userregistrar у цьому осередку)
+        $sql_local = "
+            SELECT DISTINCT u.user_email 
+            FROM {$wpdb->users} u
+            INNER JOIN {$wpdb->usermeta} um ON um.user_id = u.ID AND um.meta_key = 'wp_capabilities'
+            INNER JOIN (
+                SELECT User_ID, Unit_ID FROM UserRegistationOFST ur1
+                INNER JOIN (
+                    SELECT User_ID as uid, MAX(UserRegistationOFST_DateCreate) as max_date 
+                    FROM UserRegistationOFST GROUP BY User_ID
+                ) ur2 ON ur1.User_ID = ur2.uid AND ur1.UserRegistationOFST_DateCreate = ur2.max_date
+            ) ofst ON ofst.User_ID = u.ID
+            WHERE um.meta_value LIKE %s 
+              AND ofst.Unit_ID = %d
+        ";
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+        $local_registrars = $wpdb->get_col( $wpdb->prepare( $sql_local, '%' . $wpdb->esc_like( 'userregistrar' ) . '%', $unit_id ) );
+        if ( is_array( $local_registrars ) ) {
+            $emails = array_merge( $emails, $local_registrars );
+        }
+
+        // 2. Глобальні реєстратори (globalregistrar - бачать всі осередки)
+        $sql_global = "
+            SELECT DISTINCT u.user_email 
+            FROM {$wpdb->users} u
+            INNER JOIN {$wpdb->usermeta} um ON um.user_id = u.ID AND um.meta_key = 'wp_capabilities'
+            WHERE um.meta_value LIKE %s
+        ";
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+        $global_registrars = $wpdb->get_col( $wpdb->prepare( $sql_global, '%' . $wpdb->esc_like( 'globalregistrar' ) . '%' ) );
+        if ( is_array( $global_registrars ) ) {
+            $emails = array_merge( $emails, $global_registrars );
+        }
+
+        // 3. Президент або В.О. Президента осередку (з таблиці RegionalFST та довідника посад)
+        $sql_president = "
+            SELECT DISTINCT u.user_email
+            FROM {$wpdb->users} u
+            INNER JOIN RegionalFST rf ON rf.User_ID = u.ID
+            INNER JOIN S_MemberRegional smr ON smr.MemberRegional_ID = rf.MemberRegional_ID
+            WHERE rf.Unit_ID = %d 
+              AND (smr.MemberRegional_Name LIKE %s OR smr.MemberRegional_Name LIKE %s OR rf.MemberRegional_ID = 1)
+        ";
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+        $presidents = $wpdb->get_col( $wpdb->prepare(
+            $sql_president,
+            $unit_id,
+            '%' . $wpdb->esc_like( 'Президент' ) . '%',
+            '%' . $wpdb->esc_like( 'Голова' ) . '%'
+        ) );
+        if ( is_array( $presidents ) ) {
+            $emails = array_merge( $emails, $presidents );
+        }
+
+        // Очищення та унікалізація email-адрес (щоб людина не отримала 2 листи, якщо вона і президент, і реєстратор)
+        $emails = array_unique( array_filter( array_map( 'sanitize_email', $emails ) ) );
+
+        // Fallback на пошту адміна, якщо нікого в осередку не знайдено
+        if ( empty( $emails ) ) {
+            $emails = [ get_option( 'admin_email' ) ];
+        }
+
+        $applicant_name = trim( $data['last_name'] . ' ' . $data['first_name'] . ' ' . $data['patronymic'] );
+        $subject = 'Нова заявка на вступ до ФСТУ: ' . $applicant_name;
+
+        $message  = "Вітаємо!\n\n";
+        $message .= "Надійшла нова заявка на вступ до ФСТУ.\n\n";
+        $message .= "Кандидат: {$applicant_name}\n";
+        $message .= "Email: {$data['email']}\n";
+        $message .= "Телефон: {$data['phone']}\n\n";
+        $message .= "Будь ласка, увійдіть на сайт та перейдіть до модуля 'Заявки в ФСТУ', щоб перевірити дані та прийняти або відхилити кандидата.\n\n";
+        $message .= "З повагою,\nАвтоматична система ФСТУ";
+
+        foreach ( $emails as $email ) {
+            if ( is_email( $email ) ) {
+                wp_mail( $email, $subject, $message );
+            }
+        }
     }
 }
