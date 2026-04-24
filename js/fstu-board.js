@@ -1,7 +1,7 @@
 /**
  * Скрипт модуля "Комісії з видів туризму (Board)".
- * * Version: 1.1.1
- * Date_update: 2026-04-19
+ * * Version: 1.2.0
+ * Date_update: 2026-04-24
  */
 
 jQuery(document).ready(function($) {
@@ -74,22 +74,14 @@ jQuery(document).ready(function($) {
             openModal('member', id, { userId, roleId, fio });
         });
 
-        // Відкриття модалки додавання кандидата
-        $(document).on('click', '.fstu-add-candidate-btn', function(e) {
-            e.preventDefault();
-            const qId = $(this).data('qid');
-            openModal('candidate', null, { questionId: qId });
-        });
-
         // -----------------------------------------------------
-        // АВТОКОМПЛІТ (AJAX пошук користувача для обох модалок)
+        // АВТОКОМПЛІТ (AJAX пошук користувача для модалки)
         // -----------------------------------------------------
         let autocompleteTimeout;
-        $(document).on('input', '#modal-member-user-search, #modal-candidate-user-search', function() {
+        $(document).on('input', '#modal-member-user-search', function() {
             const $input = $(this);
-            const isCandidate = $input.attr('id') === 'modal-candidate-user-search';
-            const $results = isCandidate ? $('#modal-candidate-user-results') : $('#modal-member-user-results');
-            const $hidden = isCandidate ? $('#modal-candidate-user-id') : $('#modal-member-user-id');
+            const $results = $('#modal-member-user-results');
+            const $hidden = $('#modal-member-user-id');
             const query = $input.val().trim();
 
             $hidden.val('');
@@ -117,8 +109,6 @@ jQuery(document).ready(function($) {
                         } else {
                             $results.append(`<li class="fstu-autocomplete-item" style="color:#666; cursor:default;">За запитом нікого не знайдено</li>`);
                         }
-                    } else {
-                        $results.append(`<li class="fstu-autocomplete-item" style="color:red; cursor:default;">Помилка: ${response.data.message || 'Невідома помилка'}</li>`);
                     }
                     $results.show();
                 });
@@ -129,9 +119,8 @@ jQuery(document).ready(function($) {
         $(document).on('click', '.fstu-autocomplete-item', function() {
             if (!$(this).data('id')) return;
             const $results = $(this).closest('.fstu-autocomplete-list');
-            const isCandidate = $results.attr('id') === 'modal-candidate-user-results';
-            const $input = isCandidate ? $('#modal-candidate-user-search') : $('#modal-member-user-search');
-            const $hidden = isCandidate ? $('#modal-candidate-user-id') : $('#modal-member-user-id');
+            const $input = $('#modal-member-user-search');
+            const $hidden = $('#modal-member-user-id');
 
             $hidden.val($(this).data('id'));
             $input.val($(this).text());
@@ -139,7 +128,6 @@ jQuery(document).ready(function($) {
             $results.hide().empty();
         });
 
-        // Приховати результати при кліку поза полем
         $(document).on('click', function(e) {
             if (!$(e.target).closest('.fstu-autocomplete-wrapper').length) {
                 $('.fstu-autocomplete-list').hide();
@@ -225,33 +213,6 @@ jQuery(document).ready(function($) {
                 if (response.success) {
                     $('#fstu-modal-poll').fadeOut(200);
                     loadPolls(); // Оновлюємо таблицю опитувань
-                    showToast(response.data.message, 'success');
-                } else {
-                    showToast(response?.data?.message || 'Помилка сервера', 'error');
-                }
-            }).fail(function() {
-                showToast('Помилка сервера', 'error');
-            }).always(function() {
-                $btn.prop('disabled', false).text('Зберегти');
-            });
-        });
-
-        // -----------------------------------------------------
-        // Відправка форми (Додавання КАНДИДАТА)
-        // -----------------------------------------------------
-        $(document).on('submit', '#fstu-board-candidate-form', function(e) {
-            e.preventDefault();
-            const $form = $(this);
-            const $btn = $form.find('.fstu-btn--save');
-            const qId = $('#modal-candidate-question-id').val();
-
-            $form.find('input[name="nonce"]').val(boardData.nonce);
-            $btn.prop('disabled', true).text('Збереження...');
-
-            $.post(boardData.ajaxUrl, $form.serialize(), function(response) {
-                if (response.success) {
-                    $('#fstu-modal-candidate').fadeOut(200);
-                    loadCandidates(qId); // Оновлюємо таблицю кандидатів
                     showToast(response.data.message, 'success');
                 } else {
                     showToast(response?.data?.message || 'Помилка сервера', 'error');
@@ -527,34 +488,37 @@ jQuery(document).ready(function($) {
 
         let html = '<div class="fstu-table-responsive"><table class="fstu-table fstu-table--striped"><thead><tr>';
         html += '<th style="width: 50px;" class="fstu-text-center">№</th>';
-        html += '<th style="width: 100px;">Початок</th>';
-        html += '<th>Найменування</th>';
-        html += '<th style="width: 80px;" class="fstu-text-center" title="Кількість членів комісії">Квота</th>';
+        html += '<th style="width: 100px;">Дедлайн</th>';
+        html += '<th>Питання / Документ</th>';
+        html += '<th style="width: 80px;" class="fstu-text-center">Голосів</th>';
         html += '<th style="width: 100px;" class="fstu-text-center">Статус</th>';
         html += '<th style="width: 120px;" class="fstu-text-center">Дії</th>';
         html += '</tr></thead><tbody>';
 
         items.forEach((item, index) => {
             const statusBadge = item.Question_State == '0'
-                ? '<span class="fstu-badge fstu-badge--success">Публічний</span>'
-                : '<span class="fstu-badge fstu-badge--warning">Приватний</span>';
+                ? '<span class="fstu-badge fstu-badge--success">Відкрите</span>'
+                : '<span class="fstu-badge fstu-badge--warning">Закрите</span>';
+
+            const isExpired = new Date(item.Question_DateEnd) < new Date();
+            const expiredBadge = isExpired ? '<br><span style="color:red; font-size:10px;">Завершено</span>' : '';
 
             html += `<tr>`;
             html += `<td class="fstu-text-center">${index + 1}</td>`;
-            html += `<td>${item.Question_DateBegin}</td>`;
+            html += `<td>${item.Question_DateEnd} ${expiredBadge}</td>`;
             html += `<td><strong>${escapeHtml(item.Question_Name)}</strong></td>`;
-            html += `<td class="fstu-text-center">${item.SetCommission_CountMembers}</td>`;
+            html += `<td class="fstu-text-center">${item.votes_count || 0} / ${item.SetCommission_CountMembers || 0}</td>`;
             html += `<td class="fstu-text-center">${statusBadge}</td>`;
 
             html += `<td class="fstu-text-center">
-                        <button type="button" class="fstu-btn fstu-view-candidates" data-id="${item.Question_ID}">Відкрити</button>
+                        <button type="button" class="fstu-btn fstu-view-poll" data-id="${item.Question_ID}" data-state="${item.Question_State}" data-expired="${isExpired}">Відкрити</button>
                      </td>`;
             html += `</tr>`;
 
-            html += `<tr class="fstu-candidates-row" id="candidates-row-${item.Question_ID}" style="display:none;">
+            html += `<tr class="fstu-poll-details-row" id="poll-row-${item.Question_ID}" style="display:none;">
                         <td colspan="6" style="padding: 0; background: #fafafa;">
-                            <div class="fstu-candidates-container" id="candidates-container-${item.Question_ID}" style="padding: 15px; border-bottom: 2px solid #dcead6;">
-                                </div>
+                            <div class="fstu-poll-container" id="poll-container-${item.Question_ID}" style="padding: 20px; border-bottom: 2px solid #dcead6;">
+                            </div>
                         </td>
                      </tr>`;
         });
@@ -562,252 +526,152 @@ jQuery(document).ready(function($) {
         html += '</tbody></table></div>';
         container.html(html);
 
-        $('.fstu-view-candidates').on('click', function() {
+        $('.fstu-view-poll').on('click', function() {
             const qId = $(this).data('id');
-            const row = $(`#candidates-row-${qId}`);
+            const state = $(this).data('state');
+            const isExpired = $(this).data('expired');
+            const row = $(`#poll-row-${qId}`);
+
             if (row.is(':visible')) {
                 row.hide();
                 $(this).text('Відкрити');
             } else {
                 row.show();
                 $(this).text('Закрити');
-                loadCandidates(qId);
+                loadPollDetails(qId, state, isExpired);
             }
         });
     }
 
-    /**
-     * 5. AJAX ЗАВАНТАЖЕННЯ КАНДИДАТІВ
-     */
-    function loadCandidates(questionId) {
-        const container = $(`#candidates-container-${questionId}`);
-        container.html('<div class="fstu-text-center">Завантаження кандидатів...</div>');
+    function loadPollDetails(questionId, state, isExpired) {
+        const container = $(`#poll-container-${questionId}`);
+        container.html('<div class="fstu-text-center">Завантаження деталей...</div>');
 
         $.post(boardData.ajaxUrl, {
-            action: 'fstu_board_get_candidates',
+            action: 'fstu_board_get_poll_details',
             nonce: boardData.nonce,
-            question_id: questionId
+            question_id: questionId,
+            state: state
         }, function(response) {
             if (response.success) {
-                renderCandidates(questionId, response.data.items);
+                renderPollCard(questionId, isExpired, response.data);
             } else {
                 container.html(`<div class="fstu-text-danger">${response.data.message}</div>`);
             }
         });
     }
 
-    function renderCandidates(questionId, items) {
-        const container = $(`#candidates-container-${questionId}`);
-        let html = '';
+    function renderPollCard(questionId, isExpired, data) {
+        const container = $(`#poll-container-${questionId}`);
+        const answers = data.answers || [];
+        const stats = data.stats || [];
+        const voters = data.voters || [];
 
-        if (boardData.permissions.canManage) {
-            html += `<div style="margin-bottom: 10px; text-align: right;">
-                        <button type="button" class="fstu-btn fstu-btn--save fstu-add-candidate-btn" data-qid="${questionId}">+ Додати кандидата</button>
-                     </div>`;
+        let html = `<div style="max-width: 800px; margin: 0 auto; background: #fff; padding: 20px; border: 1px solid #e2e4e7; border-radius: 4px;">`;
+
+        // Блок кнопок голосування
+        html += `<h4 style="margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 10px;">Ваш голос:</h4>`;
+
+        if (isExpired) {
+            html += `<div class="fstu-text-danger" style="margin-bottom: 20px; font-weight: bold;">Голосування завершено. Прийняття голосів закрито.</div>`;
+        } else if (!boardData.permissions.canVote) {
+            html += `<div class="fstu-text-muted" style="margin-bottom: 20px;">Голосувати можуть лише члени ФСТУ, які входять до складу цієї комісії.</div>`;
+        } else {
+            html += `<div style="display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap;">`;
+            answers.forEach(ans => {
+                const isActive = data.current_vote == ans.Answer_ID ? 'background: #007cba; color: #fff; border-color: #007cba;' : '';
+                html += `<button class="fstu-btn fstu-cast-vote-btn" data-qid="${questionId}" data-aid="${ans.Answer_ID}" style="${isActive}">${escapeHtml(ans.Answer_Name)}</button>`;
+            });
+            html += `</div>`;
         }
 
-        if (items.length === 0) {
-            html += '<div class="fstu-text-center" style="padding: 10px;">Кандидати відсутні. Додайте першого кандидата, щоб розпочати голосування.</div>';
-            container.html(html);
-            return;
+        // Блок статистики (Прогрес-бари)
+        html += `<h4 style="border-bottom: 1px solid #eee; padding-bottom: 10px;">Загальні результати:</h4>`;
+        html += `<div style="margin-bottom: 25px;">`;
+
+        let totalVotes = stats.reduce((sum, item) => sum + parseInt(item.cnt), 0);
+
+        if (totalVotes === 0) {
+            html += `<div class="fstu-text-muted">Ще ніхто не проголосував.</div>`;
+        } else {
+            answers.forEach(ans => {
+                const stat = stats.find(s => s.Answer_ID === ans.Answer_ID);
+                const cnt = stat ? parseInt(stat.cnt) : 0;
+                const percent = (cnt / totalVotes * 100).toFixed(1);
+
+                let color = '#46b450'; // ЗА (зелений)
+                if (ans.Answer_Name.toLowerCase().includes('проти')) color = '#d9534f'; // червоний
+                if (ans.Answer_Name.toLowerCase().includes('утрим')) color = '#ffb900'; // жовтий
+
+                html += `
+                <div style="margin-bottom: 10px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+                        <strong>${escapeHtml(ans.Answer_Name)}</strong>
+                        <span>${cnt} голосів (${percent}%)</span>
+                    </div>
+                    <div style="width: 100%; background: #eee; height: 8px; border-radius: 4px; overflow: hidden;">
+                        <div style="width: ${percent}%; background: ${color}; height: 100%;"></div>
+                    </div>
+                </div>`;
+            });
+        }
+        html += `</div>`;
+
+        // Блок поіменного голосування
+        if (voters.length > 0) {
+            html += `<h4 style="border-bottom: 1px solid #eee; padding-bottom: 10px;">Поіменний протокол:</h4>`;
+            html += `<table class="fstu-table fstu-table--striped"><thead><tr><th>ПІБ</th><th style="width: 100px;" class="fstu-text-center">Голос</th><th style="width: 120px;" class="fstu-text-center">Джерело</th><th style="width: 140px;" class="fstu-text-center">Дата</th></tr></thead><tbody>`;
+
+            voters.forEach(v => {
+                let color = 'inherit';
+                if (v.Answer_Name.toLowerCase().includes('за')) color = 'green';
+                if (v.Answer_Name.toLowerCase().includes('проти')) color = 'red';
+                if (v.Answer_Name.toLowerCase().includes('утрим')) color = 'orange';
+
+                const sourceText = v.API === 'telegram-bot' ? '📱 Telegram' : '💻 Сайт';
+
+                html += `<tr>
+                    <td><a href="/personal/?ViewID=${v.User_ID}" target="_blank">${escapeHtml(v.FIO)}</a></td>
+                    <td class="fstu-text-center" style="color: ${color}; font-weight: bold;">${escapeHtml(v.Answer_Name)}</td>
+                    <td class="fstu-text-center"><small class="fstu-text-muted">${sourceText}</small></td>
+                    <td class="fstu-text-center"><small>${v.VotingResults_DateCreate}</small></td>
+                </tr>`;
+            });
+            html += `</tbody></table>`;
+        } else if (stats.length > 0) {
+            html += `<div class="fstu-text-muted" style="font-size: 12px;">Поіменний протокол прихований (закрите голосування).</div>`;
         }
 
-        html += '<table class="fstu-table"><thead><tr>';
-        html += '<th style="width: 40px;">№</th>';
-        html += '<th>Кандидат / Напрямок</th>';
-        html += '<th colspan="3" class="fstu-text-center">Результати голосування</th>';
-
-        if (boardData.permissions.canVote) {
-            html += '<th style="width: 200px;" class="fstu-text-center">Ваш голос</th>';
-        }
-        html += '</tr></thead><tbody>';
-
-        items.forEach((item, index) => {
-            const cntYes = parseInt(item.cnt_yes) || 0;
-            const cntNo = parseInt(item.cnt_no) || 0;
-            const cntAbs = parseInt(item.cnt_abstain) || 0;
-            const total = cntYes + cntNo + cntAbs;
-
-            const pYes = total > 0 ? (cntYes / total * 100) : 0;
-            const pAbs = total > 0 ? (cntAbs / total * 100) : 0;
-            const pNo = total > 0 ? (cntNo / total * 100) : 0;
-
-            const progressHtml = `
-                <div class="fstu-progress-wrapper">
-                    <div class="fstu-progress-bar fstu-progress-bar--yes" style="width: ${pYes}%;" title="ЗА: ${cntYes}"></div>
-                    <div class="fstu-progress-bar fstu-progress-bar--abstain" style="width: ${pAbs}%;" title="УТРИМАВСЯ: ${cntAbs}"></div>
-                    <div class="fstu-progress-bar fstu-progress-bar--no" style="width: ${pNo}%;" title="ПРОТИ: ${cntNo}"></div>
-                </div>
-            `;
-
-            // Формуємо tooltip для програми розвитку
-            const devTooltip = item.Development ? `title="Програма розвитку: ${escapeHtml(item.Development)}"` : '';
-            // Формуємо посилання на документ, якщо воно є
-            const urlLink = (item.URL && item.URL.trim() !== '')
-                ? `<br><a href="${escapeHtml(item.URL)}" target="_blank" class="fstu-doc-link">📄 Відкрити документ</a>`
-                : '';
-
-            html += `<tr>`;
-            html += `<td class="fstu-text-center">${index + 1}</td>`;
-            html += `<td>
-                        <strong><a href="/personal/?ViewID=${item.User_ID}" target="_blank">${escapeHtml(item.FIO)}</a></strong><br>
-                        <small class="fstu-candidate-dev" ${devTooltip}>${escapeHtml(item.Direction)}</small>
-                        ${urlLink}
-                     </td>`;
-            // Додаємо кнопку "Хто проголосував", якщо є хоча б 1 голос (показується тільки авторизованим userfstu)
-            let votersBtn = '';
-            if (total > 0 && boardData.permissions.canVote) { // canVote зазвичай є у тих, хто має userfstu
-                votersBtn = `<button class="fstu-voters-btn" data-cid="${item.CandidatesCommission_ID}" data-name="${escapeHtml(item.FIO)}">👁️ Хто проголосував</button>`;
-            }
-
-            html += `<td colspan="3" class="fstu-text-center" style="vertical-align: middle;">
-                        ${progressHtml}
-                        <div class="fstu-vote-stats">
-                            <span class="fstu-vote-val--yes">ЗА: ${cntYes}</span>
-                            <span class="fstu-vote-val--abstain">УТРИМ: ${cntAbs}</span>
-                            <span class="fstu-vote-val--no">ПРОТИ: ${cntNo}</span>
-                        </div>
-                        ${votersBtn}
-                     </td>`;
-
-            if (boardData.permissions.canVote) {
-                const voteVal = item.current_user_vote !== null ? item.current_user_vote : '';
-                const btnYesClass = voteVal == '1' ? 'fstu-btn--page active' : 'fstu-btn--page';
-                const btnAbstClass = voteVal == '0' ? 'fstu-btn--page active' : 'fstu-btn--page';
-                const btnNoClass = voteVal == '2' ? 'fstu-btn--page active' : 'fstu-btn--page';
-
-                html += `<td class="fstu-text-center">
-                            <button class="fstu-cast-vote ${btnYesClass}" data-cid="${item.CandidatesCommission_ID}" data-val="1" data-uid="${item.User_ID}">ЗА</button>
-                            <button class="fstu-cast-vote ${btnAbstClass}" data-cid="${item.CandidatesCommission_ID}" data-val="0" data-uid="${item.User_ID}">УТРИМ</button>
-                            <button class="fstu-cast-vote ${btnNoClass}" data-cid="${item.CandidatesCommission_ID}" data-val="2" data-uid="${item.User_ID}">ПРОТИ</button>
-                         </td>`;
-            }
-            html += `</tr>`;
-        });
-
-        html += '</tbody></table>';
+        html += `</div>`;
         container.html(html);
 
-        container.find('.fstu-cast-vote').on('click', function() {
-            const cid = $(this).data('cid');
-            const val = $(this).data('val');
-            const candUid = $(this).data('uid');
-            const btn = $(this);
+        // Обробник голосування
+        container.find('.fstu-cast-vote-btn').on('click', function() {
+            const qId = $(this).data('qid');
+            const aId = $(this).data('aid');
 
-            // Перевірка на Самовідвід (Голосування ПРОТИ самого себе)
-            if (val == 2 && candUid == boardData.currentUserId) {
-                const confirmMsg = "УВАГА! Ви голосуєте ПРОТИ власної кандидатури.\n\n" +
-                    "Цю дію буде розцінено як САМОВІДВІД. Вашу кандидатуру буде остаточно ВИДАЛЕНО з опитування, " +
-                    "а запис про це занесено в офіційний протокол.\n\n" +
-                    "Ви впевнені, що хочете зняти свою кандидатуру?";
-
-                if (!confirm(confirmMsg)) {
-                    return; // Скасовуємо дію, якщо користувач передумав
-                }
-            }
-
-            btn.siblings().prop('disabled', true);
-            btn.text('...').prop('disabled', true);
+            $(this).siblings().prop('disabled', true);
+            $(this).text('...').prop('disabled', true);
 
             $.post(boardData.ajaxUrl, {
                 action: 'fstu_board_cast_vote',
                 nonce: boardData.nonce,
-                candidate_id: cid,
-                vote_value: val
+                question_id: qId,
+                answer_id: aId,
+                commission_type_id: $('#fstu-board-filter-type').val(),
+                s_commission_id: $('#fstu-board-filter-commission').val()
             }, function(response) {
                 if (response.success) {
-                    showToast('Голос враховано', 'success');
-                    loadCandidates(questionId);
+                    showToast('Голос успішно зараховано', 'success');
+                    loadPollDetails(qId, $(`#poll-row-${qId}`).prev().find('.fstu-view-poll').data('state'), isExpired);
                 } else {
                     showToast(response.data.message, 'error');
-                    loadCandidates(questionId);
+                    loadPollDetails(qId, $(`#poll-row-${qId}`).prev().find('.fstu-view-poll').data('state'), isExpired);
                 }
             }).fail(function() {
                 showToast('Помилка сервера', 'error');
-                loadCandidates(questionId);
+                loadPollDetails(qId, $(`#poll-row-${qId}`).prev().find('.fstu-view-poll').data('state'), isExpired);
             });
-        });
-
-        // Біндимо клік на кнопку "Хто проголосував"
-        container.find('.fstu-voters-btn').off('click').on('click', function() {
-            const cid = $(this).data('cid');
-            const candidateName = $(this).data('name');
-
-            $.post(boardData.ajaxUrl, {
-                action: 'fstu_board_get_voters',
-                nonce: boardData.nonce,
-                candidate_id: cid
-            }, function(response) {
-                if (response.success) {
-                    renderVotersModal(candidateName, response.data.items, response.data.is_admin);
-                } else {
-                    showToast(response.data.message, 'error');
-                }
-            }).fail(function() {
-                showToast('Помилка сервера', 'error');
-            });
-        });
-    }
-
-    function renderVotersModal(candidateName, voters, isAdmin) {
-        $('#fstu-voters-modal').remove(); // Видаляємо старе вікно, якщо є
-
-        let html = `
-        <div class="fstu-modal-overlay" id="fstu-voters-modal" style="display:flex;">
-            <div class="fstu-modal-content">
-                <div class="fstu-modal-header">
-                    <h3 class="fstu-modal-title">Результати голосування</h3>
-                    <button type="button" class="fstu-modal-close">×</button>
-                </div>
-                <div class="fstu-modal-body">
-                    <div class="fstu-mb-15">
-                        <small class="fstu-text-muted">Кандидат:</small><br>
-                        <strong class="fstu-fw-bold">${candidateName}</strong>
-                    </div>
-                    <table class="fstu-table fstu-table--striped">
-                        <thead>
-                            <tr>
-                                <th>ПІБ виборця</th>
-                                ${isAdmin ? '<th class="fstu-text-center" style="width: 100px;">Голос</th>' : ''}
-                            </tr>
-                        </thead>
-                        <tbody>
-        `;
-
-        if (voters.length === 0) {
-            html += `<tr><td colspan="${isAdmin ? 2 : 1}" class="fstu-text-center">Ще ніхто не проголосував.</td></tr>`;
-        } else {
-            voters.forEach(v => {
-                html += `<tr><td>${escapeHtml(v.FIO)}</td>`;
-
-                // Друга колонка рендериться ТІЛЬКИ якщо сервер підтвердив, що це адмін
-                if (isAdmin) {
-                    let voteStr = '';
-                    let color = '';
-                    if (v.VoteValue == 1) { voteStr = 'ЗА'; color = 'green'; }
-                    else if (v.VoteValue == 2) { voteStr = 'ПРОТИ'; color = 'red'; }
-                    else if (v.VoteValue == 0) { voteStr = 'УТРИМ'; color = 'orange'; }
-
-                    html += `<td class="fstu-text-center" style="color: ${color}; font-weight: bold; font-size: 12px;">${voteStr}</td>`;
-                }
-                html += `</tr>`;
-            });
-        }
-
-        html += `</tbody></table></div></div></div>`;
-
-        $('body').append(html);
-
-        // Закриття по кліку на кнопку "Х"
-        $('#fstu-voters-modal .fstu-modal-close').on('click', function() {
-            $('#fstu-voters-modal').fadeOut(200, function(){ $(this).remove(); });
-        });
-
-        // Закриття по кліку на фон
-        $('#fstu-voters-modal').on('click', function(e) {
-            if (e.target === this) {
-                $(this).fadeOut(200, function(){ $(this).remove(); });
-            }
         });
     }
 
@@ -940,10 +804,6 @@ jQuery(document).ready(function($) {
         } else {
             $(modalId).find('.fstu-modal-title').text('Додавання запису');
             $(modalId).find('input[name="' + (type === 'member' ? 'commission_id' : 'question_id') + '"]').val('');
-
-            if (type === 'candidate' && extraData && extraData.questionId) {
-                $(modalId).find('#modal-candidate-question-id').val(extraData.questionId);
-            }
         }
 
         // Показуємо модалку

@@ -3,8 +3,8 @@
  * AJAX Controller для модуля "Комісії з видів туризму (Board)".
  * Відповідає за маршрутизацію запитів від шорткоду [fstu_board].
  *
- * * Version: 1.0.0
- * Date_update: 2026-04-18
+ * * Version: 1.1.0
+ * Date_update: 2026-04-24
  */
 
 namespace FSTU\Modules\Commissions;
@@ -36,14 +36,10 @@ class Commissions_Ajax {
         add_action( 'wp_ajax_fstu_board_delete_poll', [ $this, 'handle_delete_poll' ] );
         add_action( 'wp_ajax_fstu_board_send_email', [ $this, 'handle_send_email' ] );
 
-        // Кандидати та Голосування
-        add_action( 'wp_ajax_fstu_board_get_candidates', [ $this, 'handle_get_candidates' ] );
-        add_action( 'wp_ajax_nopriv_fstu_board_get_candidates', [ $this, 'handle_get_candidates' ] );
-        add_action( 'wp_ajax_fstu_board_save_candidate', [ $this, 'handle_save_candidate' ] );
-        add_action( 'wp_ajax_fstu_board_delete_candidate', [ $this, 'handle_delete_candidate' ] );
+        // Опитування та Голосування (Новий формат)
+        add_action( 'wp_ajax_fstu_board_get_poll_details', [ $this, 'handle_get_poll_details' ] );
+        add_action( 'wp_ajax_nopriv_fstu_board_get_poll_details', [ $this, 'handle_get_poll_details' ] );
         add_action( 'wp_ajax_fstu_board_cast_vote', [ $this, 'handle_cast_vote' ] );
-        add_action( 'wp_ajax_fstu_board_get_voters', [ $this, 'handle_get_voters' ] );
-        add_action( 'wp_ajax_nopriv_fstu_board_get_voters', [ $this, 'handle_get_voters' ] );
 
         // Протокол
         add_action( 'wp_ajax_fstu_board_get_protocol', [ $this, 'handle_get_protocol' ] );
@@ -106,40 +102,6 @@ class Commissions_Ajax {
             'items' => $polls,
         ] );
     }
-
-    /**
-     * Голосування за кандидата або відповідь (запис у CandidatesCommissionResult).
-     */
-    public function handle_cast_vote(): void {
-        check_ajax_referer( self::NONCE_ACTION, 'nonce' );
-
-        if ( ! current_user_can( Capabilities::VOTE_BOARD ) ) {
-            wp_send_json_error( [ 'message' => __( 'У вас немає прав для голосування.', 'fstu' ) ] );
-        }
-
-        $candidate_id = isset( $_POST['candidate_id'] ) ? absint( $_POST['candidate_id'] ) : 0;
-        $vote_value   = isset( $_POST['vote_value'] ) ? absint( $_POST['vote_value'] ) : 0; // 0 - Утрим, 1 - ЗА, 2 - ПРОТИ
-
-        if ( ! $candidate_id ) {
-            wp_send_json_error( [ 'message' => __( 'Не передано ID кандидата.', 'fstu' ) ] );
-        }
-
-        $service = new Commissions_Service();
-        $result  = $service->cast_vote( get_current_user_id(), $candidate_id, $vote_value );
-
-        if ( is_wp_error( $result ) ) {
-            // Віддаємо помилку (наприклад: "Ви вичерпали ліміт голосів" або "Не можна голосувати ЗА себе")
-            wp_send_json_error( [ 'message' => $result->get_error_message() ] );
-        }
-
-        if ( is_string( $result ) && $result === 'self_removed' ) {
-            // Якщо користувач зняв власну кандидатуру
-            wp_send_json_success( [ 'message' => 'Вашу кандидатуру успішно знято (самовідвід).' ] );
-        }
-
-        wp_send_json_success( [ 'message' => __( 'Ваш голос успішно враховано.', 'fstu' ) ] );
-    }
-
     /**
      * Отримання протоколу операцій.
      */
@@ -279,217 +241,125 @@ class Commissions_Ajax {
         wp_send_json_success( [ 'message' => __( 'Успішно збережено!', 'fstu' ) ] );
     }
     /**
-     * Отримання списку кандидатів для опитування.
+     * Отримання деталей опитування.
      */
-    public function handle_get_candidates(): void {
+    public function handle_get_poll_details(): void {
         check_ajax_referer( self::NONCE_ACTION, 'nonce' );
-
-        if ( ! $this->current_user_can_view() ) {
-            wp_send_json_error( [ 'message' => __( 'Недостатньо прав для перегляду.', 'fstu' ) ] );
-        }
 
         $question_id = isset( $_POST['question_id'] ) ? absint( $_POST['question_id'] ) : 0;
+        $state       = isset( $_POST['state'] ) ? absint( $_POST['state'] ) : 0;
 
         if ( ! $question_id ) {
-            wp_send_json_error( [ 'message' => __( 'Не передано ID опитування.', 'fstu' ) ] );
+            wp_send_json_error( [ 'message' => 'Не передано ID опитування.' ] );
         }
+
+        // Поіменне голосування бачать усі, якщо воно публічне (0), або якщо це Адмін.
+        $show_names = ( $state === 0 && current_user_can( 'userfstu' ) ) || current_user_can( 'administrator' );
 
         $repository = new Commissions_Repository();
-        $candidates = $repository->get_candidates_list( $question_id, get_current_user_id() );
+        $details    = $repository->get_poll_details( $question_id, $show_names );
 
-        wp_send_json_success( [ 'items' => $candidates ] );
-    }
-    public function handle_delete_member(): void {
-        check_ajax_referer( self::NONCE_ACTION, 'nonce' );
-        if ( ! current_user_can( Capabilities::DELETE_BOARD ) ) {
-            wp_send_json_error( [ 'message' => 'Немає прав на видалення.' ] );
-        }
-
-        $id = absint( $_POST['id'] );
-        $repository = new Commissions_Repository();
-        $protocol = new Commissions_Protocol_Service();
-
-        if ( $repository->delete_member( $id ) ) {
-            $protocol->log_action( 'D', "Видалено члена комісії ID: $id", '✓' );
-            wp_send_json_success( [ 'message' => 'Запис видалено.' ] );
-        }
-        wp_send_json_error( [ 'message' => 'Помилка БД при видаленні.' ] );
+        wp_send_json_success( $details );
     }
 
-    public function handle_delete_poll(): void {
-        check_ajax_referer( self::NONCE_ACTION, 'nonce' );
-        if ( ! current_user_can( Capabilities::DELETE_BOARD ) ) {
-            wp_send_json_error( [ 'message' => 'Немає прав.' ] );
-        }
-
-        $id = absint( $_POST['id'] );
-        $repository = new Commissions_Repository();
-        if ( $repository->delete_poll( $id ) ) {
-            (new Commissions_Protocol_Service())->log_action( 'D', "Видалено опитування ID: $id разом з результатами", '✓' );
-            wp_send_json_success( [ 'message' => 'Опитування видалено.' ] );
-        }
-        wp_send_json_error( [ 'message' => 'Помилка бази даних при видаленні.' ] );
-    }
     /**
-     * Збереження опитування (Insert / Update).
+     * Голосування за поточне питання (документ).
+     */
+    public function handle_cast_vote(): void {
+        check_ajax_referer( self::NONCE_ACTION, 'nonce' );
+
+        $question_id        = isset( $_POST['question_id'] ) ? absint( $_POST['question_id'] ) : 0;
+        $answer_id          = isset( $_POST['answer_id'] ) ? absint( $_POST['answer_id'] ) : 0;
+        $commission_type_id = isset( $_POST['commission_type_id'] ) ? absint( $_POST['commission_type_id'] ) : 1;
+        $s_commission_id    = isset( $_POST['s_commission_id'] ) ? absint( $_POST['s_commission_id'] ) : 0;
+        $region_id          = isset( $_POST['region_id'] ) ? absint( $_POST['region_id'] ) : 30;
+
+        if ( ! $question_id || ! $answer_id ) {
+            wp_send_json_error( [ 'message' => 'Не передані обов\'язкові дані.' ] );
+        }
+
+        $service = new Commissions_Service();
+        $result  = $service->cast_issue_vote( get_current_user_id(), $question_id, $answer_id, $commission_type_id, $s_commission_id, $region_id );
+
+        if ( is_wp_error( $result ) ) {
+            wp_send_json_error( [ 'message' => $result->get_error_message() ] );
+        }
+
+        wp_send_json_success( [ 'message' => 'Ваш голос успішно враховано.' ] );
+    }
+
+    /**
+     * Створення/Редагування опитування (документу).
      */
     public function handle_save_poll(): void {
         check_ajax_referer( self::NONCE_ACTION, 'nonce' );
 
         if ( ! $this->current_user_can_manage() ) {
-            wp_send_json_error( [ 'message' => __( 'Недостатньо прав.', 'fstu' ) ] );
+            wp_send_json_error( [ 'message' => __( 'Немає прав.', 'fstu' ) ] );
         }
 
         $question_id = isset( $_POST['question_id'] ) ? absint( $_POST['question_id'] ) : 0;
 
         global $wpdb;
-        $protocol = new Commissions_Protocol_Service();
-        $user_id  = get_current_user_id();
+        $wpdb->query( 'START TRANSACTION' );
 
-        // Санітизація вхідних даних
-        $q_name   = isset( $_POST['question_name'] ) ? sanitize_text_field( wp_unslash( $_POST['question_name'] ) ) : '';
-        $q_note   = isset( $_POST['question_note'] ) ? sanitize_textarea_field( wp_unslash( $_POST['question_note'] ) ) : '';
-        $q_begin  = isset( $_POST['question_date_begin'] ) ? sanitize_text_field( $_POST['question_date_begin'] ) : '';
-        $q_end    = isset( $_POST['question_date_end'] ) ? sanitize_text_field( $_POST['question_date_end'] ) : '';
-        $q_state  = isset( $_POST['question_state'] ) ? absint( $_POST['question_state'] ) : 0;
-        $q_url    = isset( $_POST['question_url'] ) ? esc_url_raw( wp_unslash( $_POST['question_url'] ) ) : '';
-
-        $c_type   = isset( $_POST['commission_type_id'] ) ? absint( $_POST['commission_type_id'] ) : 0;
-        $c_region = isset( $_POST['region_id'] ) ? absint( $_POST['region_id'] ) : 30;
-        $c_id     = isset( $_POST['s_commission_id'] ) ? absint( $_POST['s_commission_id'] ) : 0;
-        $q_count  = isset( $_POST['set_commission_count'] ) ? absint( $_POST['set_commission_count'] ) : 1;
+        $data = [
+            'Question_Name'      => sanitize_text_field( $_POST['question_name'] ?? '' ),
+            'Question_Note'      => sanitize_textarea_field( $_POST['question_note'] ?? '' ),
+            'Question_URL'       => esc_url_raw( $_POST['question_url'] ?? '' ),
+            'Question_DateBegin' => sanitize_text_field( $_POST['date_begin'] ?? current_time('Y-m-d') ),
+            'Question_DateEnd'   => sanitize_text_field( $_POST['date_end'] ?? current_time('Y-m-d') ),
+            'Question_State'     => isset($_POST['is_private']) && $_POST['is_private'] == '1' ? 1 : 0,
+        ];
 
         if ( $question_id > 0 ) {
-            // --- ОНОВЛЕННЯ ---
-            $wpdb->query( 'START TRANSACTION' );
-
-            // 1. Оновлюємо таблицю Question
-            $res_q = $wpdb->update(
-                'Question',
-                [
-                    'Question_Name'      => $q_name,
-                    'Question_Note'      => $q_note,
-                    'Question_DateBegin' => $q_begin,
-                    'Question_DateEnd'   => $q_end,
-                    'Question_State'     => $q_state,
-                    'Question_URL'       => $q_url,
-                ],
-                [ 'Question_ID' => $question_id ],
-                [ '%s', '%s', '%s', '%s', '%d', '%s' ],
-                [ '%d' ]
-            );
-
-            // 2. Оновлюємо квоту у зв'язковій таблиці
-            $wpdb->update(
-                'QuestionCommission',
-                [ 'SetCommission_CountMembers' => $q_count ],
-                [ 'Question_ID' => $question_id ],
-                [ '%d' ],
-                [ '%d' ]
-            );
-
-            if ( false === $res_q ) {
-                $wpdb->query( 'ROLLBACK' );
-                $protocol->log_action( 'U', "Помилка оновлення опитування ID: {$question_id}", 'error' );
-                wp_send_json_error( [ 'message' => __( 'Помилка оновлення бази даних.', 'fstu' ) ] );
-            }
-
-            $protocol->log_action( 'U', "Оновлено опитування ID: {$question_id}", '✓' );
-            $wpdb->query( 'COMMIT' );
-            wp_send_json_success( [ 'message' => __( 'Опитування успішно оновлено!', 'fstu' ) ] );
-
+            $result = $wpdb->update( 'Question', $data, [ 'Question_ID' => $question_id ], null, [ '%d' ] );
         } else {
-            // --- СТВОРЕННЯ (через існуючу збережену процедуру бази даних) ---
-            $wpdb->get_var(
-                $wpdb->prepare(
-                    "call InsertQuestionCommission(%d, %d, %d, %d, %d, %d, %s, %s, %d, %s, %s, %s, %s, %d, @ResultID)",
-                    $user_id,
-                    $c_id,
-                    2, // QuestionType_ID = 2 (Опитування за кандидатів)
-                    $c_type,
-                    $c_region,
-                    1, // AnswerPool_ID = 1 (Стандартний набір)
-                    $q_begin,
-                    $q_end,
-                    $q_state,
-                    $q_name,
-                    $q_note,
-                    $q_url,
-                    '1', // Внутрішній прапорець з legacy
-                    $q_count
-                )
-            );
+            $data['User_ID'] = get_current_user_id();
+            $data['QuestionType_ID'] = 1; // 1 - Поточні питання / Документи
+            $data['Question_DateCreate'] = current_time( 'mysql' );
 
-            $result_id = $wpdb->get_var( "SELECT @ResultID" );
+            $result = $wpdb->insert( 'Question', $data );
+            $question_id = $wpdb->insert_id;
 
-            if ( $result_id == 1 ) {
-                $protocol->log_action( 'I', "Створено нове опитування: {$q_name}", '✓' );
-                wp_send_json_success( [ 'message' => __( 'Опитування успішно створено!', 'fstu' ) ] );
-            } else {
-                $error_msg = $wpdb->last_error;
-                $protocol->log_action( 'I', "Помилка створення опитування", 'error' );
-                wp_send_json_error( [ 'message' => __( 'Помилка бази даних при створенні опитування. ' . $error_msg, 'fstu' ) ] );
-            }
+            // Прив'язуємо до комісії
+            $wpdb->insert( 'QuestionCommission', [
+                'Question_ID'       => $question_id,
+                'Commission_ID'     => absint( $_POST['s_commission_id'] ?? 0 ),
+                'CommissionType_ID' => absint( $_POST['commission_type_id'] ?? 1 ),
+                'Region_ID'         => 30 // За замовчуванням
+            ]);
+
+            // Прив'язуємо стандартні відповіді ФСТУ: ЗА(1), ПРОТИ(2), УТРИМАВСЯ(3)
+            $wpdb->insert( 'AnswerQuestion', [ 'Question_ID' => $question_id, 'Answer_ID' => 1 ] );
+            $wpdb->insert( 'AnswerQuestion', [ 'Question_ID' => $question_id, 'Answer_ID' => 2 ] );
+            $wpdb->insert( 'AnswerQuestion', [ 'Question_ID' => $question_id, 'Answer_ID' => 3 ] );
         }
+
+        if ( false === $result ) {
+            $wpdb->query( 'ROLLBACK' );
+            wp_send_json_error( [ 'message' => 'Помилка збереження.' ] );
+        }
+
+        $wpdb->query( 'COMMIT' );
+        wp_send_json_success( [ 'message' => 'Опитування успішно збережено.' ] );
     }
+
     /**
-     * Збереження кандидата.
+     * Видалення опитування.
      */
-    public function handle_save_candidate(): void {
+    public function handle_delete_poll(): void {
         check_ajax_referer( self::NONCE_ACTION, 'nonce' );
-
-        if ( ! $this->current_user_can_manage() ) {
-            wp_send_json_error( [ 'message' => __( 'Недостатньо прав.', 'fstu' ) ] );
+        if ( ! $this->current_user_can_delete() ) {
+            wp_send_json_error( [ 'message' => __( 'Немає прав.', 'fstu' ) ] );
         }
 
-        $question_id = isset( $_POST['question_id'] ) ? absint( $_POST['question_id'] ) : 0;
-        $user_id     = isset( $_POST['user_id'] ) ? absint( $_POST['user_id'] ) : 0;
-        $direction   = isset( $_POST['direction'] ) ? sanitize_text_field( wp_unslash( $_POST['direction'] ) ) : '';
-        $development = isset( $_POST['development'] ) ? sanitize_textarea_field( wp_unslash( $_POST['development'] ) ) : '';
-        $url         = isset( $_POST['url'] ) ? esc_url_raw( wp_unslash( $_POST['url'] ) ) : '';
+        $id = isset( $_POST['id'] ) ? absint( $_POST['id'] ) : 0;
+        $repo = new Commissions_Repository();
 
-        if ( ! $question_id || ! $user_id ) {
-            wp_send_json_error( [ 'message' => 'Не передано ID опитування або кандидата.' ] );
+        if ( $repo->delete_poll( $id ) ) {
+            wp_send_json_success( [ 'message' => 'Опитування видалено.' ] );
         }
-
-        $repository = new Commissions_Repository();
-        $result = $repository->save_candidate( $question_id, $user_id, $direction, $development, $url );
-
-        if ( $result === true ) {
-            (new Commissions_Protocol_Service())->log_action( 'I', "Додано кандидата (User ID: {$user_id}) до опитування ID: {$question_id}", '✓' );
-            wp_send_json_success( [ 'message' => 'Кандидата успішно додано!' ] );
-        } else {
-            (new Commissions_Protocol_Service())->log_action( 'I', "Помилка додавання кандидата", 'error' );
-            wp_send_json_error( [ 'message' => $result ] );
-        }
+        wp_send_json_error( [ 'message' => 'Помилка видалення.' ] );
     }
-    /**
-     * Отримання списку тих, хто проголосував.
-     */
-    public function handle_get_voters(): void {
-        check_ajax_referer( self::NONCE_ACTION, 'nonce' );
-
-        // Перевіряємо, чи має юзер роль/право userfstu (або є адміном)
-        if ( ! current_user_can( 'userfstu' ) && ! current_user_can( 'manage_options' ) ) {
-            wp_send_json_error( [ 'message' => 'У вас немає прав для перегляду списку тих, хто проголосував.' ] );
-        }
-
-        $candidate_id = isset( $_POST['candidate_id'] ) ? absint( $_POST['candidate_id'] ) : 0;
-
-        if ( ! $candidate_id ) {
-            wp_send_json_error( [ 'message' => 'Не передано ID кандидата.' ] );
-        }
-
-        $repository = new Commissions_Repository();
-        $voters     = $repository->get_voters_for_candidate( $candidate_id );
-
-        // Визначаємо, чи є користувач адміністратором, щоб показати колонку "Як проголосував"
-        $is_admin = current_user_can( 'administrator' );
-
-        wp_send_json_success( [
-            'items'    => $voters,
-            'is_admin' => $is_admin
-        ] );
-    }
-    //---
 }
