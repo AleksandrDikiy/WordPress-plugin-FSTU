@@ -1,0 +1,120 @@
+/**
+ * CSS для модуля "Рада ветеранів" (Дизайн Виконкому)
+ * Version: 1.1.0
+ * Date_update: 2026-04-25
+ */
+
+.fstu-veterans-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 20px;
+    padding: 20px 0;
+}
+
+.fstu-veterans-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 25px 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.fstu-veterans-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border-color: #cbd5e1;
+}
+
+.fstu-veterans-card__photo-wrapper {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin-bottom: 15px;
+    background: #f1f5f9;
+}
+
+.fstu-veterans-card__photo-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.fstu-veterans-card__role {
+    font-size: 11px;
+    text-transform: uppercase;
+    color: #64748b;
+    font-weight: 600;
+    margin-bottom: 8px;
+    line-height: 1.4;
+}
+
+.fstu-veterans-card__name {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 15px;
+    line-height: 1.3;
+}
+
+.fstu-veterans-card__name a {
+    text-decoration: none;
+    color: inherit;
+    transition: color 0.2s;
+}
+
+.fstu-veterans-card__name a:hover {
+    color: #d9534f;
+}
+
+.fstu-veterans-card__email-box {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #3b82f6;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.fstu-veterans-card__email-box:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+.fstu-veterans-card__email-box.copied {
+    background: #dcead6;
+    color: #2e7d32;
+    border-color: #a5d6a7;
+}
+
+.fstu-hidden-contact {
+    color: #9ca3af;
+    font-style: italic;
+    font-size: 12px;
+}
+
+.fstu-veterans-card__delete {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: transparent;
+    border: none;
+    color: #cbd5e1;
+    cursor: pointer;
+    font-size: 16px;
+    transition: color 0.2s;
+    padding: 0;
+}
+
+.fstu-veterans-card__delete:hover {
+    color: #d9534f;
+}

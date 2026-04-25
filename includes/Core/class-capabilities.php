@@ -189,6 +189,11 @@ class Capabilities {
     public const VIEW_ELECTIONS          = 'fstu_view_elections';
     public const MANAGE_ELECTIONS        = 'fstu_manage_elections';
     public const VIEW_ELECTIONS_PROTOCOL = 'fstu_view_elections_protocol';
+    // Рада ветеранів
+    public const VIEW_VETERANS             = 'fstu_view_veterans';
+    public const MANAGE_VETERANS           = 'fstu_manage_veterans';
+    public const DELETE_VETERANS           = 'fstu_delete_veterans';
+    public const VIEW_VETERANS_PROTOCOL    = 'fstu_view_veterans_protocol';
 
     /**
      * Ініціалізує capability-модель для поточного запиту.
@@ -380,6 +385,11 @@ class Capabilities {
                 self::VIEW_ELECTIONS             => true,
                 self::MANAGE_ELECTIONS           => true,
                 self::VIEW_ELECTIONS_PROTOCOL    => true,
+                // Veterans
+                self::VIEW_VETERANS              => true,
+                self::MANAGE_VETERANS            => true,
+                self::DELETE_VETERANS            => true,
+                self::VIEW_VETERANS_PROTOCOL     => true,
             ],
             'sailadministrator' => [
 				self::ACCESS_ADMIN                  => true,
@@ -512,6 +522,11 @@ class Capabilities {
                 self::DELETE_USER_FSTU           => true,
                 self::VIEW_USER_FSTU_PROTOCOL    => true,
                 self::VIEW_USER_FSTU_REPORT      => true,
+                // Veterans
+                self::VIEW_VETERANS              => true,
+                self::MANAGE_VETERANS            => true,
+                self::DELETE_VETERANS            => true,
+                self::VIEW_VETERANS_PROTOCOL     => true,
             ],
             'userregistrar' => [
 				self::ACCESS_ADMIN             => true,
@@ -587,6 +602,11 @@ class Capabilities {
                 self::MANAGE_USER_FSTU           => true,
                 self::VIEW_USER_FSTU_PROTOCOL    => true,
                 self::VIEW_USER_FSTU_REPORT      => true,
+                // Veterans
+                self::VIEW_VETERANS              => true,
+                self::MANAGE_VETERANS            => true,
+                self::DELETE_VETERANS            => true,
+                self::VIEW_VETERANS_PROTOCOL     => true,
             ],
             'userfstu' => [
 				self::VIEW_PARTICIPATION_TYPE => true,
@@ -2233,6 +2253,22 @@ class Capabilities {
             'canProtocol' => current_user_can( 'manage_options' ) || current_user_can( self::VIEW_ELECTIONS_PROTOCOL ),
         ];
     }
+    /**
+     * Повертає прапорці прав для модуля Ради ветеранів.
+     */
+    public static function get_veterans_permissions(): array {
+        $current_user = wp_get_current_user();
+        $user_roles   = $current_user instanceof \WP_User ? array_map( 'strval', (array) $current_user->roles ) : [];
 
+        // Контакти бачать тільки ролі, починаючи з userfstu
+        $can_view_contacts = current_user_can( 'manage_options' ) || ! empty( array_intersect( [ 'administrator', 'globalregistrar', 'userregistrar', 'userfstu' ], $user_roles ) );
+
+        return [
+            'canView'         => true, // Доступно для всіх (навіть гостей)
+            'canManage'       => current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_VETERANS ),
+            'canDelete'       => current_user_can( 'manage_options' ) || current_user_can( self::DELETE_VETERANS ),
+            'canViewContacts' => $can_view_contacts,
+        ];
+    }
     //----------
 }
