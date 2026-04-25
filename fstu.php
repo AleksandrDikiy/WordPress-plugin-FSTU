@@ -453,6 +453,15 @@ if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Elections/class-elections-
 if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Elections/class-elections-ajax.php' ) ) {
     require_once FSTU_PLUGIN_DIR . 'includes/Modules/Elections/class-elections-ajax.php';
 }
+//var_dump( 'Шлях: ', FSTU_PLUGIN_DIR . 'includes/Modules/Part/class-part-list.php', 'Існує: ', file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Part/class-part-list.php' ) );
+// Part — Статистика участі (2026-04-25)
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Part/class-part-list.php' ) ) {
+    require_once FSTU_PLUGIN_DIR . 'includes/Modules/Part/class-part-repository.php';
+    require_once FSTU_PLUGIN_DIR . 'includes/Modules/Part/class-part-service.php';
+    require_once FSTU_PLUGIN_DIR . 'includes/Modules/Part/class-part-protocol-service.php';
+    require_once FSTU_PLUGIN_DIR . 'includes/Modules/Part/class-part-list.php';
+    require_once FSTU_PLUGIN_DIR . 'includes/Modules/Part/class-part-ajax.php';
+}
 // PersonalCabinet — Особистий кабінет ФСТУ (2026-04-09)
 if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/PersonalCabinet/class-personal-cabinet-repository.php' ) ) {
     require_once FSTU_PLUGIN_DIR . 'includes/Modules/PersonalCabinet/class-personal-cabinet-repository.php';
@@ -719,6 +728,11 @@ function fstu_init(): void {
     }
     if ( class_exists( 'FSTU\Modules\Elections\Elections_Cron' ) ) {
         ( new \FSTU\Modules\Elections\Elections_Cron() )->init();
+    }
+    // ── Статистика (Part) ────────────────────────────────────────────────────
+    if ( class_exists( 'FSTU\Modules\Part\Part_List' ) ) {
+        ( new FSTU\Modules\Part\Part_List() )->init();
+        ( new FSTU\Modules\Part\Part_Ajax() )->init();
     }
     // ── Особистий кабінет ФСТУ ───────────────────────────────────────────────
     if ( class_exists( 'FSTU\Modules\PersonalCabinet\Personal_Cabinet_List' ) ) {
