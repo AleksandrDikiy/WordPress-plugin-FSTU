@@ -194,7 +194,10 @@ class Capabilities {
     public const MANAGE_VETERANS           = 'fstu_manage_veterans';
     public const DELETE_VETERANS           = 'fstu_delete_veterans';
     public const VIEW_VETERANS_PROTOCOL    = 'fstu_view_veterans_protocol';
-
+    // Ревізійної комісії
+    public const VIEW_AUDIT   = 'fstu_view_audit';
+    public const MANAGE_AUDIT = 'fstu_manage_audit';
+    public const DELETE_AUDIT = 'fstu_delete_audit';
     /**
      * Ініціалізує capability-модель для поточного запиту.
      */
@@ -390,6 +393,10 @@ class Capabilities {
                 self::MANAGE_VETERANS            => true,
                 self::DELETE_VETERANS            => true,
                 self::VIEW_VETERANS_PROTOCOL     => true,
+                // Audit
+                self::VIEW_AUDIT   => true,
+                self::MANAGE_AUDIT => true,
+                self::DELETE_AUDIT => true,
             ],
             'sailadministrator' => [
 				self::ACCESS_ADMIN                  => true,
@@ -527,6 +534,10 @@ class Capabilities {
                 self::MANAGE_VETERANS            => true,
                 self::DELETE_VETERANS            => true,
                 self::VIEW_VETERANS_PROTOCOL     => true,
+                // Audit
+                self::VIEW_AUDIT   => true,
+                self::MANAGE_AUDIT => true,
+                self::DELETE_AUDIT => true,
             ],
             'userregistrar' => [
 				self::ACCESS_ADMIN             => true,
@@ -607,6 +618,10 @@ class Capabilities {
                 self::MANAGE_VETERANS            => true,
                 self::DELETE_VETERANS            => true,
                 self::VIEW_VETERANS_PROTOCOL     => true,
+                // Audit
+                self::VIEW_AUDIT   => true,
+                self::MANAGE_AUDIT => true,
+                self::DELETE_AUDIT => true,
             ],
             'userfstu' => [
 				self::VIEW_PARTICIPATION_TYPE => true,
@@ -641,7 +656,9 @@ class Capabilities {
                 self::VOTE_BOARD                 => true,
                 // Elections
                 self::VIEW_ELECTIONS             => true,
-			],
+                self::VIEW_VETERANS              => true,
+                self::VIEW_AUDIT                 => true,
+            ],
 			'referee' => [
 				self::VIEW_REFEREES               => true,
 				self::VIEW_REFEREE_CATEGORY       => true,
@@ -2267,6 +2284,23 @@ class Capabilities {
             'canView'         => true, // Доступно для всіх (навіть гостей)
             'canManage'       => current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_VETERANS ),
             'canDelete'       => current_user_can( 'manage_options' ) || current_user_can( self::DELETE_VETERANS ),
+            'canViewContacts' => $can_view_contacts,
+        ];
+    }
+    /**
+     * Повертає прапорці прав для модуля Ревізійної комісії.
+     */
+    public static function get_audit_permissions(): array {
+        $current_user = wp_get_current_user();
+        $user_roles   = $current_user instanceof \WP_User ? array_map( 'strval', (array) $current_user->roles ) : [];
+
+        // Контакти бачать тільки ролі, починаючи з userfstu
+        $can_view_contacts = current_user_can( 'manage_options' ) || ! empty( array_intersect( [ 'administrator', 'globalregistrar', 'userregistrar', 'userfstu' ], $user_roles ) );
+
+        return [
+            'canView'         => true, // Доступно для всіх (навіть гостей)
+            'canManage'       => current_user_can( 'manage_options' ) || current_user_can( self::MANAGE_AUDIT ),
+            'canDelete'       => current_user_can( 'manage_options' ) || current_user_can( self::DELETE_AUDIT ),
             'canViewContacts' => $can_view_contacts,
         ];
     }

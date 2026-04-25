@@ -478,6 +478,14 @@ if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Veterans/class-veterans-re
     require_once FSTU_PLUGIN_DIR . 'includes/Modules/Veterans/class-veterans-list.php';
     require_once FSTU_PLUGIN_DIR . 'includes/Modules/Veterans/class-veterans-ajax.php';
 }
+// ── Ревізійна комісія ФСТУ ──────────────────────────────────────────────────
+if ( file_exists( FSTU_PLUGIN_DIR . 'includes/Modules/Audit/class-audit-repository.php' ) ) {
+    require_once FSTU_PLUGIN_DIR . 'includes/Modules/Audit/class-audit-repository.php';
+    require_once FSTU_PLUGIN_DIR . 'includes/Modules/Audit/class-audit-list.php';
+    require_once FSTU_PLUGIN_DIR . 'includes/Modules/Audit/class-audit-ajax.php';
+}
+
+
 // ── Довідники (Хаб) ──────────────────────────────────────────────────────
 require_once FSTU_PLUGIN_DIR . 'includes/Dictionaries/class-dictionaries-hub.php';
 ( new FSTU\Modules\Dictionaries\Dictionaries_Hub() )->init();
@@ -730,5 +738,10 @@ function fstu_init(): void {
     if ( class_exists( 'FSTU\Modules\Veterans\Veterans_List' ) ) {
         ( new FSTU\Modules\Veterans\Veterans_List() )->init();
         ( new FSTU\Modules\Veterans\Veterans_Ajax() )->init();
+    }
+    //
+    if ( class_exists( 'FSTU\Modules\Audit\Audit_List' ) ) {
+        ( new FSTU\Modules\Audit\Audit_List() )->init();
+        ( new FSTU\Modules\Audit\Audit_Ajax() )->init();
     }
 }
