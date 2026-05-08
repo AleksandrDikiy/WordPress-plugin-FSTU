@@ -1,19 +1,20 @@
 <?php
+/**
+ * Поштовий сервіс підмодуля Calendar_Applications.
+ * Відповідає за MVP email-сценарії заявок і нових учасників.
+ *
+ * Version: 1.1.0
+ * Date_update: 2026-05-08
+ *
+ * @package FSTU\Modules\Calendar\CalendarApplications
+ */
+
 namespace FSTU\Modules\Calendar\CalendarApplications;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-/**
- * Поштовий сервіс підмодуля Calendar_Applications.
- * Відповідає за MVP email-сценарії заявок і нових учасників.
- *
- * Version: 1.0.0
- * Date_update: 2026-04-13
- *
- * @package FSTU\Modules\Calendar\CalendarApplications
- */
 class Calendar_Applications_Mailer {
 
 	private ?Calendar_Applications_Repository $repository = null;
@@ -128,7 +129,6 @@ class Calendar_Applications_Mailer {
 		$from_email = $this->get_admin_email();
 
 		if ( '' !== $from_email && is_email( $from_email ) ) {
-			$headers[] = 'From: ' . $from_email;
 			$headers[] = 'Reply-To: ' . $from_email;
 		}
 

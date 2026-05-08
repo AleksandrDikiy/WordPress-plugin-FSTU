@@ -1,4 +1,11 @@
 <?php
+/**
+ * Поштовий сервіс модуля "Заявки в ФСТУ".
+ * Відповідає за формування та відправку листів через wp_mail().
+ *
+ * Version:     1.1.0
+ * Date_update: 2026-05-08
+ */
 
 namespace FSTU\Modules\Applications;
 
@@ -6,13 +13,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-/**
- * Поштовий сервіс модуля "Заявки в ФСТУ".
- * Відповідає за формування та відправку листів через wp_mail().
- *
- * Version:     1.0.1
- * Date_update: 2026-04-24
- */
 class Applications_Mailer {
 
     /**
@@ -45,7 +45,6 @@ class Applications_Mailer {
         $headers = [ 'Content-Type: text/plain; charset=UTF-8' ];
 
         if ( '' !== $validated_from ) {
-            $headers[] = 'From: ' . $validated_from;
             $headers[] = 'Reply-To: ' . $validated_from;
         }
 

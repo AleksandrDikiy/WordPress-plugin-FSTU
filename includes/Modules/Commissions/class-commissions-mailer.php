@@ -2,8 +2,8 @@
 /**
  * Mailer Service для відправки сповіщень модуля "Комісії з видів туризму (Board)".
  *
- * * Version: 1.0.0
- * Date_update: 2026-04-18
+ * Version: 1.1.0
+ * Date_update: 2026-05-08
  */
 
 namespace FSTU\Modules\Commissions;
@@ -33,7 +33,6 @@ class Commissions_Mailer {
         $message = $this->build_email_html( $poll_data );
         $headers = [
             'Content-Type: text/html; charset=UTF-8',
-            'From: ФСТУ-робот <fstu.com.ua@gmail.com>',
             'Reply-To: fstu.com.ua@gmail.com',
         ];
 

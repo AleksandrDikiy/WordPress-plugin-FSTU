@@ -2,8 +2,8 @@
 /**
  * AJAX-обробники модуля "Реєстр платіжних документів".
  *
- * Version:     1.0.1
- * Date_update: 2026-04-20
+ * Version:     1.1.0
+ * Date_update: 2026-05-08
  *
  * @package FSTU\PaymentDocs
  */
@@ -313,7 +313,12 @@ class Payment_Docs_Ajax {
         $to_emails = array_unique( array_filter( $to_emails ) );
 
         // Відправляємо (можна використати bcc для приховання адрес одна від одної)
-        $headers = [ 'Content-Type: text/plain; charset=UTF-8' ];
+        $admin_email = get_option( 'admin_email' );
+        $headers = [ 
+            'Content-Type: text/plain; charset=UTF-8',
+            'Reply-To: ' . ( is_email( $admin_email ) ? $admin_email : 'fstu.com.ua@gmail.com' )
+        ];
+        
         foreach ( $to_emails as $email ) {
             wp_mail( $email, $subject, $message, $headers );
         }

@@ -3,7 +3,7 @@
  * Plugin Name:  FSTU Portal
  * Plugin URI:   https://www.fstu.com.ua/
  * Description:  Офіційний плагін Федерації спортивного туризму України. Enterprise ERP/CRM система управління реєстрами, структурою та фінансами федерації.
- * Version:      1.23.1
+ * Version:      1.24.0
  * Author:       Oleksandr Dykyi
  * Author URI:   https://www.fstu.com.ua/
  * Text Domain:  fstu
@@ -11,7 +11,7 @@
  * Requires PHP: 8.0
  * Requires at least: 6.0
  *
- * Date_update: 2026-04-24
+ * Date_update: 2026-05-08
  *
  * @package FSTU
  */
@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // ─── Константи плагіна ────────────────────────────────────────────────────────
 
-define( 'FSTU_VERSION',      '1.23.3' );
+define( 'FSTU_VERSION',      '1.24.0' );
 define( 'FSTU_DB_VERSION',   '1.3.1' );
 define( 'FSTU_PLUGIN_FILE',  __FILE__ );
 define( 'FSTU_PLUGIN_DIR',   plugin_dir_path( __FILE__ ) );
