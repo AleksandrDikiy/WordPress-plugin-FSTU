@@ -967,10 +967,13 @@ class User_Fstu_Modals_Ajax {
 
         $message  = "Шановний(а) {$name}!\n\n";
         $message .= "Нагадуємо про необхідність сплати щорічного членського внеску ФСТУ за {$year} рік.\n\n";
-        $message .= "Реквізити для сплати та детальна інформація доступні за посиланням на нашому сайті:\n";
-        $message .= "https://www.fstu.com.ua/rekviziti-dlya-oplati-organizacijnix-vneskiv-fstu/\n\n";
-        $message .= "Після сплати, будь ласка, додайте квитанцію у своєму особистому кабінеті.\n\n";
-        $message .= "Дякуємо, що ви з нами!\n";
+        $message .= "Тепер ви можете легко та швидко сплатити внесок онлайн безпосередньо зі свого Особистого кабінету!\n";
+        $message .= "Для цього просто натисніть кнопку «Сплатити» у фінансовому розділі вашого профілю:\n";
+        $message .= site_url( "/personal/?ViewID={$user_id}" ) . "\n\n";
+        $message .= "Якщо ви віддаєте перевагу класичному банківському переказу, реквізити та детальна інформація доступні тут:\n";
+        $message .= "https://www.fstu.com.ua/rekviziti-dlya-oplati-organizacijnix-vneskiv-fstu/\n";
+        $message .= "(У цьому випадку не забудьте вручну додати скан/фото квитанції у своєму кабінеті).\n\n";
+        $message .= "Дякуємо, що ви з нами!\n\n";
         $message .= "З повагою,\nАдміністрація ФСТУ";
 
         // 2. Надсилаємо лист
@@ -1102,15 +1105,17 @@ class User_Fstu_Modals_Ajax {
         ], [ '%s', '%d', '%s', '%s', '%s', '%s' ] );
 
         // 3. Відправляємо листи (Спрощена версія з вашого старого коду)
-        $user_info = get_userdata( $user_id );
-        $fio       = get_user_meta( $user_id, 'last_name', true ) . ' ' . get_user_meta( $user_id, 'first_name', true );
+        $user_info  = get_userdata( $user_id );
+        $fio        = get_user_meta( $user_id, 'last_name', true ) . ' ' . get_user_meta( $user_id, 'first_name', true );
+        $creator_id = get_current_user_id();
 
         $subject = "Додано квитанцію про сплату членських внесків на сайті ФСТУ";
         $message  = "ПІБ: {$fio}\n";
         $message .= "Сума: {$summa}\n";
         $message .= "Рік: {$year_id}\n";
         $message .= "Посилання на квитанцію: {$url}\n\n";
-        $message .= "Посилання на реєстр: " . site_url( '/userfstu/' ) . "\n";
+        $message .= "Посилання на сторінку користувача, який додав оплату: " . site_url( "/personal/?ViewID={$creator_id}" ) . "\n";
+        $message .= "Картка профілю платника: " . site_url( "/personal/?ViewID={$user_id}" ) . "\n";
 
         // Кому відправляємо (як у старому коді)
         $to_emails = [ 'Aleksandr.Dikiy@gmail.com', 'fstu.com.ua@gmail.com' ];
