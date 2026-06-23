@@ -496,22 +496,29 @@ class TypeEvent_Ajax {
 	 * Нормалізує тип логування для UI.
 	 */
 	private function get_log_type_label( string $type ): string {
-		return match ( strtoupper( $type ) ) {
-			self::LOG_TYPE_INSERT, 'I' => 'INSERT',
-			self::LOG_TYPE_UPDATE, 'U' => 'UPDATE',
-			self::LOG_TYPE_DELETE, 'D' => 'DELETE',
-			default => $type,
-		};
+		$type_upper = strtoupper( $type );
+		$map = [
+			self::LOG_TYPE_INSERT => 'INSERT',
+			'I'                   => 'INSERT',
+			self::LOG_TYPE_UPDATE => 'UPDATE',
+			'U'                   => 'UPDATE',
+			self::LOG_TYPE_DELETE => 'DELETE',
+			'D'                   => 'DELETE',
+		];
+		return $map[ $type_upper ] ?? $type;
 	}
 
 	/**
 	 * Нормалізує статус логування для UI.
 	 */
 	private function get_log_status_label( string $status ): string {
-		return match ( trim( mb_strtolower( $status ) ) ) {
-			'✓', 'успішно', 'success' => self::LOG_STATUS_SUCCESS,
-			default => $status,
-		};
+		$status_clean = trim( mb_strtolower( $status ) );
+		$map = [
+			'✓'       => self::LOG_STATUS_SUCCESS,
+			'успішно' => self::LOG_STATUS_SUCCESS,
+			'success' => self::LOG_STATUS_SUCCESS,
+		];
+		return $map[ $status_clean ] ?? $status;
 	}
 
 	/**

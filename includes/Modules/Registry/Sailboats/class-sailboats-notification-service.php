@@ -90,11 +90,11 @@ class Sailboats_Notification_Service {
 	 * @param array<string,mixed> $payload Дані листа.
 	 */
 	private function build_subject( string $type, array $payload ): string {
-		$setting_name = match ( $type ) {
+		$map = [
 			'sailing'  => 'SailboatsMailSubjectSailing',
 			'combined' => 'SailboatsMailSubjectCombined',
-			default    => 'SailboatsMailSubjectMembership',
-		};
+		];
+		$setting_name = $map[ $type ] ?? 'SailboatsMailSubjectMembership';
 
 		$default_template = self::get_settings_defaults()[ $setting_name ]['value'] ?? '{boat_name}';
 		$template         = $this->get_setting_or_default( $setting_name, $default_template );
@@ -108,11 +108,11 @@ class Sailboats_Notification_Service {
 	 * @param array<string,mixed> $payload Дані листа.
 	 */
 	private function build_message( string $type, array $payload ): string {
-		$setting_name = match ( $type ) {
+		$map = [
 			'sailing'  => 'SailboatsMailBodySailing',
 			'combined' => 'SailboatsMailBodyCombined',
-			default    => 'SailboatsMailBodyMembership',
-		};
+		];
+		$setting_name = $map[ $type ] ?? 'SailboatsMailBodyMembership';
 
 		$default_template = self::get_settings_defaults()[ $setting_name ]['value'] ?? '{signature}';
 		$template         = $this->get_setting_or_default( $setting_name, $default_template );

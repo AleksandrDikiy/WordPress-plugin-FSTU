@@ -719,22 +719,29 @@ class Country_Ajax {
 	 * Повертає читабельний підпис типу логування для UI протоколу.
 	 */
 	private function get_log_type_label( string $type ): string {
-		return match ( strtoupper( $type ) ) {
-			self::LOG_TYPE_INSERT, 'INSERT' => 'INSERT',
-			self::LOG_TYPE_UPDATE, 'UPDATE' => 'UPDATE',
-			self::LOG_TYPE_DELETE, 'DELETE' => 'DELETE',
-			default => $type,
-		};
+		$type_upper = strtoupper( $type );
+		$map = [
+			self::LOG_TYPE_INSERT => 'INSERT',
+			'INSERT'              => 'INSERT',
+			self::LOG_TYPE_UPDATE => 'UPDATE',
+			'UPDATE'              => 'UPDATE',
+			self::LOG_TYPE_DELETE => 'DELETE',
+			'DELETE'              => 'DELETE',
+		];
+		return $map[ $type_upper ] ?? $type;
 	}
 
 	/**
 	 * Повертає читабельний підпис статусу логування для UI протоколу.
 	 */
 	private function get_log_status_label( string $status ): string {
-		return match ( trim( mb_strtolower( $status ) ) ) {
-			'✓', 'успішно', 'success' => self::LOG_STATUS_SUCCESS,
-			default => $status,
-		};
+		$status_clean = trim( mb_strtolower( $status ) );
+		$map = [
+			'✓'       => self::LOG_STATUS_SUCCESS,
+			'успішно' => self::LOG_STATUS_SUCCESS,
+			'success' => self::LOG_STATUS_SUCCESS,
+		];
+		return $map[ $status_clean ] ?? $status;
 	}
 
 	/**

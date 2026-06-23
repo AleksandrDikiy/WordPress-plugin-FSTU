@@ -162,16 +162,17 @@ class Steering_Upload_Service {
 	}
 
 	private function map_upload_error( int $error_code ): string {
-		return match ( $error_code ) {
-			UPLOAD_ERR_INI_SIZE,
-			UPLOAD_ERR_FORM_SIZE => 'photo_too_large',
-			UPLOAD_ERR_PARTIAL   => 'photo_partial',
-			UPLOAD_ERR_NO_FILE   => 'photo_required',
+		$map = [
+			UPLOAD_ERR_INI_SIZE   => 'photo_too_large',
+			UPLOAD_ERR_FORM_SIZE  => 'photo_too_large',
+			UPLOAD_ERR_PARTIAL    => 'photo_partial',
+			UPLOAD_ERR_NO_FILE    => 'photo_required',
 			UPLOAD_ERR_NO_TMP_DIR => 'photo_tmp_dir_missing',
 			UPLOAD_ERR_CANT_WRITE => 'photo_disk_write_failed',
-			UPLOAD_ERR_EXTENSION => 'photo_extension_blocked',
-			default              => 'photo_upload_failed',
-		};
+			UPLOAD_ERR_EXTENSION  => 'photo_extension_blocked',
+		];
+
+		return $map[ $error_code ] ?? 'photo_upload_failed';
 	}
 }
 

@@ -42,7 +42,7 @@ class Veterans_Repository {
     /**
      * Безпечно видаляє запис та логує дію.
      */
-    public function delete_member( int $guidance_id, int $user_id ): bool|\WP_Error {
+    public function delete_member( int $guidance_id, int $user_id ) {
         global $wpdb;
 
         $wpdb->query( 'START TRANSACTION' );

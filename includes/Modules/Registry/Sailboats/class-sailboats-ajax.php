@@ -884,26 +884,24 @@ class Sailboats_Ajax {
 	 */
 	private function get_mutation_error_message( \Throwable $throwable, bool $is_create ): string {
 		$marker = trim( $throwable->getMessage() );
+		$mutation_error = $is_create ? __( 'Помилка при збереженні запису.', 'fstu' ) : __( 'Помилка при оновленні запису.', 'fstu' );
 
-		return match ( $marker ) {
-			'existing_sailboat_not_found'          => __( 'Існуюче судно не знайдено.', 'fstu' ),
+		$map = [
+			'existing_sailboat_not_found'              => __( 'Існуюче судно не знайдено.', 'fstu' ),
 			'existing_sailboat_has_active_application' => __( 'Для цього судна вже існує активна заявка / судновий квиток. Спочатку заверште або відкрийте наявний запис.', 'fstu' ),
-			'item_not_found'                       => __( 'Запис не знайдено.', 'fstu' ),
-			'application_ship_ticket_not_found'    => __( 'Пов’язану заявку не знайдено.', 'fstu' ),
-			'sailboat_table_schema_invalid',
-			'application_ship_ticket_schema_invalid' => __( 'Структура legacy-таблиць не дозволяє виконати операцію збереження.', 'fstu' ),
-			'sailboat_insert_failed',
-			'application_ship_ticket_insert_failed',
-			'sailboat_update_failed',
-			'application_ship_ticket_update_failed',
-			'sailboat_link_update_failed',
-			'sailboats_log_insert_failed'          => $is_create
-				? __( 'Помилка при збереженні запису.', 'fstu' )
-				: __( 'Помилка при оновленні запису.', 'fstu' ),
-			default                               => $is_create
-				? __( 'Помилка при збереженні запису.', 'fstu' )
-				: __( 'Помилка при оновленні запису.', 'fstu' ),
-		};
+			'item_not_found'                           => __( 'Запис не знайдено.', 'fstu' ),
+			'application_ship_ticket_not_found'        => __( 'Пов’язану заявку не знайдено.', 'fstu' ),
+			'sailboat_table_schema_invalid'            => __( 'Структура legacy-таблиць не дозволяє виконати операцію збереження.', 'fstu' ),
+			'application_ship_ticket_schema_invalid'   => __( 'Структура legacy-таблиць не дозволяє виконати операцію збереження.', 'fstu' ),
+			'sailboat_insert_failed'                   => $mutation_error,
+			'application_ship_ticket_insert_failed'    => $mutation_error,
+			'sailboat_update_failed'                   => $mutation_error,
+			'application_ship_ticket_update_failed'    => $mutation_error,
+			'sailboat_link_update_failed'              => $mutation_error,
+			'sailboats_log_insert_failed'              => $mutation_error,
+		];
+
+		return $map[ $marker ] ?? $mutation_error;
 	}
 
 	/**
@@ -911,38 +909,41 @@ class Sailboats_Ajax {
 	 */
 	private function get_service_action_error_message( \Throwable $throwable, string $action ): string {
 		$marker = trim( $throwable->getMessage() );
+		$generic = $this->get_generic_action_error_message( $action );
 
-		return match ( $marker ) {
-			'item_not_found', 'application_ship_ticket_not_found' => __( 'Запис не знайдено.', 'fstu' ),
-			'invalid_payment_date'                                 => __( 'Вкажіть коректну дату оплати.', 'fstu' ),
-			'invalid_payment_date_sequence'                        => __( 'Дата оплати не може бути раніше дати створення заявки.', 'fstu' ),
-			'invalid_received_date'                                => __( 'Вкажіть коректну дату вручення.', 'fstu' ),
-			'invalid_received_date_sequence'                       => __( 'Дата вручення не може бути раніше дати створення заявки.', 'fstu' ),
-			'invalid_sale_date'                                    => __( 'Вкажіть коректну дату продажу / вибуття.', 'fstu' ),
-			'invalid_sale_date_sequence'                           => __( 'Дата продажу / вибуття не може бути раніше дати створення заявки.', 'fstu' ),
-			'application_ship_ticket_status_unsupported'          => __( 'Legacy-схема не підтримує зміну статусу через новий модуль.', 'fstu' ),
-			'application_ship_ticket_payment_unsupported'         => __( 'Legacy-схема не підтримує збереження оплати через новий модуль.', 'fstu' ),
-			'application_ship_ticket_received_unsupported'        => __( 'Legacy-схема не підтримує фіксацію вручення через новий модуль.', 'fstu' ),
-			'application_ship_ticket_sale_unsupported'            => __( 'Legacy-схема не підтримує фіксацію вибуття через новий модуль.', 'fstu' ),
-			'application_ship_ticket_update_failed',
-			'sailboats_log_insert_failed'                        => $this->get_generic_action_error_message( $action ),
-			default                                              => $this->get_generic_action_error_message( $action ),
-		};
+		$map = [
+			'item_not_found'                               => __( 'Запис не знайдено.', 'fstu' ),
+			'application_ship_ticket_not_found'            => __( 'Запис не знайдено.', 'fstu' ),
+			'invalid_payment_date'                         => __( 'Вкажіть коректну дату оплати.', 'fstu' ),
+			'invalid_payment_date_sequence'                => __( 'Дата оплати не може бути раніше дати створення заявки.', 'fstu' ),
+			'invalid_received_date'                        => __( 'Вкажіть коректну дату вручення.', 'fstu' ),
+			'invalid_received_date_sequence'               => __( 'Дата вручення не може бути раніше дати створення заявки.', 'fstu' ),
+			'invalid_sale_date'                            => __( 'Вкажіть коректну дату продажу / вибуття.', 'fstu' ),
+			'invalid_sale_date_sequence'                   => __( 'Дата продажу / вибуття не може бути раніше дати створення заявки.', 'fstu' ),
+			'application_ship_ticket_status_unsupported'   => __( 'Legacy-схема не підтримує зміну статусу через новий модуль.', 'fstu' ),
+			'application_ship_ticket_payment_unsupported'  => __( 'Legacy-схема не підтримує збереження оплати через новий модуль.', 'fstu' ),
+			'application_ship_ticket_received_unsupported' => __( 'Legacy-схема не підтримує фіксацію вручення через новий модуль.', 'fstu' ),
+			'application_ship_ticket_sale_unsupported'     => __( 'Legacy-схема не підтримує фіксацію вибуття через новий модуль.', 'fstu' ),
+			'application_ship_ticket_update_failed'        => $generic,
+			'sailboats_log_insert_failed'                  => $generic,
+		];
+
+		return $map[ $marker ] ?? $generic;
 	}
 
 	/**
 	 * Повертає generic-повідомлення для службової дії.
 	 */
 	private function get_generic_action_error_message( string $action ): string {
-		return match ( $action ) {
+		$map = [
 			'status'   => __( 'Помилка при зміні статусу.', 'fstu' ),
 			'payment'  => __( 'Помилка при збереженні оплати.', 'fstu' ),
 			'received' => __( 'Помилка при фіксації вручення.', 'fstu' ),
 			'sale'     => __( 'Помилка при фіксації продажу / вибуття.', 'fstu' ),
 			'delete'   => __( 'Не вдалося видалити запис.', 'fstu' ),
 			'notify'   => __( 'Не вдалося надіслати повідомлення.', 'fstu' ),
-			default    => __( 'Помилка виконання службової операції.', 'fstu' ),
-		};
+		];
+		return $map[ $action ] ?? __( 'Помилка виконання службової операції.', 'fstu' );
 	}
 
 	/**
@@ -955,14 +956,16 @@ class Sailboats_Ajax {
 			return (string) mb_substr( $marker, mb_strlen( 'delete_blocked:' ) );
 		}
 
-		return match ( $marker ) {
-			'item_not_found', 'application_ship_ticket_not_found' => __( 'Запис не знайдено.', 'fstu' ),
-			'application_delete_failed',
-			'application_ship_ticket_delete_failed',
-			'sailboat_delete_failed',
-			'sailboats_log_insert_failed'                         => __( 'Не вдалося видалити запис.', 'fstu' ),
-			default                                               => __( 'Не вдалося видалити запис.', 'fstu' ),
-		};
+		$map = [
+			'item_not_found'                        => __( 'Запис не знайдено.', 'fstu' ),
+			'application_ship_ticket_not_found'     => __( 'Запис не знайдено.', 'fstu' ),
+			'application_delete_failed'             => __( 'Не вдалося видалити запис.', 'fstu' ),
+			'application_ship_ticket_delete_failed' => __( 'Не вдалося видалити запис.', 'fstu' ),
+			'sailboat_delete_failed'                => __( 'Не вдалося видалити запис.', 'fstu' ),
+			'sailboats_log_insert_failed'           => __( 'Не вдалося видалити запис.', 'fstu' ),
+		];
+
+		return $map[ $marker ] ?? __( 'Не вдалося видалити запис.', 'fstu' );
 	}
 
 	/**
@@ -971,12 +974,13 @@ class Sailboats_Ajax {
 	private function get_notification_error_message( \Throwable $throwable ): string {
 		$marker = trim( $throwable->getMessage() );
 
-		return match ( $marker ) {
+		$map = [
 			'item_not_found'               => __( 'Запис не знайдено.', 'fstu' ),
 			'notification_email_not_found' => __( 'Не знайдено валідний email одержувача.', 'fstu' ),
 			'notification_send_failed'     => __( 'Не вдалося надіслати повідомлення.', 'fstu' ),
-			default                        => __( 'Не вдалося надіслати повідомлення.', 'fstu' ),
-		};
+		];
+
+		return $map[ $marker ] ?? __( 'Не вдалося надіслати повідомлення.', 'fstu' );
 	}
 
 	/**

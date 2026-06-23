@@ -28,3 +28,4 @@ build/
 PLAN*.md
 TEXHNICAL*.md
 TECHNICAL*.md
+find_php8.sh

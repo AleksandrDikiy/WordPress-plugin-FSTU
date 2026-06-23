@@ -270,7 +270,7 @@ class Personal_Cabinet_Service {
 	 * @param array<string,bool> $permissions
 	 * @return array<string,mixed>|\WP_Error
 	 */
-	public function save_dues_receipt( int $profile_user_id, array $permissions, int $year_id, float $summa, string $url ): array|\WP_Error {
+	public function save_dues_receipt( int $profile_user_id, array $permissions, int $year_id, float $summa, string $url ) {
 		if ( $profile_user_id <= 0 || ! ( get_userdata( $profile_user_id ) instanceof \WP_User ) ) {
 			return new \WP_Error( 'invalid_user', __( 'Профіль користувача не знайдено.', 'fstu' ) );
 		}

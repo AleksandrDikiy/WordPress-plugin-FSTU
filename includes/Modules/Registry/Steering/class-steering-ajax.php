@@ -535,108 +535,124 @@ class Steering_Ajax {
 
 	private function get_create_error_message( \Throwable $throwable ): string {
 		$marker = trim( $throwable->getMessage() );
+		$photo_error = __( 'Не вдалося зберегти фотографію. Перевірте формат файлу.', 'fstu' );
+		$generic_error = __( 'Помилка при збереженні заявки стернового.', 'fstu' );
 
-		return match ( $marker ) {
-			'submit_login_required'   => __( 'Для подачі заявки потрібно авторизуватися.', 'fstu' ),
-			'user_not_found'          => __( 'Обраного користувача не знайдено.', 'fstu' ),
-			'city_not_found'          => __( 'Обране місто не знайдено.', 'fstu' ),
-			'duplicate_user'          => __( 'Для цього користувача заявка або посвідчення вже існує.', 'fstu' ),
-			'photo_required'         => __( 'Додайте фотографію для посвідчення.', 'fstu' ),
-			'photo_too_large'        => __( 'Розмір фотографії перевищує допустимий ліміт 10 МБ.', 'fstu' ),
-			'photo_partial',
-			'photo_upload_failed',
-			'photo_not_uploaded',
-			'photo_empty',
-			'photo_tmp_dir_missing',
-			'photo_disk_write_failed',
-			'photo_extension_blocked',
-			'photo_directory_unavailable',
-			'photo_editor_unavailable',
-			'photo_save_failed',
-			'photo_invalid_user',
-			'photo_invalid_type',
-			'photo_invalid_image'    => __( 'Не вдалося зберегти фотографію. Перевірте формат файлу.', 'fstu' ),
-			'steering_insert_failed',
-			'steering_log_insert_failed' => __( 'Помилка при збереженні заявки стернового.', 'fstu' ),
-			default                   => __( 'Помилка при збереженні заявки стернового.', 'fstu' ),
-		};
+		$map = [
+			'submit_login_required'       => __( 'Для подачі заявки потрібно авторизуватися.', 'fstu' ),
+			'user_not_found'              => __( 'Обраного користувача не знайдено.', 'fstu' ),
+			'city_not_found'              => __( 'Обране місто не знайдено.', 'fstu' ),
+			'duplicate_user'              => __( 'Для цього користувача заявка або посвідчення вже існує.', 'fstu' ),
+			'photo_required'              => __( 'Додайте фотографію для посвідчення.', 'fstu' ),
+			'photo_too_large'             => __( 'Розмір фотографії перевищує допустимий ліміт 10 МБ.', 'fstu' ),
+			'photo_partial'               => $photo_error,
+			'photo_upload_failed'         => $photo_error,
+			'photo_not_uploaded'          => $photo_error,
+			'photo_empty'                 => $photo_error,
+			'photo_tmp_dir_missing'       => $photo_error,
+			'photo_disk_write_failed'     => $photo_error,
+			'photo_extension_blocked'     => $photo_error,
+			'photo_directory_unavailable' => $photo_error,
+			'photo_editor_unavailable'    => $photo_error,
+			'photo_save_failed'           => $photo_error,
+			'photo_invalid_user'          => $photo_error,
+			'photo_invalid_type'          => $photo_error,
+			'photo_invalid_image'         => $photo_error,
+			'steering_insert_failed'      => $generic_error,
+			'steering_log_insert_failed'  => $generic_error,
+		];
+
+		return $map[ $marker ] ?? $generic_error;
 	}
 
 	private function get_update_error_message( \Throwable $throwable ): string {
 		$marker = trim( $throwable->getMessage() );
+		$photo_error = __( 'Не вдалося зберегти фотографію. Перевірте формат файлу.', 'fstu' );
+		$generic_error = __( 'Сталася помилка оновлення запису.', 'fstu' );
+		$save_error = __( 'Сталася помилка збереження.', 'fstu' );
 
-		return match ( $marker ) {
+		$map = [
 			'update_forbidden'            => __( 'Недостатньо прав для редагування запису.', 'fstu' ),
 			'update_item_not_found'       => __( 'Запис не знайдено.', 'fstu' ),
 			'city_not_found'              => __( 'Обране місто не знайдено.', 'fstu' ),
-			'steering_update_failed',
-			'photo_backup_failed',
-			'photo_restore_failed',
-			'steering_log_insert_failed'  => __( 'Сталася помилка збереження.', 'fstu' ),
-			'photo_partial',
-			'photo_upload_failed',
-			'photo_not_uploaded',
-			'photo_empty',
-			'photo_tmp_dir_missing',
-			'photo_disk_write_failed',
-			'photo_extension_blocked',
-			'photo_directory_unavailable',
-			'photo_editor_unavailable',
-			'photo_save_failed',
-			'photo_invalid_user',
-			'photo_invalid_type',
-			'photo_invalid_image'         => __( 'Не вдалося зберегти фотографію. Перевірте формат файлу.', 'fstu' ),
-			default                       => __( 'Сталася помилка оновлення запису.', 'fstu' ),
-		};
+			'steering_update_failed'      => $save_error,
+			'photo_backup_failed'         => $save_error,
+			'photo_restore_failed'        => $save_error,
+			'steering_log_insert_failed'  => $save_error,
+			'photo_partial'               => $photo_error,
+			'photo_upload_failed'         => $photo_error,
+			'photo_not_uploaded'          => $photo_error,
+			'photo_empty'                 => $photo_error,
+			'photo_tmp_dir_missing'       => $photo_error,
+			'photo_disk_write_failed'     => $photo_error,
+			'photo_extension_blocked'     => $photo_error,
+			'photo_directory_unavailable' => $photo_error,
+			'photo_editor_unavailable'    => $photo_error,
+			'photo_save_failed'           => $photo_error,
+			'photo_invalid_user'          => $photo_error,
+			'photo_invalid_type'          => $photo_error,
+			'photo_invalid_image'         => $photo_error,
+		];
+
+		return $map[ $marker ] ?? $generic_error;
 	}
 
 	private function get_delete_error_message( \Throwable $throwable ): string {
 		$marker = trim( $throwable->getMessage() );
 
-		return match ( true ) {
-			'delete_forbidden' === $marker => __( 'Недостатньо прав для видалення запису.', 'fstu' ),
-			'delete_item_not_found' === $marker => __( 'Запис не знайдено.', 'fstu' ),
-			'delete_failed' === $marker,
-			'steering_log_insert_failed' === $marker => __( 'Сталася помилка видалення запису.', 'fstu' ),
-			str_starts_with( $marker, 'delete_blocked:' ) => __( 'Видалення заблоковано: запис має пов’язані дані або вже зареєстрований.', 'fstu' ),
-			default => __( 'Сталася помилка видалення запису.', 'fstu' ),
-		};
+		if ( str_starts_with( $marker, 'delete_blocked:' ) ) {
+			return __( 'Видалення заблоковано: запис має пов’язані дані або вже зареєстрований.', 'fstu' );
+		}
+
+		$map = [
+			'delete_forbidden'           => __( 'Недостатньо прав для видалення запису.', 'fstu' ),
+			'delete_item_not_found'      => __( 'Запис не знайдено.', 'fstu' ),
+			'delete_failed'              => __( 'Сталася помилка видалення запису.', 'fstu' ),
+			'steering_log_insert_failed' => __( 'Сталася помилка видалення запису.', 'fstu' ),
+		];
+
+		return $map[ $marker ] ?? __( 'Сталася помилка видалення запису.', 'fstu' );
 	}
 
 	private function get_verify_error_message( \Throwable $throwable ): string {
 		$marker = trim( $throwable->getMessage() );
+		$generic_error = __( 'Сталася помилка підтвердження кваліфікації.', 'fstu' );
 
-		return match ( $marker ) {
-			'verify_login_required'        => __( 'Для підтвердження кваліфікації потрібно авторизуватися.', 'fstu' ),
-			'verify_forbidden'             => __( 'Недостатньо прав для підтвердження кваліфікації.', 'fstu' ),
-			'verify_item_not_found'        => __( 'Запис не знайдено.', 'fstu' ),
-			'verify_self_forbidden'        => __( 'Не можна підтверджувати власну кваліфікацію.', 'fstu' ),
-			'verify_duplicate'             => __( 'Ви вже підтверджували цей запис.', 'fstu' ),
+		$map = [
+			'verify_login_required'         => __( 'Для підтвердження кваліфікації потрібно авторизуватися.', 'fstu' ),
+			'verify_forbidden'              => __( 'Недостатньо прав для підтвердження кваліфікації.', 'fstu' ),
+			'verify_item_not_found'         => __( 'Запис не знайдено.', 'fstu' ),
+			'verify_self_forbidden'         => __( 'Не можна підтверджувати власну кваліфікацію.', 'fstu' ),
+			'verify_duplicate'              => __( 'Ви вже підтверджували цей запис.', 'fstu' ),
 			'verify_qualification_required' => __( 'Підтвердження доступне лише кваліфікованим особам.', 'fstu' ),
-			'verify_already_registered'    => __( 'Запис уже зареєстровано. Повторне підтвердження не потрібне.', 'fstu' ),
-			'steering_register_failed'     => __( 'Сталася помилка збереження.', 'fstu' ),
-			'steering_log_insert_failed'   => __( 'Сталася помилка збереження.', 'fstu' ),
-			default                        => __( 'Сталася помилка підтвердження кваліфікації.', 'fstu' ),
-		};
+			'verify_already_registered'     => __( 'Запис уже зареєстровано. Повторне підтвердження не потрібне.', 'fstu' ),
+			'steering_register_failed'      => __( 'Сталася помилка збереження.', 'fstu' ),
+			'steering_log_insert_failed'    => __( 'Сталася помилка збереження.', 'fstu' ),
+		];
+
+		return $map[ $marker ] ?? $generic_error;
 	}
 
 	private function get_status_error_message( \Throwable $throwable ): string {
 		$marker = trim( $throwable->getMessage() );
+		$generic_error = __( 'Сталася помилка оновлення статусу.', 'fstu' );
+		$save_error = __( 'Сталася помилка збереження.', 'fstu' );
 
-		return match ( $marker ) {
-			'status_forbidden'               => __( 'Недостатньо прав для виконання статусної дії.', 'fstu' ),
-			'status_item_not_found'          => __( 'Запис не знайдено.', 'fstu' ),
-			'status_already_registered'      => __( 'Посвідчення вже зареєстровано.', 'fstu' ),
+		$map = [
+			'status_forbidden'                => __( 'Недостатньо прав для виконання статусної дії.', 'fstu' ),
+			'status_item_not_found'           => __( 'Запис не знайдено.', 'fstu' ),
+			'status_already_registered'       => __( 'Посвідчення вже зареєстровано.', 'fstu' ),
 			'status_send_requires_registered' => __( 'Спочатку потрібно зареєструвати посвідчення.', 'fstu' ),
-			'status_already_sent'            => __( 'Запис уже позначено як відправлений поштою.', 'fstu' ),
-			'status_received_requires_sent'  => __( 'Позначити доставку можна лише після відправки поштою.', 'fstu' ),
-			'status_already_received'        => __( 'Запис уже позначено як доставлений одержувачу.', 'fstu' ),
-			'status_update_failed',
-			'status_action_invalid',
-			'steering_register_failed',
-			'steering_log_insert_failed'     => __( 'Сталася помилка збереження.', 'fstu' ),
-			default                          => __( 'Сталася помилка оновлення статусу.', 'fstu' ),
-		};
+			'status_already_sent'             => __( 'Запис уже позначено як відправлений поштою.', 'fstu' ),
+			'status_received_requires_sent'   => __( 'Позначити доставку можна лише після відправки поштою.', 'fstu' ),
+			'status_already_received'         => __( 'Запис уже позначено як доставлений одержувачу.', 'fstu' ),
+			'status_update_failed'            => $save_error,
+			'status_action_invalid'           => $save_error,
+			'steering_register_failed'        => $save_error,
+			'steering_log_insert_failed'      => $save_error,
+		];
+
+		return $map[ $marker ] ?? $generic_error;
 	}
 
 	/**
@@ -685,16 +701,16 @@ class Steering_Ajax {
 	}
 
 	private function map_upload_error( int $error_code ): string {
-		return match ( $error_code ) {
-			UPLOAD_ERR_INI_SIZE,
-			UPLOAD_ERR_FORM_SIZE => 'photo_too_large',
-			UPLOAD_ERR_PARTIAL   => 'photo_partial',
-			UPLOAD_ERR_NO_FILE   => 'photo_required',
+		$map = [
+			UPLOAD_ERR_INI_SIZE   => 'photo_too_large',
+			UPLOAD_ERR_FORM_SIZE  => 'photo_too_large',
+			UPLOAD_ERR_PARTIAL    => 'photo_partial',
+			UPLOAD_ERR_NO_FILE    => 'photo_required',
 			UPLOAD_ERR_NO_TMP_DIR => 'photo_tmp_dir_missing',
 			UPLOAD_ERR_CANT_WRITE => 'photo_disk_write_failed',
-			UPLOAD_ERR_EXTENSION => 'photo_extension_blocked',
-			default              => 'photo_upload_failed',
-		};
+			UPLOAD_ERR_EXTENSION  => 'photo_extension_blocked',
+		];
+		return $map[ $error_code ] ?? 'photo_upload_failed';
 	}
 
 	private function handle_status_action( string $action ): void {

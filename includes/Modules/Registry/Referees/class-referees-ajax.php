@@ -478,21 +478,19 @@ class Referees_Ajax {
 
 	private function get_referee_error_message( \Throwable $throwable, bool $is_create ): string {
 		$marker = trim( $throwable->getMessage() );
+		$generic_error = $is_create ? __( 'Помилка при збереженні запису судді.', 'fstu' ) : __( 'Помилка при оновленні запису судді.', 'fstu' );
 
-		return match ( $marker ) {
-			'user_not_found'         => __( 'Обраного користувача не знайдено.', 'fstu' ),
-			'category_not_found'     => __( 'Обрану суддівську категорію не знайдено.', 'fstu' ),
-			'duplicate_referee_user' => __( 'Для цього користувача запис судді вже існує.', 'fstu' ),
-			'referee_not_found'      => __( 'Запис судді не знайдено.', 'fstu' ),
-			'referee_insert_failed',
-			'referee_update_failed',
-			'referees_log_insert_failed' => $is_create
-				? __( 'Помилка при збереженні запису судді.', 'fstu' )
-				: __( 'Помилка при оновленні запису судді.', 'fstu' ),
-			default => $is_create
-				? __( 'Помилка при збереженні запису судді.', 'fstu' )
-				: __( 'Помилка при оновленні запису судді.', 'fstu' ),
-		};
+		$map = [
+			'user_not_found'             => __( 'Обраного користувача не знайдено.', 'fstu' ),
+			'category_not_found'         => __( 'Обрану суддівську категорію не знайдено.', 'fstu' ),
+			'duplicate_referee_user'     => __( 'Для цього користувача запис судді вже існує.', 'fstu' ),
+			'referee_not_found'          => __( 'Запис судді не знайдено.', 'fstu' ),
+			'referee_insert_failed'      => $generic_error,
+			'referee_update_failed'      => $generic_error,
+			'referees_log_insert_failed' => $generic_error,
+		];
+
+		return $map[ $marker ] ?? $generic_error;
 	}
 
 	private function get_delete_error_message( \Throwable $throwable ): string {
@@ -502,42 +500,42 @@ class Referees_Ajax {
 			return (string) mb_substr( $marker, mb_strlen( 'delete_blocked:' ) );
 		}
 
-		return match ( $marker ) {
-			'referee_not_found'       => __( 'Запис судді не знайдено.', 'fstu' ),
-			'referee_delete_failed',
+		$map = [
+			'referee_not_found'          => __( 'Запис судді не знайдено.', 'fstu' ),
+			'referee_delete_failed'      => __( 'Не вдалося видалити запис судді.', 'fstu' ),
 			'referees_log_insert_failed' => __( 'Не вдалося видалити запис судді.', 'fstu' ),
-			default                   => __( 'Не вдалося видалити запис судді.', 'fstu' ),
-		};
+		];
+
+		return $map[ $marker ] ?? __( 'Не вдалося видалити запис судді.', 'fstu' );
 	}
 
 	private function get_certificate_error_message( \Throwable $throwable ): string {
 		$marker = trim( $throwable->getMessage() );
 
-		return match ( $marker ) {
-			'referee_not_found'         => __( 'Суддю для довідки не знайдено.', 'fstu' ),
-			'calendar_not_found'        => __( 'Обраний захід календаря не знайдено.', 'fstu' ),
-			'duplicate_certificate'     => __( 'Для цього судді вже існує довідка по вибраному заходу.', 'fstu' ),
-			'certificate_insert_failed',
+		$map = [
+			'referee_not_found'          => __( 'Суддю для довідки не знайдено.', 'fstu' ),
+			'calendar_not_found'         => __( 'Обраний захід календаря не знайдено.', 'fstu' ),
+			'duplicate_certificate'      => __( 'Для цього судді вже існує довідка по вибраному заходу.', 'fstu' ),
+			'certificate_insert_failed'  => __( 'Помилка при збереженні довідки.', 'fstu' ),
 			'referees_log_insert_failed' => __( 'Помилка при збереженні довідки.', 'fstu' ),
-			default                     => __( 'Помилка при збереженні довідки.', 'fstu' ),
-		};
+		];
+
+		return $map[ $marker ] ?? __( 'Помилка при збереженні довідки.', 'fstu' );
 	}
 
 	private function get_certificate_action_error_message( \Throwable $throwable, string $action ): string {
 		$marker = trim( $throwable->getMessage() );
+		$generic_error = 'bind' === $action ? __( 'Не вдалося оновити категорію довідки.', 'fstu' ) : __( 'Не вдалося зняти прив’язку категорії.', 'fstu' );
 
-		return match ( $marker ) {
+		$map = [
 			'certificate_not_found'      => __( 'Довідку не знайдено.', 'fstu' ),
 			'category_not_found'         => __( 'Обрану суддівську категорію не знайдено.', 'fstu' ),
-			'certificate_bind_failed',
-			'certificate_unbind_failed',
-			'referees_log_insert_failed' => 'bind' === $action
-				? __( 'Не вдалося оновити категорію довідки.', 'fstu' )
-				: __( 'Не вдалося зняти прив’язку категорії.', 'fstu' ),
-			default                      => 'bind' === $action
-				? __( 'Не вдалося оновити категорію довідки.', 'fstu' )
-				: __( 'Не вдалося зняти прив’язку категорії.', 'fstu' ),
-		};
+			'certificate_bind_failed'    => $generic_error,
+			'certificate_unbind_failed'  => $generic_error,
+			'referees_log_insert_failed' => $generic_error,
+		];
+
+		return $map[ $marker ] ?? $generic_error;
 	}
 
 	private function normalize_date_input( string $value ): string {

@@ -307,7 +307,20 @@ class Member_Card_Applications_Ajax {
 	}
 
 	private function get_error_message( string $marker, string $context ): string {
-		return match ( $marker ) {
+		$context_map = [
+			'create'  => __( 'Сталася помилка створення посвідчення.', 'fstu' ),
+			'view'    => __( 'Сталася помилка перегляду посвідчення.', 'fstu' ),
+			'update'  => __( 'Сталася помилка оновлення посвідчення.', 'fstu' ),
+			'reissue' => __( 'Сталася помилка перевипуску посвідчення.', 'fstu' ),
+			'photo'   => __( 'Сталася помилка оновлення фото посвідчення.', 'fstu' ),
+			'delete'  => __( 'Сталася помилка видалення посвідчення.', 'fstu' ),
+		];
+		$default_message = $context_map[ $context ] ?? __( 'Сталася службова помилка.', 'fstu' );
+
+		$photo_invalid = __( 'Дозволені лише коректні зображення JPEG/PNG/WebP.', 'fstu' );
+		$photo_failed  = __( 'Не вдалося зберегти фото посвідчення.', 'fstu' );
+
+		$map = [
 			'member_card_not_found'          => __( 'Запис посвідчення не знайдено.', 'fstu' ),
 			'member_card_invalid_id'         => __( 'Невірний ідентифікатор посвідчення.', 'fstu' ),
 			'member_card_invalid_user'       => __( 'Не вдалося визначити користувача для операції.', 'fstu' ),
@@ -332,18 +345,15 @@ class Member_Card_Applications_Ajax {
 			'photo_not_uploaded'             => __( 'Файл фото не було отримано.', 'fstu' ),
 			'photo_empty'                    => __( 'Файл фото порожній.', 'fstu' ),
 			'photo_too_large'                => __( 'Файл фото завеликий.', 'fstu' ),
-			'photo_invalid_type', 'photo_invalid_image' => __( 'Дозволені лише коректні зображення JPEG/PNG/WebP.', 'fstu' ),
-			'photo_directory_unavailable', 'photo_editor_unavailable', 'photo_save_failed', 'photo_upload_failed' => __( 'Не вдалося зберегти фото посвідчення.', 'fstu' ),
-			default => match ( $context ) {
-				'create'  => __( 'Сталася помилка створення посвідчення.', 'fstu' ),
-				'view'    => __( 'Сталася помилка перегляду посвідчення.', 'fstu' ),
-				'update'  => __( 'Сталася помилка оновлення посвідчення.', 'fstu' ),
-				'reissue' => __( 'Сталася помилка перевипуску посвідчення.', 'fstu' ),
-				'photo'   => __( 'Сталася помилка оновлення фото посвідчення.', 'fstu' ),
-				'delete'  => __( 'Сталася помилка видалення посвідчення.', 'fstu' ),
-				default   => __( 'Сталася службова помилка.', 'fstu' ),
-			},
-		};
+			'photo_invalid_type'             => $photo_invalid,
+			'photo_invalid_image'            => $photo_invalid,
+			'photo_directory_unavailable'    => $photo_failed,
+			'photo_editor_unavailable'       => $photo_failed,
+			'photo_save_failed'              => $photo_failed,
+			'photo_upload_failed'            => $photo_failed,
+		];
+
+		return $map[ $marker ] ?? $default_message;
 	}
 
 	private function get_service(): Member_Card_Applications_Service {

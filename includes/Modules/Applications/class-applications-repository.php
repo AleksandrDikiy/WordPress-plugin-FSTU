@@ -680,7 +680,7 @@ class Applications_Repository {
         int $region_id,
         int $unit_id,
         string $new_date
-    ): bool|\WP_Error {
+    ) {
         global $wpdb;
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery
@@ -717,7 +717,7 @@ class Applications_Repository {
      *
      * @param array<string,mixed> $record
      */
-    public function insert_ofst_history_snapshot( array $record ): bool|\WP_Error {
+    public function insert_ofst_history_snapshot( array $record ) {
         global $wpdb;
 
         $user_id    = (int) ( $record['User_ID'] ?? 0 );
@@ -750,7 +750,7 @@ class Applications_Repository {
     /**
      * Створює абсолютно новий запис ОФСТ (використовується, якщо кандидат його не мав).
      */
-    public function insert_new_ofst_record( int $user_id, int $region_id, int $unit_id, string $date ): bool|\WP_Error {
+    public function insert_new_ofst_record( int $user_id, int $region_id, int $unit_id, string $date ) {
         global $wpdb;
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery

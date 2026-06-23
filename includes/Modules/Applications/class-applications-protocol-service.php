@@ -90,22 +90,29 @@ class Applications_Protocol_Service {
      * Повертає лейбл типу логування.
      */
     public function get_log_type_label( string $type ): string {
-        return match ( strtoupper( trim( $type ) ) ) {
-            'I', 'INSERT' => 'I',
-            'U', 'UPDATE' => 'U',
-            'D', 'DELETE' => 'D',
-            default       => $type,
-        };
+        $type_upper = strtoupper( trim( $type ) );
+        $map = [
+            'I'      => 'I',
+            'INSERT' => 'I',
+            'U'      => 'U',
+            'UPDATE' => 'U',
+            'D'      => 'D',
+            'DELETE' => 'D',
+        ];
+        return $map[ $type_upper ] ?? $type;
     }
 
     /**
      * Повертає лейбл статусу логування.
      */
     public function get_log_status_label( string $status ): string {
-        return match ( trim( mb_strtolower( $status ) ) ) {
-            '✓', 'success', 'успішно' => self::STATUS_SUCCESS,
-            default                   => $status,
-        };
+        $status_clean = trim( mb_strtolower( $status ) );
+        $map = [
+            '✓'       => self::STATUS_SUCCESS,
+            'success' => self::STATUS_SUCCESS,
+            'успішно' => self::STATUS_SUCCESS,
+        ];
+        return $map[ $status_clean ] ?? $status;
     }
 
     /**

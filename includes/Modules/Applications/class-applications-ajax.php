@@ -137,7 +137,7 @@ class Applications_Ajax {
      * Повертає повідомлення для accept-flow.
      */
     private function get_accept_error_message( string $marker ): string {
-        return match ( $marker ) {
+        $map = [
             'candidate_not_found'             => 'Кандидата не знайдено.',
             'candidate_region_not_found'      => 'Для кандидата не визначено область.',
             'ticket_number_not_generated'     => 'Не вдалося сформувати номер квитка.',
@@ -146,30 +146,30 @@ class Applications_Ajax {
             'candidate_card_already_exists'   => 'Для кандидата вже існує членський квиток. Перевірте картку вручну.',
             'member_card_insert_failed'       => 'Не вдалося створити членський квиток кандидата.',
             'applications_log_insert_failed'  => 'Сталася помилка збереження протоколу. Операцію скасовано.',
-            default                           => 'Сталася помилка при обробці заявки.',
-        };
+        ];
+        return $map[ $marker ] ?? 'Сталася помилка при обробці заявки.';
     }
 
     /**
      * Повертає повідомлення для reject-flow.
      */
     private function get_reject_error_message( string $marker ): string {
-        return match ( $marker ) {
+        $map = [
             'candidate_not_found'             => 'Кандидата не знайдено.',
             'candidate_already_accepted'      => 'Кандидат уже прийнятий до ФСТУ та не може бути відхилений у модулі заявок.',
             'candidate_role_already_accepted' => 'Кандидат уже має роль члена ФСТУ. Перевірте його стан вручну.',
             'candidate_card_already_exists'   => 'Для кандидата вже існує членський квиток. Операцію відхилення заблоковано.',
             'reject_role_update_failed'       => 'Не вдалося завершити відхилення заявки. Спробуйте ще раз.',
             'applications_log_insert_failed'  => 'Сталася помилка збереження протоколу. Операцію скасовано.',
-            default                           => 'Сталася помилка при відхиленні заявки.',
-        };
+        ];
+        return $map[ $marker ] ?? 'Сталася помилка при відхиленні заявки.';
     }
 
     /**
      * Повертає повідомлення для change_ofst-flow.
      */
     private function get_change_ofst_error_message( string $marker ): string {
-        return match ( $marker ) {
+        $map = [
             'candidate_not_found'             => 'Кандидата не знайдено.',
             'candidate_already_accepted'      => 'Кандидат уже прийнятий до ФСТУ. Зміну ОФСТ виконуйте у відповідному реєстрі.',
             'candidate_role_already_accepted' => 'Кандидат уже має роль члена ФСТУ. Перевірте його стан вручну.',
@@ -186,8 +186,8 @@ class Applications_Ajax {
             'ofst_update_failed'              => 'Не вдалося оновити поточний запис ОФСТ через службову помилку збереження.',
             'ofst_state_conflict'             => 'Запис ОФСТ було змінено паралельно. Оновіть список і повторіть спробу.',
             'applications_log_insert_failed'  => 'Сталася помилка збереження протоколу. Операцію скасовано.',
-            default                           => 'Помилка оновлення ОФСТ.',
-        };
+        ];
+        return $map[ $marker ] ?? 'Помилка оновлення ОФСТ.';
     }
 
     /**

@@ -43,7 +43,7 @@ class Personal_Cabinet_Payments_Service {
 	 * @param array<string,bool> $permissions
 	 * @return array<string,mixed>|\WP_Error
 	 */
-	public function build_portmone_payload( int $profile_user_id, array $permissions ): array|\WP_Error {
+	public function build_portmone_payload( int $profile_user_id, array $permissions ) {
 		if ( $profile_user_id <= 0 || ! ( get_userdata( $profile_user_id ) instanceof \WP_User ) ) {
 			return new \WP_Error( 'invalid_user', __( 'Профіль користувача не знайдено.', 'fstu' ) );
 		}
@@ -114,8 +114,9 @@ class Personal_Cabinet_Payments_Service {
 	/**
 	 * @param array<string,mixed> $query_data
 	 * @param array<string,mixed> $post_data
+	 * @return string
 	 */
-	public function process_portmone_return( string $result, array $query_data, array $post_data ): string {
+	public function process_portmone_return( string $result, array $query_data, array $post_data ) {
 		$result = in_array( $result, [ 'success', 'failure' ], true ) ? $result : 'error';
 
 		$order_number    = sanitize_text_field( wp_unslash( $post_data['SHOPORDERNUMBER'] ?? '' ) );

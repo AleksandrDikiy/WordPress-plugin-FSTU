@@ -103,35 +103,23 @@ class User_Fstu_Ajax {
      * Обробляє AJAX-запит отримання списку членів ФСТУ з фільтрами та пагінацією.
      */
     public function handle_get_users(): void {
-        // 1. Перевірка nonce (захист від CSRF)
         check_ajax_referer( User_Fstu_List::NONCE_ACTION, 'nonce' );
 
-        // 2. Санітизація вхідних параметрів
         $filters = $this->sanitize_filters( $_POST );
-
-        // 3. Отримання даних
         $result = $this->get_users_data( $filters );
-
-		// 4. Формування HTML рядків таблиці
-		$rows_html = $this->build_table_rows( $result['rows'], $filters['page'], $filters['per_page'] );
+        $rows_html = $this->build_table_rows( $result['rows'], $filters['page'], $filters['per_page'] );
 
         $response_data = [
             'html'        => $rows_html,
-            'total'      => (int) $result['total'],
-            'page'       => (int) $filters['page'],
-            'per_page'   => (int) $filters['per_page'],
-            'total_paid'  => (int) $result['total_paid'], // Додаємо кількість сплативших до відповіді
-            'total_pages' => (int) ceil( $result['total'] / $filters['per_page'] ),
+            'total'       => (int) $result['total'],
+            'page'        => (int) $filters['page'],
+            'per_page'    => (int) $filters['per_page'],
+            'total_paid'  => (int) $result['total_paid'],
+            'total_pages' => (int) ceil( $result['total'] / $filters['per_page'] )
         ];
 
-        /*/ ДОДАЄМО ВИВІД ЗАПИТУ ДЛЯ ДЕБАГУ АДМІНІСТРАТОРАМ
-        if ( current_user_can( 'administrator' ) && ! empty( $result['debug_sql'] ) ) {
-            $response_data['debug_sql'] = preg_replace('/\s+/', ' ', $result['debug_sql']);
-        }
-        */
-
         wp_send_json_success( $response_data );
-	}
+    }
 
 	/**
 	 * Перевіряє, чи існує email у системі WordPress.
@@ -251,7 +239,7 @@ class User_Fstu_Ajax {
 		$error_messages = $error->get_error_messages();
 		$error_message  = isset( $error_messages[0] ) ? sanitize_text_field( wp_strip_all_tags( (string) $error_messages[0] ) ) : '';
 
-		$message = match ( $code ) {
+		$messages_map = [
 			'invalid_email'              => 'Вказано некоректну email-адресу.',
 			'existing_user_email'        => 'Користувач з таким email уже зареєстрований.',
 			'existing_user_login'        => 'Не вдалося створити логін для нового користувача. Спробуйте інший email.',
@@ -269,8 +257,8 @@ class User_Fstu_Ajax {
 			'turnstile_http_error'       => 'Сервіс перевірки безпеки тимчасово недоступний. Спробуйте ще раз.',
 			'turnstile_invalid_response' => 'Отримано некоректну відповідь від сервісу перевірки безпеки.',
 			'turnstile_failed'           => '' !== $error_message ? $error_message : 'Верифікація Cloudflare Turnstile не пройдена. Спробуйте ще раз.',
-			default                      => '' !== $error_message ? $error_message : 'Сталася помилка під час подачі заявки.',
-		};
+		];
+		$message = $messages_map[ $code ] ?? ( '' !== $error_message ? $error_message : 'Сталася помилка під час подачі заявки.' );
 
 		return [
 			'message' => $message,
@@ -286,13 +274,13 @@ class User_Fstu_Ajax {
 	private function build_application_error_payload_from_throwable( \Throwable $throwable ): array {
 		$code = sanitize_key( trim( $throwable->getMessage() ) );
 
-		$message = match ( $code ) {
+		$messages_map = [
 			'application_insert_failed' => 'Не вдалося створити обліковий запис заявника. Спробуйте ще раз.',
 			'ofst_insert_failed'        => 'Не вдалося зберегти реєстрацію в ОФСТ.',
 			'city_insert_failed'        => 'Не вдалося зберегти місто проживання.',
 			'tourism_insert_failed'     => 'Не вдалося зберегти основний вид туризму.',
-			default                     => 'Внутрішня помилка сервера під час обробки заявки.',
-		};
+		];
+		$message = $messages_map[ $code ] ?? 'Внутрішня помилка сервера під час обробки заявки.';
 
 		return [
 			'message' => $message,
@@ -754,12 +742,12 @@ class User_Fstu_Ajax {
 			);
 
 			// Статус ФСТУ (іконка)
-			$fstu_icon = match ( $row['fstu_status'] ) {
+			$icons_map = [
 				'member'    => '<span class="fstu-icon fstu-icon--ok" title="Член ФСТУ">✔</span>',
 				'removed'   => '<span class="fstu-icon fstu-icon--no" title="Видалений">✖</span>',
 				'applicant' => '<span class="fstu-icon fstu-icon--app" title="Заявник">⬇</span>',
-				default     => '<span class="fstu-icon fstu-icon--none" title="Не член">—</span>',
-			};
+			];
+			$fstu_icon = $icons_map[ $row['fstu_status'] ] ?? '<span class="fstu-icon fstu-icon--none" title="Не член">—</span>';
 
 			// Членський квиток (клікабельний для авторизованих)
 			$card_num = esc_html( $row['card_number'] );
@@ -883,7 +871,7 @@ class User_Fstu_Ajax {
 	/**
 	 * Форматує суму внеску для відображення у таблиці.
 	 *
-	 * @param string|null $amount Сума або null.
+	 * @param string $amount Сума або null.
 	 * @return string HTML-рядок.
 	 */
 	private function format_dues( ?string $amount ): string {
@@ -902,7 +890,7 @@ class User_Fstu_Ajax {
 	 * @param string $token Токен з форми.
 	 * @return bool|\WP_Error True якщо верифікація пройшла, або safe-помилка.
 	 */
-	private function verify_turnstile( string $token ): bool|\WP_Error {
+	private function verify_turnstile( string $token ) {
 		if ( ! defined( 'FSTU_TURNSTILE_SECRET_KEY' ) || empty( FSTU_TURNSTILE_SECRET_KEY ) ) {
 			return new \WP_Error( 'turnstile_not_configured', 'Форма тимчасово недоступна: відсутній секретний ключ Turnstile.' );
 		}
@@ -973,7 +961,7 @@ class User_Fstu_Ajax {
      * @param array $data Валідовані дані.
      * @return int|\WP_Error User ID або помилка.
      */
-    private function save_application( array $data ): int|\WP_Error {
+    private function save_application( array $data ) {
         global $wpdb;
 
         $password = $data['password'];
