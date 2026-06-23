@@ -153,13 +153,20 @@ class Personal_Cabinet_Ajax {
 	public function handle_get_portmone_payload(): void {
 		$this->verify_nonce();
 		$profile_user_id = $this->sanitize_profile_user_id();
-		$year = absint($_POST['year'] ?? current_time('Y')); // Отримуємо рік з кнопки
+		$year = absint($_POST['year'] ?? current_time('Y'));
 		
 		if ($profile_user_id <= 0) {
 			$this->send_safe_error('Користувача не знайдено');
 		}
 
 		global $wpdb;
+
+		// 1. ПЕРЕВІРКА НАЛАШТУВАННЯ ЕКВАЙРИНГУ
+		$acquiring_enabled = $wpdb->get_var( "SELECT ParamValue FROM Settings WHERE ParamName='Enable_Acquiring'" );
+		if ( $acquiring_enabled === '0' ) {
+			$this->send_safe_error('Онлайн-оплата тимчасово вимкнена. Будь ласка, завантажте квитанцію вручну.');
+		}
+
 		// Отримуємо суму як у старому плагіні
 		$amount = floatval( $wpdb->get_var( "SELECT GetParamValueSettings('AnnualFee') as 'AnnualFee'" ) );
 		if ($amount <= 0) $amount = 25; // Страховка

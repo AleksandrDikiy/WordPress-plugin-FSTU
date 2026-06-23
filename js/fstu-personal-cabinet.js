@@ -184,8 +184,12 @@ jQuery(document).ready(function ($) {
                     } else if (val === 'delete_judging') {
                         cellHtml = '<button type="button" class="fstu-btn fstu-delete-judging-btn" data-id="' + escHtml(row.id) + '" style="padding: 4px 8px; font-size: 11px; background-color: #fef2f2!important; color: #b91c1c!important; border: 1px solid #fecaca!important;">Видалити</button>';
                     } else if (val === 'pay_portmone') {
-                        // ЗЕЛЕНА КНОПКА СПЛАТИТИ (з передачею року)
-                        cellHtml = '<button type="button" class="fstu-btn fstu-pay-portmone-btn" data-year="' + escHtml(row.year) + '" style="padding: 4px 8px; font-size: 11px; background-color: #ecfdf5!important; color: #047857!important; border: 1px solid #a7f3d0!important;">Сплатити</button>';
+                        if ( l10n.isAcquiringEnabled === '0' ) {
+                            cellHtml = '<span style="font-size: 11px; color: #6b7280; font-style: italic;">Онлайн-оплата тимчасово вимкнена</span>';
+                        } else {
+                            // ЗЕЛЕНА КНОПКА СПЛАТИТИ (з передачею року)
+                            cellHtml = '<button type="button" class="fstu-btn fstu-pay-portmone-btn" data-year="' + escHtml(row.year) + '" style="padding: 4px 8px; font-size: 11px; background-color: #ecfdf5!important; color: #047857!important; border: 1px solid #a7f3d0!important;">Сплатити</button>';
+                        }
                     } else if (val === 'pay_monobank') {
                         // ЗЕЛЕНА КНОПКА ДЛЯ ВІТРИЛЬНИКІВ (Посилання-кнопка в нову вкладку)
                         var payUrl = row.url_pay ? escHtml(row.url_pay) : '#';

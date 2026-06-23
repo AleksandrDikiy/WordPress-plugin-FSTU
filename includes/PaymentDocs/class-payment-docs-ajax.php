@@ -441,6 +441,9 @@ class Payment_Docs_Ajax {
         }
 
         global $wpdb;
+        
+        // 1. ПЕРЕВІРКА НАЛАШТУВАННЯ ЕКВАЙРИНГУ
+        $acquiring_enabled = $wpdb->get_var( "SELECT ParamValue FROM Settings WHERE ParamName='Enable_Acquiring'" );
 
         // Отримуємо налаштування сум з БД
         $amount     = (float) $wpdb->get_var( "SELECT ParamValue FROM Settings WHERE ParamName='Unit_Dues_Amount'" );

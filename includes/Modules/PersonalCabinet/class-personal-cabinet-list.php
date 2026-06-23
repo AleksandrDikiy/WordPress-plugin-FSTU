@@ -95,6 +95,9 @@ class Personal_Cabinet_List {
 			true
 		);
 
+		global $wpdb;
+		$acquiring_enabled = $wpdb->get_var( "SELECT ParamValue FROM Settings WHERE ParamName='Enable_Acquiring'" );
+
 		wp_localize_script(
 			self::ASSET_HANDLE,
 			'fstuPersonalCabinetL10n',
@@ -105,6 +108,7 @@ class Personal_Cabinet_List {
 				'loginUrl'    => $login_url,
 				'profileUserId' => $profile_request['user_id'],
 				'permissions' => $permissions,
+				'isAcquiringEnabled' => $acquiring_enabled,
 				'defaults'    => [
 					'protocolPerPage' => Personal_Cabinet_Protocol_Service::get_default_per_page(),
 					'currentYear'     => (int) current_time( 'Y' ),
